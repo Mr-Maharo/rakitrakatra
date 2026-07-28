@@ -472,11 +472,9 @@
         }
     }
 
-    game.addScene('ala', AlaScene);
-    game.start('ala');
-
     // ============================================================
     // 3) HUD (HTML) — satria tsy manana fanamboarana soratra ny renderer WebGL
+    //    (voafaritra ALOHAN'ny fanombohana ny lalao, satria antsoin'ny scene.create())
     // ============================================================
     const scoreEl = document.getElementById('scoreEl');
     const highEl = document.getElementById('highEl');
@@ -492,6 +490,9 @@
     }
     function showMsg(text) { msgEl.textContent = text; msgEl.style.display = 'block'; }
     function hideMsg() { msgEl.style.display = 'none'; }
+
+    game.addScene('ala', AlaScene);
+    game.start('ala');
 
     setInterval(() => {
         fpsEl.textContent = game.stats.fps;
