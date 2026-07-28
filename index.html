@@ -1,559 +1,525 @@
 <!DOCTYPE html>
 <html lang="mg">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Rakitrakatra V4 · Demo</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            background: #0a0a0f;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-            font-family: 'Courier New', monospace;
-            touch-action: none;
-        }
-        canvas {
-            display: block;
-            width: 100vw;
-            height: 100vh;
-            image-rendering: pixelated;
-            background: #0d0d16;
-            cursor: crosshair;
-        }
-        #loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #0a0a0f;
-            color: #44aaff;
-            font-size: 20px;
-            font-family: 'Courier New', monospace;
-            z-index: 100;
-            flex-direction: column;
-            gap: 15px;
-            transition: opacity 0.5s;
-        }
-        .spinner {
-            width: 35px;
-            height: 35px;
-            border: 3px solid rgba(68, 170, 255, 0.1);
-            border-top-color: #44aaff;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        #ui {
-            position: fixed;
-            bottom: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.2);
-            font-size: 12px;
-            letter-spacing: 1px;
-            text-align: center;
-            pointer-events: none;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 4px 16px;
-            border-radius: 12px;
-            backdrop-filter: blur(4px);
-            user-select: none;
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            z-index: 10;
-        }
-        #ui span {
-            color: rgba(255, 200, 100, 0.5);
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Demo — Rakitrakatra V4 "Ady Goavana"</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(ellipse at top, #1b2338 0%, #0a0d16 70%);
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        color: #eef2ff;
+        gap: 14px;
+        padding: 20px 0 40px;
+    }
+    h1 {
+        margin: 0;
+        font-size: 20px;
+        letter-spacing: 0.5px;
+        background: linear-gradient(90deg,#ff1493,#00ffff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    #stage {
+        position: relative;
+        width: 960px;
+        max-width: 96vw;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0 0 2px #2b3557, 0 20px 60px rgba(0,0,0,.6);
+    }
+    canvas {
+        display: block;
+        width: 100%;
+        image-rendering: pixelated;
+        background: #0a0d16;
+    }
+    #hud {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        font-size: 14px;
+        text-shadow: 0 2px 4px rgba(0,0,0,.8);
+    }
+    #topbar {
+        position: absolute;
+        top: 10px; left: 12px; right: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    #stats {
+        text-align: right;
+        opacity: .85;
+        font-variant-numeric: tabular-nums;
+    }
+    #msg {
+        position: absolute;
+        left: 50%; top: 44%;
+        transform: translate(-50%,-50%);
+        font-size: 26px;
+        font-weight: 700;
+        text-align: center;
+        display: none;
+    }
+    #controls {
+        position: absolute;
+        bottom: 10px; left: 12px; right: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        pointer-events: none;
+    }
+    #legend {
+        font-size: 12px;
+        line-height: 1.5;
+        opacity: .8;
+        background: rgba(10,13,22,.45);
+        padding: 6px 10px;
+        border-radius: 6px;
+    }
+    button {
+        pointer-events: all;
+        font: inherit;
+        font-size: 12px;
+        background: #1e2745;
+        border: 1px solid #3a4674;
+        color: #eef2ff;
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    button:hover { background: #2a355c; }
+    button.on { background: #1e5f4a; border-color: #35a380; }
+    #btnrow { display: flex; gap: 8px; pointer-events: all; }
+    footer { font-size: 12px; opacity: .55; text-align: center; max-width: 800px; }
+    code { color: #9fd3ff; }
+</style>
 </head>
 <body>
 
-    <!-- LOADING SCREEN -->
-    <div id="loading">
-        <div class="spinner"></div>
-        <div>⏳ Mampiditra motera...</div>
+<h1>⚡ RAKITRAKATRA V4 — "ADY GOAVANA" · Demo</h1>
+
+<div id="stage">
+    <canvas id="gameCanvas" width="960" height="540"></canvas>
+    <div id="hud">
+        <div id="topbar">
+            <div id="legend">
+                Isa: <b id="scoreEl">0</b> &nbsp;|&nbsp;
+                Vola tsara indrindra: <b id="highEl">0</b> &nbsp;|&nbsp;
+                Aina: <b id="hpEl">3</b>
+            </div>
+            <div id="stats">
+                FPS: <span id="fpsEl">0</span><br>
+                Zavatra velona: <span id="entEl">0</span>
+            </div>
+        </div>
+        <div id="msg"></div>
+        <div id="controls">
+            <div id="legend">
+                ← → / A D : mihetsika &nbsp;·&nbsp; Space : mitsambikina &nbsp;·&nbsp; R : manomboka indray
+            </div>
+            <div id="btnrow">
+                <button id="btnRain">🌧️ Rotsak'orana</button>
+                <button id="btnPause">⏸️ Ato</button>
+            </div>
+        </div>
     </div>
+</div>
 
-    <!-- UI OVERLAY -->
-    <div id="ui">⬆ ⬇ ⬅ ➡ &nbsp;·&nbsp; <span>clic / tap</span> &nbsp;·&nbsp; tire</div>
+<footer>
+    Demo natao tamin'ny <code>rakitrakatra.js</code> (V4 "Ady Goavana") — WebGL2 renderer, ECS, Kamera, Fanindry,
+    Sarimihetsika, Vovoka (particles), Fizika, Toetrandro, Tehirizo. Ampidino ao amin'ny lakilasy iray ihany
+    ny <code>demo.html</code> sy ny <code>rakitrakatra.js</code>.
+</footer>
 
-    <!-- ============================================================ -->
-    <!--  LOADER : Mampiditra ilay motera avy any ivelany              -->
-    <!-- ============================================================ -->
-    <script>
-        (function() {
-            const loading = document.getElementById('loading');
+<script src="rakitrakatra.js"></script>
+<script>
+(function(){
+    const R = window.Rakitrakatra;
 
-            // Mamorona script ho an'ny motera
-            const script = document.createElement('script');
-            script.src = 'rakitrakatra.js';
-            script.async = false;
+    // ============================================================
+    // 1) TEXTURES PROCEDURALES — tsy misy fichier sary ilaina
+    // ============================================================
+    function makeCanvas(w, h, draw) {
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        draw(c.getContext('2d'), w, h);
+        return c;
+    }
 
-            script.onload = function() {
-                console.log('✅ Moteur Rakitrakatra V4 tafiditra!');
+    // Tile — bitany ahitra + tany
+    const tileCanvas = makeCanvas(32, 32, (ctx) => {
+        ctx.fillStyle = '#5b3a29';
+        ctx.fillRect(0, 0, 32, 32);
+        ctx.fillStyle = '#3f2a1e';
+        for (let i = 0; i < 10; i++) {
+            ctx.fillRect((i * 7) % 32, 10 + ((i * 13) % 20), 3, 3);
+        }
+        ctx.fillStyle = '#4caf50';
+        ctx.fillRect(0, 0, 32, 8);
+        ctx.fillStyle = '#66d17a';
+        ctx.fillRect(0, 0, 32, 3);
+    });
 
-                // Esory ny loading
-                loading.style.opacity = '0';
-                setTimeout(() => loading.style.display = 'none', 500);
+    // Vola madinika (coin)
+    const coinCanvas = makeCanvas(16, 16, (ctx) => {
+        ctx.fillStyle = '#ffb300';
+        ctx.beginPath(); ctx.arc(8, 8, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffe082';
+        ctx.beginPath(); ctx.arc(6, 6, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#b8860b';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(8, 8, 7, 0, Math.PI * 2); ctx.stroke();
+    });
 
-                // Atombohy ny demo raha misy ny R
-                if (typeof R !== 'undefined') {
-                    initDemo();
-                } else {
-                    loading.innerHTML = '<div style="color:#ff4466;">❌ Erreur: moteur tsy hita</div>';
-                }
-            };
+    // Loza (spike hazard)
+    const spikeCanvas = makeCanvas(32, 20, (ctx) => {
+        ctx.fillStyle = '#c62828';
+        for (let i = 0; i < 4; i++) {
+            ctx.beginPath();
+            ctx.moveTo(i * 8, 20);
+            ctx.lineTo(i * 8 + 4, 2);
+            ctx.lineTo(i * 8 + 8, 20);
+            ctx.fill();
+        }
+    });
 
-            script.onerror = function() {
-                loading.innerHTML = `
-                            <div style="color:#ff4466;text-align:center;line-height:1.6;">
-                                ❌ Tsy hita ny <strong>rakitrakatra.js</strong><br>
-                                <small style="font-size:14px;color:#888;">
-                                    Apetraho amin'ny folder mitovy ity rakitra ity.
-                                </small>
-                            </div>
-                        `;
-            };
+    // Player — 4 frame (32x32) walk cycle, natao andrikitra tsotra
+    const FW = 32, FH = 32;
+    const playerCanvas = makeCanvas(FW * 4, FH, (ctx) => {
+        for (let f = 0; f < 4; f++) {
+            const ox = f * FW;
+            const legOffset = [0, 4, 0, -4][f];
+            ctx.save();
+            ctx.translate(ox, 0);
+            // aloka
+            ctx.fillStyle = 'rgba(0,0,0,.25)';
+            ctx.beginPath(); ctx.ellipse(16, 29, 9, 3, 0, 0, Math.PI * 2); ctx.fill();
+            // tongotra
+            ctx.fillStyle = '#2b2f77';
+            ctx.fillRect(9, 22 + Math.max(0, -legOffset * 0.2), 5, 7);
+            ctx.fillRect(18 - legOffset * 0.2, 22 + Math.max(0, legOffset * 0.2), 5, 7);
+            // vatana
+            ctx.fillStyle = '#00e5ff';
+            ctx.fillRect(8, 10, 16, 14);
+            // loha
+            ctx.fillStyle = '#ffe0b2';
+            ctx.beginPath(); ctx.arc(16, 8, 7, 0, Math.PI * 2); ctx.fill();
+            // maso
+            ctx.fillStyle = '#111';
+            ctx.fillRect(18, 6, 2, 2);
+            // sabatra kely (antenna)
+            ctx.fillStyle = '#ff1493';
+            ctx.fillRect(15, 0, 2, 4);
+            ctx.restore();
+        }
+    });
 
-            document.head.appendChild(script);
+    // ============================================================
+    // 2) LALAO (game) sy SEHATRA (scene)
+    // ============================================================
+    const LEVEL_W = 2600, LEVEL_H = 540;
+    const GRAVITY = 1500;
+    const MOVE_SPEED = 230;
+    const JUMP_VELOCITY = -570;
 
-            // ============================================================
-            //  DEMO : Mampiasa ny fototry ny framework ihany
-            // ============================================================
-            function initDemo() {
-                // Ampiasaintsika araka ny fomba ofisialin'ny framework
-                const { Lalao, Sehatra, Z, Fanindry, Feo, UI, Fizika, Vovoka } = R;
+    const canvasEl = document.getElementById('gameCanvas');
+    const game = new R.Lalao(960, 540, { canvas: canvasEl, gameKey: 'rakitrakatra_demo' });
 
-                // --------------------------------------------------------
-                //  SCÈNE : "Demo"
-                // --------------------------------------------------------
-                class DemoScene extends Sehatra {
-                    constructor(key) {
-                        super(key);
-                        this.player = -1;
-                        this.enemies = [];
-                        this.bullets = [];
-                        this.particles = null;
-                        this.hpBar = null;
-                        this.score = 0;
-                        this.wave = 0;
-                        this.gameOver = false;
-                        this.shootCD = 0;
-                    }
+    game.renderer.addTexture('tile', tileCanvas);
+    game.renderer.addTexture('coin', coinCanvas);
+    game.renderer.addTexture('spike', spikeCanvas);
+    game.renderer.addTexture('player', playerCanvas);
 
-                    init(data) {
-                        this.score = 0;
-                        this.wave = 0;
-                        this.enemies = [];
-                        this.bullets = [];
-                        this.gameOver = false;
-                        this.shootCD = 0;
-                    }
+    const playerFrames = [0, 1, 2, 3].map(i => ({ x: i * FW, y: 0, w: FW, h: FH }));
 
-                    create() {
-                        const ecs = this.game.ecs;
-                        const cam = this.game.camera;
+    class AlaScene extends R.Sehatra {
+        create() {
+            this.t = 0;
+            this.rng = new R.PRNG(7);
 
-                        // --- Joueur ---
-                        this.player = ecs.create();
-                        const p = this.player;
-                        ecs.x[p] = 400;
-                        ecs.y[p] = 300;
-                        ecs.w[p] = 30;
-                        ecs.h[p] = 30;
-                        ecs.color[p] = 0xFF44AAFF;
-                        ecs.hp[p] = 100;
-                        ecs.maxHp[p] = 100;
-                        ecs.tag[p] = 1;
-
-                        // --- Caméra ---
-                        cam.follow(ecs, p, 0.08);
-                        cam.setBounds(-50, -50, 900, 700);
-                        cam.zoom = 1;
-
-                        // --- Particules ---
-                        this.particles = new Vovoka(3000);
-
-                        // --- Barre de vie ---
-                        this.hpBar = new UI.Bara(20, 20, 180, 16, {
-                            max: 100,
-                            value: 100,
-                            bgColor: 0xCC222244,
-                            fillColor: 0xFF44FF44
-                        });
-
-                        // --- Ennemis initiaux ---
-                        for (let i = 0; i < 4; i++) this.spawnEnemy();
-
-                        // --- Vagues ---
-                        this.game.timer.every(5000, () => {
-                            if (!this.gameOver) {
-                                this.wave++;
-                                for (let i = 0; i < Math.min(2 + this.wave, 6); i++) {
-                                    this.spawnEnemy();
-                                }
-                                cam.shake(3, 120);
-                                Feo.mamorona('power');
-                            }
-                        });
-                    }
-
-                    spawnEnemy() {
-                        const ecs = this.game.ecs;
-                        const cam = this.game.camera.getBounds();
-
-                        const side = Math.floor(Math.random() * 4);
-                        let x, y;
-                        const cx = cam.x + cam.w / 2;
-                        const cy = cam.y + cam.h / 2;
-
-                        switch (side) {
-                            case 0:
-                                x = cx - cam.w / 2 - 20 + Math.random() * 40;
-                                y = cy - cam.h / 2 + Math.random() * cam.h;
-                                break;
-                            case 1:
-                                x = cx + cam.w / 2 + 20 - Math.random() * 40;
-                                y = cy - cam.h / 2 + Math.random() * cam.h;
-                                break;
-                            case 2:
-                                x = cx - cam.w / 2 + Math.random() * cam.w;
-                                y = cy - cam.h / 2 - 20 + Math.random() * 40;
-                                break;
-                            case 3:
-                                x = cx - cam.w / 2 + Math.random() * cam.w;
-                                y = cy + cam.h / 2 + 20 - Math.random() * 40;
-                                break;
-                        }
-
-                        const id = ecs.create();
-                        const size = 18 + Math.random() * 14;
-                        ecs.x[id] = Z.clamp(x, 20, 880);
-                        ecs.y[id] = Z.clamp(y, 20, 680);
-                        ecs.w[id] = size;
-                        ecs.h[id] = size;
-                        ecs.color[id] = 0xFFFF6644;
-                        ecs.hp[id] = 1 + Math.floor(this.wave / 2);
-                        ecs.maxHp[id] = ecs.hp[id];
-                        ecs.tag[id] = 2;
-                        ecs._speed = 50 + this.wave * 3;
-                        ecs._dmg = 8 + Math.floor(this.wave / 2);
-
-                        this.enemies.push(id);
-                    }
-
-                    shoot(targetX, targetY) {
-                        if (this.gameOver) return;
-                        if (this.shootCD > 0) return;
-                        if (this.player < 0 || !this.game.ecs.isAlive(this.player)) return;
-
-                        const ecs = this.game.ecs;
-                        const p = this.player;
-                        const px = ecs.x[p] + ecs.w[p] / 2;
-                        const py = ecs.y[p] + ecs.h[p] / 2;
-
-                        const angle = Math.atan2(targetY - py, targetX - px);
-                        const speed = 400;
-
-                        const id = ecs.create();
-                        ecs.x[id] = px;
-                        ecs.y[id] = py;
-                        ecs.w[id] = 6;
-                        ecs.h[id] = 6;
-                        ecs.vx[id] = Math.cos(angle) * speed;
-                        ecs.vy[id] = Math.sin(angle) * speed;
-                        ecs.color[id] = 0xFF44FF88;
-                        ecs.tag[id] = 3;
-                        ecs.lifetime[id] = 1.5;
-
-                        this.bullets.push(id);
-                        this.shootCD = 0.15;
-                        Feo.mamorona('laser');
-                    }
-
-                    update(dt, dtMs) {
-                        if (this.gameOver) {
-                            if (Fanindry.justPressed(' ')) this.restart();
-                            return;
-                        }
-
-                        const ecs = this.game.ecs;
-                        const cam = this.game.camera;
-
-                        // Cooldown
-                        if (this.shootCD > 0) this.shootCD -= dt;
-
-                        // --- Joueur ---
-                        const p = this.player;
-                        if (ecs.isAlive(p)) {
-                            const axis = Fanindry.axis();
-                            const speed = 180;
-                            ecs.vx[p] = Z.approach(ecs.vx[p], axis.x * speed, 600 * dt);
-                            ecs.vy[p] = Z.approach(ecs.vy[p], axis.y * speed, 600 * dt);
-
-                            ecs.x[p] = Z.clamp(ecs.x[p] + ecs.vx[p] * dt, 20, 880);
-                            ecs.y[p] = Z.clamp(ecs.y[p] + ecs.vy[p] * dt, 20, 680);
-
-                            // Tir
-                            if (Fanindry.mouse.justDown[0]) {
-                                this.shoot(Fanindry.mouse.worldX, Fanindry.mouse.worldY);
-                            }
-                            if (Fanindry.justPressed(' ')) {
-                                const dir = Math.atan2(ecs.vy[p], ecs.vx[p]);
-                                if (Math.hypot(ecs.vx[p], ecs.vy[p]) > 10) {
-                                    this.shoot(ecs.x[p] + Math.cos(dir) * 100, ecs.y[p] + Math.sin(dir) * 100);
-                                } else {
-                                    this.shoot(ecs.x[p] + 50, ecs.y[p]);
-                                }
-                            }
-
-                            this.hpBar.value = ecs.hp[p];
-                            this.hpBar.max = ecs.maxHp[p];
-                        }
-
-                        // --- IA ennemis ---
-                        const pPos = ecs.isAlive(p) ? { x: ecs.x[p], y: ecs.y[p] } : null;
-                        const dead = [];
-                        for (let i = 0; i < this.enemies.length; i++) {
-                            const e = this.enemies[i];
-                            if (!ecs.isAlive(e)) { dead.push(i); continue; }
-
-                            if (pPos) {
-                                const dx = pPos.x - ecs.x[e];
-                                const dy = pPos.y - ecs.y[e];
-                                const d = Math.hypot(dx, dy);
-                                if (d > 1) {
-                                    const spd = ecs._speed || 60;
-                                    ecs.vx[e] = Z.approach(ecs.vx[e], (dx / d) * spd, 100 * dt);
-                                    ecs.vy[e] = Z.approach(ecs.vy[e], (dy / d) * spd, 100 * dt);
-                                }
-                            }
-                            ecs.x[e] = Z.clamp(ecs.x[e] + ecs.vx[e] * dt, 10, 890);
-                            ecs.y[e] = Z.clamp(ecs.y[e] + ecs.vy[e] * dt, 10, 690);
-                        }
-                        for (let i = dead.length - 1; i >= 0; i--) {
-                            this.enemies.splice(dead[i], 1);
-                        }
-
-                        // --- Projectiles ---
-                        const deadBullets = [];
-                        for (let i = 0; i < this.bullets.length; i++) {
-                            const b = this.bullets[i];
-                            if (!ecs.isAlive(b)) { deadBullets.push(i); continue; }
-
-                            ecs.x[b] += ecs.vx[b] * dt;
-                            ecs.y[b] += ecs.vy[b] * dt;
-
-                            ecs.lifetime[b] -= dt;
-                            if (ecs.lifetime[b] <= 0 || ecs.x[b] < -50 || ecs.x[b] > 950 || ecs.y[b] < -50 || ecs.y[b] >
-                                750) {
-                                ecs.destroy(b);
-                                deadBullets.push(i);
-                            }
-                        }
-                        for (let i = deadBullets.length - 1; i >= 0; i--) {
-                            this.bullets.splice(deadBullets[i], 1);
-                        }
-
-                        // --- Collisions bullet → enemy ---
-                        for (const b of this.bullets) {
-                            if (!ecs.isAlive(b)) continue;
-                            for (const e of this.enemies) {
-                                if (!ecs.isAlive(e)) continue;
-                                if (Fizika.rectVsRect(ecs.x[b], ecs.y[b], ecs.w[b] || 6, ecs.h[b] || 6,
-                                        ecs.x[e], ecs.y[e], ecs.w[e] || 20, ecs.h[e] || 20)) {
-                                    ecs.hp[e]--;
-                                    if (ecs.hp[e] <= 0) {
-                                        ecs.destroy(e);
-                                        this.score++;
-                                        // Effet
-                                        const cx = ecs.x[e] + ecs.w[e] / 2;
-                                        const cy = ecs.y[e] + ecs.h[e] / 2;
-                                        for (let j = 0; j < 15; j++) {
-                                            const a = Math.random() * Math.PI * 2;
-                                            const s = 40 + Math.random() * 100;
-                                            this.particles.emit(cx, cy, {
-                                                count: 1,
-                                                speedMin: s * 0.4,
-                                                speedMax: s,
-                                                angle: a,
-                                                angleSpread: 0.6,
-                                                lifeMin: 0.2,
-                                                lifeMax: 0.5,
-                                                sizeStart: 4 + Math.random() * 6,
-                                                sizeEnd: 0,
-                                                color: 0xFFFF6644,
-                                                gravity: 50
-                                            });
-                                        }
-                                        Feo.mamorona('hit');
-                                        cam.shake(2, 80);
-                                    }
-                                    ecs.destroy(b);
-                                    break;
-                                }
-                            }
-                        }
-
-                        // --- Collisions enemy → player ---
-                        if (ecs.isAlive(p)) {
-                            for (const e of this.enemies) {
-                                if (!ecs.isAlive(e)) continue;
-                                if (Fizika.rectVsRect(ecs.x[p], ecs.y[p], ecs.w[p] || 30, ecs.h[p] || 30,
-                                        ecs.x[e], ecs.y[e], ecs.w[e] || 20, ecs.h[e] || 20)) {
-                                    ecs.hp[p] -= ecs._dmg || 10;
-                                    const dx = ecs.x[e] - ecs.x[p];
-                                    const dy = ecs.y[e] - ecs.y[p];
-                                    const d = Math.hypot(dx, dy) || 1;
-                                    ecs.x[e] += (dx / d) * 20;
-                                    ecs.y[e] += (dy / d) * 20;
-                                    Feo.mamorona('hit');
-                                    cam.shake(4, 100);
-
-                                    if (ecs.hp[p] <= 0) {
-                                        ecs.hp[p] = 0;
-                                        this.gameOver = true;
-                                        ecs.alpha[p] = 0.3;
-                                        Feo.mamorona('explode');
-                                        for (let j = 0; j < 25; j++) {
-                                            const a = Math.random() * Math.PI * 2;
-                                            const s = 50 + Math.random() * 150;
-                                            this.particles.emit(ecs.x[p] + ecs.w[p] / 2, ecs.y[p] + ecs.h[p] / 2, {
-                                                count: 1,
-                                                speedMin: s * 0.3,
-                                                speedMax: s,
-                                                angle: a,
-                                                angleSpread: 1.2,
-                                                lifeMin: 0.3,
-                                                lifeMax: 0.8,
-                                                sizeStart: 6 + Math.random() * 8,
-                                                sizeEnd: 0,
-                                                color: 0xFF44AAFF,
-                                                gravity: 20
-                                            });
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-
-                        // --- Particules ---
-                        this.particles.update(dt);
-                    }
-
-                    restart() {
-                        this.gameOver = false;
-                        this.score = 0;
-                        this.wave = 0;
-                        this.enemies = [];
-                        this.bullets = [];
-
-                        const ecs = this.game.ecs;
-                        const p = this.player;
-                        if (ecs.isAlive(p)) {
-                            ecs.hp[p] = ecs.maxHp[p];
-                            ecs.x[p] = 400;
-                            ecs.y[p] = 300;
-                            ecs.vx[p] = 0;
-                            ecs.vy[p] = 0;
-                            ecs.alpha[p] = 1;
-                        }
-
-                        for (let i = 0; i < 4; i++) this.spawnEnemy();
-                        this.game.camera.shake(6, 150);
-                        Feo.mamorona('power');
-                    }
-
-                    render(renderer, camera) {
-                        const ecs = this.game.ecs;
-
-                        // Entités
-                        const draw = (id) => {
-                            if (!ecs.isAlive(id)) return;
-                            const x = ecs.x[id],
-                                y = ecs.y[id];
-                            const w = ecs.w[id] || 20,
-                                h = ecs.h[id] || 20;
-                            const c = ecs.color[id] || 0xFFFFFFFF;
-                            const a = ecs.alpha[id] || 1;
-                            const col = ((c >>> 24) << 24) | ((c >>> 16) << 16) | ((c >>> 8) << 8) | Math.floor(a * 255);
-                            renderer.drawRect(x, y, w, h, col);
-                        };
-
-                        if (this.player >= 0) draw(this.player);
-                        for (const e of this.enemies) draw(e);
-                        for (const b of this.bullets) draw(b);
-                    }
-
-                    renderUI(renderer) {
-                        if (this.hpBar) this.hpBar.render(renderer);
-
-                        // Score
-                        renderer.drawRect(20, 50, 220, 22, 0x88000000);
-                        renderer.drawRect(22, 52, 216, 18, 0x44FFFFFF);
-
-                        // Game Over
-                        if (this.gameOver) {
-                            renderer.drawRect(180, 200, 340, 120, 0xCC000000);
-                            renderer.drawRect(190, 210, 320, 100, 0xCCFF2244);
-                            renderer.drawRect(230, 250, 240, 4, 0xFFFFFFFF);
-                            renderer.drawRect(230, 270, 180, 4, 0xFFFFFFFF);
-                            renderer.drawRect(230, 290, 260, 4, 0xFFFFFFFF);
-                        }
-                    }
-                }
-
-                // --------------------------------------------------------
-                //  LANCEMENT
-                // --------------------------------------------------------
-                // Mamorona canvas ary ampiana ao amin'ny body
-                const canvas = document.createElement('canvas');
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-                document.body.prepend(canvas);
-
-                const game = new Lalao(window.innerWidth, window.innerHeight, {
-                    canvas: canvas,
-                    maxEntities: 20000,
-                    gameKey: 'demo'
-                });
-
-                game.addScene('demo', DemoScene);
-                game.start('demo');
-
-                // Redimensionnement
-                window.addEventListener('resize', () => {
-                    const w = window.innerWidth;
-                    const h = window.innerHeight;
-                    canvas.width = w;
-                    canvas.height = h;
-                    game.renderer.resize(w, h);
-                    game.width = w;
-                    game.height = h;
-                    game.camera.viewW = w;
-                    game.camera.viewH = h;
-                });
-
-                console.log('🎮 Demo Rakitrakatra V4 lancée !');
+            // --- Andrafitra ny tany (platforms) ---
+            this.platforms = [{ x: 0, y: 500, w: LEVEL_W, h: 40 }];
+            for (let i = 0; i < 8; i++) {
+                const x = 260 + i * 300;
+                const y = 500 - 90 - (i % 3) * 55;
+                this.platforms.push({ x, y, w: 150, h: 24 });
             }
-        })();
-    </script>
+
+            // --- Loza (spikes) eo amin'ny tany ---
+            this.spikes = [
+                { x: 720, y: 480, w: 64, h: 20 },
+                { x: 1560, y: 480, w: 96, h: 20 }
+            ];
+
+            // --- Vola (coins) — mampiasa ny ECS an'ny framework ---
+            this.ecs = this.game.ecs;
+            this.coinIds = [];
+            for (const plat of this.platforms.slice(1)) {
+                const id = this.ecs.create();
+                this.ecs.x[id] = plat.x + plat.w / 2 - 8;
+                this.ecs.y[id] = plat.y - 26;
+                this.ecs.tag[id] = 1; // 1 = vola
+                this.coinIds.push(id);
+            }
+
+            // --- Mpilalao (player) ---
+            this.player = { x: 80, y: 400, vx: 0, vy: 0, w: 22, h: 30, facing: 1, grounded: false };
+
+            this.anim = new R.Sarimihetsika(null);
+            this.anim.add('miandry', [playerFrames[0]], 4, true);
+            this.anim.add('mandeha', playerFrames, 10, true);
+            this.anim.add('mitsambikina', [playerFrames[1]], 1, false);
+
+            // --- Kamera ---
+            this.camera = this.game.camera;
+            this.camera.follow(this.player, 0.14);
+            this.camera.setDeadzone(0, 0, 180, 90);
+            this.camera.setBounds(0, 0, LEVEL_W, LEVEL_H);
+
+            // --- Fitehirizana (save) ---
+            this.score = 0;
+            this.hp = 3;
+            this.highScore = (this.game.save.load(0) || {}).highScore || 0;
+            this.invulnUntil = 0;
+            this.gameOver = false;
+            this.rainOn = false;
+
+            updateHud(this);
+        }
+
+        _collide(axis) {
+            const p = this.player;
+            for (const plat of this.platforms) {
+                if (!R.Fizika.rectVsRect(p.x, p.y, p.w, p.h, plat.x, plat.y, plat.w, plat.h)) continue;
+                if (axis === 'x') {
+                    if (p.vx > 0) p.x = plat.x - p.w;
+                    else if (p.vx < 0) p.x = plat.x + plat.w;
+                    p.vx = 0;
+                } else {
+                    if (p.vy > 0) {
+                        if (p.vy > 900) this.camera.shake(6, 150);
+                        p.y = plat.y - p.h;
+                        p.vy = 0;
+                        p.grounded = true;
+                    } else if (p.vy < 0) {
+                        p.y = plat.y + plat.h;
+                        p.vy = 0;
+                    }
+                }
+            }
+        }
+
+        _hurt() {
+            const now = performance.now();
+            if (now < this.invulnUntil) return;
+            this.hp--;
+            this.invulnUntil = now + 1200;
+            this.camera.shake(8, 200);
+            R.Feo.mamorona('hit');
+            this.game.particles.emit(this.player.x + this.player.w / 2, this.player.y + this.player.h / 2,
+                { count: 16, color: 0xFF3333FF, speedMin: 80, speedMax: 220, lifeMin: .3, lifeMax: .6, gravity: 500 });
+            if (this.hp <= 0) this._gameOver();
+            updateHud(this);
+        }
+
+        _gameOver() {
+            this.gameOver = true;
+            showMsg('NESIN\'NY LOZA! Tsindrio R hanombohana indray');
+        }
+
+        _respawn() {
+            this.player.x = 80; this.player.y = 400;
+            this.player.vx = 0; this.player.vy = 0;
+            this.hp = 3;
+            this.invulnUntil = performance.now() + 1000;
+            this.camera.x = 0; this.camera.y = 0;
+            updateHud(this);
+        }
+
+        reset() {
+            this.score = 0;
+            this.gameOver = false;
+            hideMsg();
+            for (const id of this.coinIds) this.ecs.alive[id] = 1;
+            this._respawn();
+        }
+
+        update(dt, dtMs) {
+            this.t += dt;
+            if (this.gameOver) {
+                if (R.Fanindry.justPressed('r')) this.reset();
+                return;
+            }
+            if (R.Fanindry.justPressed('r')) { this.reset(); return; }
+
+            const p = this.player;
+            const axis = R.Fanindry.axis();
+            p.vx = axis.x * MOVE_SPEED;
+            if (Math.abs(axis.x) > 0.05) p.facing = axis.x > 0 ? 1 : -1;
+
+            if (R.Fanindry.justPressed(' ') && p.grounded) {
+                p.vy = JUMP_VELOCITY;
+                p.grounded = false;
+                R.Feo.mamorona('jump');
+            }
+
+            p.vy = Math.min(p.vy + GRAVITY * dt, 1000);
+
+            p.x += p.vx * dt;
+            p.x = R.Z.clamp(p.x, 0, LEVEL_W - p.w);
+            this._collide('x');
+
+            p.grounded = false;
+            p.y += p.vy * dt;
+            this._collide('y');
+
+            if (p.y > LEVEL_H + 100) this._hurt(), this._respawn();
+
+            // haolo (spikes)
+            for (const s of this.spikes) {
+                if (R.Fizika.rectVsRect(p.x, p.y, p.w, p.h, s.x, s.y, s.w, s.h)) this._hurt();
+            }
+
+            // fanangonana vola
+            this.ecs.forEach(id => {
+                if (this.ecs.tag[id] !== 1) return;
+                const cx = this.ecs.x[id];
+                const cy = this.ecs.y[id] + Math.sin(this.t * 3 + id) * 3;
+                if (R.Fizika.rectVsRect(p.x, p.y, p.w, p.h, cx, cy, 16, 16)) {
+                    this.ecs.destroy(id);
+                    this.score += 10;
+                    if (this.score > this.highScore) {
+                        this.highScore = this.score;
+                        this.game.save.save(0, { highScore: this.highScore });
+                    }
+                    R.Feo.mamorona('coin');
+                    this.game.particles.emit(cx + 8, cy + 8, {
+                        count: 14, color: 0xFFD700FF, speedMin: 60, speedMax: 190,
+                        lifeMin: .3, lifeMax: .6, gravity: 300
+                    });
+                    updateHud(this);
+                }
+            });
+
+            // rakitra fihetsehana (animation state)
+            if (!p.grounded) this.anim.play('mitsambikina');
+            else if (Math.abs(p.vx) > 5) this.anim.play('mandeha');
+            else this.anim.play('miandry');
+            this.anim.update(dtMs);
+
+            // vola sisa tavela?
+            let coinsLeft = 0;
+            this.ecs.forEach(id => { if (this.ecs.tag[id] === 1) coinsLeft++; });
+            if (coinsLeft === 0 && !this._won) {
+                this._won = true;
+                showMsg('NAHARESY LAHATRA! Nangoninao daholo ny vola ✨');
+            }
+        }
+
+        render(renderer, camera) {
+            // parallax lavitra — havoana maloka
+            const pf = 0.35;
+            for (let i = -1; i < 10; i++) {
+                const hx = i * 260 - camera.x * pf;
+                renderer.drawRect(hx, 420, 220, 120, 0x1a2340FF);
+            }
+
+            // tany (platforms) — pavés amin'ny tile texture
+            for (const plat of this.platforms) {
+                for (let x = plat.x; x < plat.x + plat.w; x += 32) {
+                    for (let y = plat.y; y < plat.y + plat.h; y += 32) {
+                        renderer.drawSprite(x, y, 32, 32, 0, 0, 32, 32, 0xFFFFFFFF, 'tile');
+                    }
+                }
+            }
+
+            // loza (spikes)
+            for (const s of this.spikes) {
+                renderer.drawSprite(s.x, s.y, s.w, s.h, 0, 0, 32, 20, 0xFFFFFFFF, 'spike');
+            }
+
+            // vola (coins)
+            this.ecs.forEach(id => {
+                if (this.ecs.tag[id] !== 1) return;
+                const cx = this.ecs.x[id];
+                const cy = this.ecs.y[id] + Math.sin(this.t * 3 + id) * 3;
+                renderer.drawSprite(cx, cy, 16, 16, 0, 0, 16, 16, 0xFFFFFFFF, 'coin');
+            });
+
+            // mpilalao (player) — miova endrika arakaraka ny sarimihetsika
+            const p = this.player;
+            const frame = this.anim.getFrame() || playerFrames[0];
+            const blinking = performance.now() < this.invulnUntil && Math.floor(performance.now() / 100) % 2 === 0;
+            const tint = blinking ? 0xFFFFFF66 : 0xFFFFFFFF;
+            renderer.drawSprite(p.x - (FW - p.w) / 2, p.y - (FH - p.h), FW, FH,
+                                 frame.x, frame.y, frame.w, frame.h, tint, 'player', p.facing < 0);
+        }
+
+        renderUI(renderer) {
+            // Bara aina (HP bar) — mampiasa UI.Bara an'ny framework
+            if (!this.hpBar) this.hpBar = new R.UI.Bara(16, 16, 140, 16, { max: 3, value: this.hp, fillColor: 0xFF4444FF });
+            this.hpBar.setValue(Math.max(0, this.hp));
+            this.hpBar.render(renderer);
+        }
+    }
+
+    game.addScene('ala', AlaScene);
+    game.start('ala');
+
+    // ============================================================
+    // 3) HUD (HTML) — satria tsy manana fanamboarana soratra ny renderer WebGL
+    // ============================================================
+    const scoreEl = document.getElementById('scoreEl');
+    const highEl = document.getElementById('highEl');
+    const hpEl = document.getElementById('hpEl');
+    const fpsEl = document.getElementById('fpsEl');
+    const entEl = document.getElementById('entEl');
+    const msgEl = document.getElementById('msg');
+
+    function updateHud(scene) {
+        scoreEl.textContent = scene.score;
+        highEl.textContent = scene.highScore;
+        hpEl.textContent = Math.max(0, scene.hp);
+    }
+    function showMsg(text) { msgEl.textContent = text; msgEl.style.display = 'block'; }
+    function hideMsg() { msgEl.style.display = 'none'; }
+
+    setInterval(() => {
+        fpsEl.textContent = game.stats.fps;
+        entEl.textContent = game.ecs.count;
+    }, 250);
+
+    // --- Rotsak'orana (Toetrandro weather) ---
+    const btnRain = document.getElementById('btnRain');
+    btnRain.addEventListener('click', () => {
+        const scene = game.scenes.active;
+        scene.rainOn = !scene.rainOn;
+        game.weather.setMode(scene.rainOn ? 'rain' : 'none');
+        btnRain.classList.toggle('on', scene.rainOn);
+    });
+
+    // --- Ato / manohy (pause) ---
+    const btnPause = document.getElementById('btnPause');
+    let paused = false;
+    btnPause.addEventListener('click', () => {
+        paused = !paused;
+        if (paused) { game.pause(); btnPause.textContent = '▶️ Manohy'; btnPause.classList.add('on'); }
+        else { game.resume(); btnPause.textContent = '⏸️ Ato'; btnPause.classList.remove('on'); }
+    });
+
+    // Manomboka ny feo rehefa mikitika voalohany ny mpampiasa (fitakiana an'ny web audio)
+    window.addEventListener('pointerdown', () => R.Feo.resume(), { once: true });
+    window.addEventListener('keydown', () => R.Feo.resume(), { once: true });
+})();
+</script>
 </body>
 </html>
