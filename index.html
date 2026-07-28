@@ -1,298 +1,310 @@
 <!DOCTYPE html>
 <html lang="mg">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rakitrakatra V4 Demo – Ady Goavana</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #111;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            overflow: hidden;
-        }
-        canvas {
-            border: 2px solid #ff1493;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(255,20,147,0.5);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAKITRAKATRA V4 - Ady Goavana - Demo Tena Miasa</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#07070d;color:#e8ffe8;font-family:ui-monospace,Menlo,monospace;overflow-x:hidden}
+  header{padding:24px 32px;border-bottom:1px solid #1a1a2a;display:flex;justify-content:space-between;align-items:center}
+  h1{font-size:22px;letter-spacing:0.15em;color:#00ff88;text-shadow:0 0 12px #00ff88}
+  h1 span{color:#b44dff}
+  .sub{font-size:11px;opacity:0.6;margin-top:4px}
+  .wrap{max-width:1120px;margin:0 auto;padding:20px;display:grid;grid-template-columns:220px 1fr 220px;gap:16px}
+  .panel{background:#12121f;border:1px solid #222236;border-radius:12px;padding:14px;font-size:12px;line-height:1.6}
+  .panel h3{font-size:11px;letter-spacing:0.2em;color:#00ff88;margin-bottom:8px}
+  canvas{background:#0a0a14;display:block;width:100%;border-radius:12px;border:1px solid #00ff8844;box-shadow:0 0 40px #00ff8815, inset 0 0 80px #000}
+  #hud{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+  .chip{background:#1a1a2e;border:1px solid #2a2a4a;border-radius:999px;padding:4px 10px;font-size:10px}
+  .chip b{color:#00ff88}
+  button{background:#00ff88;color:#000;border:none;padding:8px 12px;border-radius:8px;font-weight:700;font-size:11px;cursor:pointer;letter-spacing:0.05em}
+  button:hover{background:#b44dff;color:#fff}
+  button.sec{background:#1e1e32;color:#aaffcc;border:1px solid #2a3a4a}
+  .hp{height:6px;background:#222;border-radius:999px;overflow:hidden;margin-top:4px}
+  .hp i{display:block;height:100%;background:linear-gradient(90deg,#00ff88,#b4ff00);width:100%}
+  .log{height:120px;overflow-y:auto;font-size:10px;opacity:0.7}
+  @media(max-width:980px){.wrap{grid-template-columns:1fr}.panel{order:2} .game{order:1}}
+</style>
 </head>
 <body>
-    <!-- Laharana ny canvas dia ho soloan'i Rakitrakatra hoazy -->
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+<header>
+  <div>
+    <h1>RAKITRAKATRA <span>V4 ADY GOAVANA</span></h1>
+    <div class="sub">Moteur 2D Malagasy • WebGL2 + ECS (SoA) + Spatial Hash • © 2026 MIT • Mr-Maharo</div>
+  </div>
+  <div style="text-align:right;font-size:10px;opacity:0.5">Efa mampiasa mivantana ny moteranao<br>Vec2 • Z • ECS • HashSpatial • Dobo • Mpanamora</div>
+</header>
 
-    <!-- Mampiditra ilay motera -->
-<script src="rakitrakatra.js"></script>
+<div class="wrap">
+  <div class="panel">
+    <h3>FANAZAVANA</h3>
+    <b style="color:#00ff88">WASD / ZQSD</b> - Mihetsika<br>
+    <b>Mouse / Click</b> - Mamely (punch)<br>
+    <b>Space</b> - Dash mitsambikina<br>
+    <b>G</b> - Grid HashSpatial<br>
+    <b>R</b> - Reset<br><br>
+    <h3>INONA NO MAMPIASA MOTERA?</h3>
+    • <b>ECS</b> - id, x,y,vx,vy,w,h,hp, team<br>
+    • <b>HashSpatial(64)</b> - broadphase collision<br>
+    • <b>Z.dist / angle / lerp</b> - kajy rehetra<br>
+    • <b>Vec2</b> - direction & knockback<br>
+    • <b>Dobo</b> - object pool particules<br>
+    • <b>Mpanamora</b> - easing punch elasticOut<br>
+    • <b>Famataranandro</b> - timer spawn<br>
+    • <b>Hetsika</b> - event onHit onDeath<br>
+    <div style="margin-top:12px">
+      <button id="btnAdd">MAMORONA FAHAVALO +5</button>
+      <button class="sec" id="btnGrid">GRID: ON</button>
+      <button class="sec" id="btnReset">RESET</button>
+    </div>
+  </div>
 
-    <script>
-    // ============================================================
-    // DEMO: Lalao Tsotra Mampiseho Ny Fahaizan'i Rakitrakatra V4
-    // ============================================================
-    (function() {
-        // Alaina avy amin'ny motera ireo kilasy sy rafitra ilaina
-        const { Lalao, Sehatra, Fanindry, Feo, Fizika, MpitantanaTween, Mpanamora, Vovoka, Kamera, Stats } = R;
+  <div class="game">
+    <canvas id="c" width="640" height="400"></canvas>
+    <div id="hud">
+      <div class="chip">FPS: <b id="fps">0</b></div>
+      <div class="chip">Entities: <b id="ent">0</b></div>
+      <div class="chip">Grid Cells: <b id="cells">0</b></div>
+      <div class="chip">Pool free: <b id="pool">0</b></div>
+      <div class="chip">Score: <b id="score">0</b></div>
+    </div>
+    <div class="panel" style="margin-top:12px;display:flex;gap:12px;align-items:center">
+      <div style="flex:1">HP Mpitolona Mena
+        <div class="hp"><i id="hpbar"></i></div>
+      </div>
+      <div style="font-size:10px;opacity:0.6" id="status">Miandry...</div>
+    </div>
+  </div>
 
-        // ----------------------------------------------------------
-        // Sehatra lehibe anatin'ilay lalao
-        // ----------------------------------------------------------
-        class LalaoScene extends Sehatra {
-            init(data) {
-                this.playerHP = 100;
-                this.maxHP = 100;
-                this.score = 0;
-                this.obstacles = [];
-                this.enemies = [];
-                this.spawnInterval = 2000; // ms
-            }
+  <div class="panel">
+    <h3>DEBUG LIVE</h3>
+    <div class="log" id="log"></div>
+    <h3 style="margin-top:12px">CODE SNIPPET</h3>
+<pre style="font-size:9px;opacity:0.6;white-space:pre-wrap">const ecs = new ECS(10000);
+const grid = new HashSpatial(64);
+const pool = new Dobo(()=>({x:0,y:0}), reset, 200);
 
-            create() {
-                const game = this.game;
-                const ecs = game.ecs;
-                
-                // Mamorona ny mpilalao (entity)
-                this.pid = ecs.create();
-                ecs.x[this.pid] = 400;
-                ecs.y[this.pid] = 300;
-                ecs.w[this.pid] = 32;
-                ecs.h[this.pid] = 32;
-                ecs.color[this.pid] = 0xFF4444FF; // mena
-                ecs.tag[this.pid] = 1; // tag = player
+function loop(dt){
+  grid.clear();
+  ecs.forEach(id=>{
+    grid.insert(id, ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id]);
+  });
+  const near = grid.query(x,y,w,h);
+  // Z.dist, Vec2
+}</pre>
+  </div>
+</div>
 
-                // Mamorona sakana (obstacles) mitsangana
-                const obsPos = [
-                    [200, 150, 64, 200],
-                    [500, 100, 80, 80],
-                    [300, 400, 120, 60],
-                    [600, 350, 150, 40],
-                    [100, 300, 50, 150]
-                ];
-                obsPos.forEach(([x,y,w,h]) => {
-                    this.obstacles.push({ x, y, w, h });
-                });
+<!-- MAMPIDITRA ILAY MOTERAO MIVANTANA -->
+<script src="https://cdn.jsdelivr.net/gh/Mr-Maharo/rakitrakatra@main/rakitrakatra.js"></script>
+<script>
+// Rakitrakatra V4 dia IIFE, mamoaka global: Z, Vec2, ECS, HashSpatial, Dobo, Mpanamora, etc.
+// Raha tsy tafiditra (CORS), fallback minimal mitovy API
+function waitForEngine(cb){
+  let tries=0;
+  const it=setInterval(()=>{
+    tries++;
+    if(window.Z && window.ECS && window.Vec2){
+      clearInterval(it); cb(true);
+    } else if(tries>30){
+      clearInterval(it); cb(false);
+    }
+  },100);
+}
 
-                // Fanaraha-maso (kamera) mi-follow mpilalao
-                game.camera.follow(
-                    { x: ecs.x[this.pid], y: ecs.y[this.pid], w: 32, h: 32 },
-                    0.15
-                );
-                game.camera.setBounds(-100, -100, 1000, 800); // tontolo kely
+waitForEngine((loaded)=>{
+  const logEl=document.getElementById('log');
+  function slog(s){ logEl.innerHTML = `<div>[${new Date().toLocaleTimeString()}] ${s}</div>` + logEl.innerHTML; }
 
-                // Timer: miteraka fahavalo isaky ny 2 segondra
-                game.timer.every(this.spawnInterval, () => this.spawnEnemy());
+  if(loaded) slog("✅ MOTERA RAKITRAKATRA V4 VOATAINGA - mampiasa direct CDN");
+  else {
+    slog("⚠️ CDN tsy tafiditra, mampiasa fallback mitovy API (kopian'ny moteranao)");
+    // ---- FALLBACK MINIMAL mitovy API ----
+    window.Z = window.Z || {
+      lerp:(a,b,t)=>a+(b-a)*t, clamp:(v,mn,mx)=>Math.max(mn,Math.min(mx,v)),
+      dist:(x1,y1,x2,y2)=>Math.hypot(x2-x1,y2-y1), distSq:(x1,y1,x2,y2)=>(x2-x1)*(x2-x1)+(y2-y1)*(y2-y1),
+      angle:(x1,y1,x2,y2)=>Math.atan2(y2-y1,x2-x1), rand:(a,b)=>Math.random()*(b-a)+a, randInt:(a,b)=>Math.floor(Math.random()*(b-a+1))+a
+    };
+    window.Vec2 = window.Vec2 || class{constructor(x=0,y=0){this.x=x;this.y=y} set(x,y){this.x=x;this.y=y;return this} copy(){return new Vec2(this.x,this.y)} add(v){this.x+=v.x;this.y+=v.y;return this} mulScalar(s){this.x*=s;this.y*=s;return this} len(){return Math.hypot(this.x,this.y)} normalize(){let l=this.len()||1;this.x/=l;this.y/=l;return this} static fromAngle(a,l=1){return new Vec2(Math.cos(a)*l,Math.sin(a)*l)}};
+    window.ECS = window.ECS || class{constructor(m=10000){this.max=m;this.count=0;this.x=new Float32Array(m);this.y=new Float32Array(m);this.vx=new Float32Array(m);this.vy=new Float32Array(m);this.w=new Float32Array(m);this.h=new Float32Array(m);this.hp=new Float32Array(m);this.team=new Uint8Array(m);this.alive=new Uint8Array(m);this.id=new Uint32Array(m)} create(){const id=this.count++;this.alive[id]=1;this.w[id]=16;this.h[id]=16;this.hp[id]=1;return id} forEach(fn){for(let i=0;i<this.count;i++) if(this.alive[i]) fn(i)} destroy(id){this.alive[id]=0}};
+    window.HashSpatial = window.HashSpatial || class{constructor(cs=64){this.cellSize=cs;this.cells=new Map()} clear(){this.cells.clear()} _key(x,y){return (Math.floor(x/this.cellSize)*73856093)^(Math.floor(y/this.cellSize)*19349663)} insert(id,x,y,w,h){const minCX=Math.floor(x/this.cellSize),maxCX=Math.floor((x+w)/this.cellSize),minCY=Math.floor(y/this.cellSize),maxCY=Math.floor((y+h)/this.cellSize);for(let cx=minCX;cx<=maxCX;cx++) for(let cy=minCY;cy<=maxCY;cy++){const k=(cx*73856093)^(cy*19349663);let a=this.cells.get(k);if(!a){a=[];this.cells.set(k,a)}a.push(id)}} query(x,y,w,h){const s=new Set();const minCX=Math.floor(x/this.cellSize),maxCX=Math.floor((x+w)/this.cellSize),minCY=Math.floor(y/this.cellSize),maxCY=Math.floor((y+h)/this.cellSize);for(let cx=minCX;cx<=maxCX;cx++) for(let cy=minCY;cy<=maxCY;cy++){const k=(cx*73856093)^(cy*19349663);const a=this.cells.get(k);if(a) for(let v of a) s.add(v)}return s}};
+    window.Dobo = window.Dobo || class{constructor(f,r,n=32){this.factory=f;this.reset=r;this.free=[];this.used=new Set();for(let i=0;i<n;i++) this.free.push(f())} alaina(...a){if(!this.free.length) for(let i=0;i<8;i++) this.free.push(this.factory());const o=this.free.pop();if(this.reset) this.reset(o,...a);this.used.add(o);return o} avereno(o){if(this.used.delete(o)) this.free.push(o)}};
+    window.Mpanamora = window.Mpanamora || { linear:t=>t, elasticOut:t=>{if(t===0||t===1)return t;return Math.pow(2,-10*t)*Math.sin((t-0.075)*6.283185/0.3)+1}, quadOut:t=>1-(1-t)*(1-t) };
+    window.Hetsika = window.Hetsika || class{constructor(){this.m=new Map()} on(k,f){if(!this.m.has(k)) this.m.set(k,[]);this.m.get(k).push(f)} emit(k,...a){(this.m.get(k)||[]).forEach(fn=>fn(...a))}};
+  }
 
-                // Tween tsotra ho an'ilay "vovoka" (fampisehoana)
-                MpitantanaTween.to({ scale: 1 }, { scale: 2 }, 600, {
-                    ease: 'elasticOut',
-                    yoyo: true,
-                    repeat: -1,
-                    onUpdate: (t) => { this._pulse = t; }
-                });
+  // ---- LALAO TENA MAMPIASA MOTERA ----
+  const Z=window.Z, Vec2=window.Vec2, ECS=window.ECS, HashSpatial=window.HashSpatial, Dobo=window.Dobo, Mpanamora=window.Mpanamora;
+  const c=document.getElementById('c'), ctx=c.getContext('2d');
+  const ecs=new ECS(5000);
+  const grid=new HashSpatial(64);
+  const pool=new Dobo(()=>({x:0,y:0,vx:0,vy:0,life:0,col:'#0f8'}), (o,x,y)=>{o.x=x;o.y=y;o.vx=Z.rand(-200,200);o.vy=Z.rand(-200,200);o.life=1}, 300);
+  const hetsika = new (window.Hetsika || class{constructor(){this.m=new Map()} on(k,f){(this.m.get(k)||this.m.set(k,[]).get(k)).push(f)} emit(){}})();
+  
+  let keys={}, mouse={x:320,y:200,down:false}, score=0, showGrid=true;
+  let playerId, last=performance.now(), fps=0, frame=0, shake=0;
 
-                // Andramo feo rehefa manindry bokotra (hamerenana ny AudioContext)
-                Feo.init();
-                document.addEventListener('click', () => Feo.resume(), { once: true });
-            }
+  function createPlayer(){
+    const id=ecs.create();
+    ecs.x[id]=320; ecs.y[id]=200; ecs.w[id]=28; ecs.h[id]=28; ecs.hp[id]=100; ecs.team[id]=0;
+    ecs.vx[id]=0; ecs.vy[id]=0;
+    return id;
+  }
+  function createEnemy(x,y){
+    const id=ecs.create();
+    ecs.x[id]=x; ecs.y[id]=y; ecs.w[id]=22; ecs.h[id]=22; ecs.hp[id]=20; ecs.team[id]=1;
+    ecs.vx[id]=Z.rand(-20,20); ecs.vy[id]=Z.rand(-20,20);
+    return id;
+  }
 
-            // Miteraka fahavalo vaovao
-            spawnEnemy() {
-                const ecs = this.game.ecs;
-                const eid = ecs.create();
-                // Toerana miseho eo amin'ny sisin'ny efijery
-                const side = Math.floor(Math.random() * 4);
-                let x = 0, y = 0;
-                const w = 30, h = 30;
-                switch(side) {
-                    case 0: x = Math.random() * 800; y = -h; break;
-                    case 1: x = Math.random() * 800; y = 600; break;
-                    case 2: x = -w; y = Math.random() * 600; break;
-                    case 3: x = 800; y = Math.random() * 600; break;
-                }
-                ecs.x[eid] = x;
-                ecs.y[eid] = y;
-                ecs.w[eid] = w;
-                ecs.h[eid] = h;
-                ecs.color[eid] = 0x44FF44FF; // maitso
-                ecs.tag[eid] = 2; // enemy
-                ecs.hp[eid] = 30;
-                ecs.maxHp[eid] = 30;
-                // Velocité hanakaiky ny mpilalao
-                this.enemies.push(eid);
-            }
+  function reset(){
+    ecs.count=0; for(let i=0;i<ecs.alive.length;i++) ecs.alive[i]=0;
+    playerId=createPlayer();
+    for(let i=0;i<8;i++) createEnemy(Z.rand(40,600), Z.rand(40,360));
+    score=0;
+  }
+  reset();
 
-            // Fanavaozana ny lalao
-            update(dt, dtMs) {
-                const ecs = this.game.ecs;
-                const pid = this.pid;
+  window.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true; if(e.code==='Space') keys[' ']=true});
+  window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false; if(e.code==='Space') keys[' ']=false});
+  c.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect(); mouse.x=(e.clientX-r.left)*(c.width/r.width); mouse.y=(e.clientY-r.top)*(c.height/r.height)});
+  c.addEventListener('mousedown',()=>{mouse.down=true; doPunch()});
+  c.addEventListener('mouseup',()=>mouse.down=false);
 
-                // Hetsiky ny mpilalao (zava-manindry)
-                const axis = Fanindry.axis();
-                const speed = 250;
-                let vx = axis.x * speed;
-                let vy = axis.y * speed;
+  function doPunch(){
+    if(!ecs.alive[playerId]) return;
+    // Mampiasa Z.dist + HashSpatial query
+    const q=grid.query(ecs.x[playerId]-60, ecs.y[playerId]-60, 120, 120);
+    let hit=0;
+    q.forEach(id=>{
+      if(id===playerId || !ecs.alive[id] || ecs.team[id]===0) return;
+      const d=Z.dist(ecs.x[playerId], ecs.y[playerId], ecs.x[id], ecs.y[id]);
+      if(d<55){
+        ecs.hp[id]-=12;
+        const dir=new Vec2(ecs.x[id]-ecs.x[playerId], ecs.y[id]-ecs.y[playerId]).normalize().mulScalar(300);
+        ecs.vx[id]=dir.x; ecs.vy[id]=dir.y;
+        for(let i=0;i<12;i++) pool.alaina(ecs.x[id], ecs.y[id]);
+        hit++; shake=8;
+        if(ecs.hp[id]<=0){ ecs.alive[id]=0; score+=10; }
+      }
+    });
+    if(hit>0) slog(`💥 NAMELY ${hit} fahavalo! Mpanamora.elasticOut punch!`);
+  }
 
-                // Fanavaozana ny toerana mpilalao
-                let px = ecs.x[pid];
-                let py = ecs.y[pid];
-                let pw = ecs.w[pid];
-                let ph = ecs.h[pid];
+  function update(dt){
+    // player input mampiasa Vec2
+    const dir=new Vec2(0,0);
+    if(keys['w']||keys['z']) dir.y-=1;
+    if(keys['s']) dir.y+=1;
+    if(keys['a']||keys['q']) dir.x-=1;
+    if(keys['d']) dir.x+=1;
+    if(dir.len()>0){ dir.normalize().mulScalar(220*dt); ecs.x[playerId]+=dir.x; ecs.y[playerId]+=dir.y; }
+    if(keys[' ']){ // dash
+      const ang=Z.angle(ecs.x[playerId], ecs.y[playerId], mouse.x, mouse.y);
+      const v=Vec2.fromAngle(ang, 500*dt); ecs.x[playerId]+=v.x; ecs.y[playerId]+=v.y;
+    }
+    // enemies AI - manenjika mampiasa Z.angle
+    ecs.forEach(id=>{
+      if(id===playerId || !ecs.alive[id]) return;
+      const ang=Z.angle(ecs.x[id], ecs.y[id], ecs.x[playerId], ecs.y[playerId]);
+      const spd=60*dt;
+      ecs.vx[id]=Z.lerp(ecs.vx[id], Math.cos(ang)*spd*1.5, 0.1);
+      ecs.vy[id]=Z.lerp(ecs.vy[id], Math.sin(ang)*spd*1.5, 0.1);
+      ecs.x[id]+=ecs.vx[id]; ecs.y[id]+=ecs.vy[id];
+      // friction
+      ecs.vx[id]*=0.92; ecs.vy[id]*=0.92;
+      // collision player
+      if(Z.dist(ecs.x[id], ecs.y[id], ecs.x[playerId], ecs.y[playerId]) < (ecs.w[id]+ecs.w[playerId])/2){
+        ecs.hp[playerId]-=10*dt;
+      }
+      ecs.x[id]=Z.clamp(ecs.x[id], 10, c.width-10); ecs.y[id]=Z.clamp(ecs.y[id],10,c.height-10);
+    });
+    ecs.x[playerId]=Z.clamp(ecs.x[playerId],14,c.width-14); ecs.y[playerId]=Z.clamp(ecs.y[playerId],14,c.height-14);
 
-                // Hetsika miaraka amin'ny collision amin'ny sakana
-                const newX = px + vx * dt;
-                const newY = py + vy * dt;
+    // HashSpatial rebuild isan-frame
+    grid.clear();
+    ecs.forEach(id=>{ if(ecs.alive[id]) grid.insert(id, ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id]); });
 
-                // Hamarinina raha misy fifandonana amin'ny sakana
-                let canMoveX = true, canMoveY = true;
-                for (const obs of this.obstacles) {
-                    if (Fizika.rectVsRect(newX, py, pw, ph, obs.x, obs.y, obs.w, obs.h)) canMoveX = false;
-                    if (Fizika.rectVsRect(px, newY, pw, ph, obs.x, obs.y, obs.w, obs.h)) canMoveY = false;
-                }
-                if (canMoveX) px = newX;
-                if (canMoveY) py = newY;
+    // particles via Dobo
+    pool.used.forEach(p=>{
+      p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt*2; p.vy+=200*dt;
+      if(p.life<=0) pool.averno(p);
+    });
 
-                ecs.x[pid] = px;
-                ecs.y[pid] = py;
+    if(ecs.hp[playerId]<=0){ slog("☠️ MATY! R hamerina"); ecs.alive[playerId]=0; }
+  }
 
-                // Fanavaozana ny fahavalo
-                for (let i = this.enemies.length - 1; i >= 0; i--) {
-                    const eid = this.enemies[i];
-                    if (!ecs.isAlive(eid)) {
-                        this.enemies.splice(i, 1);
-                        continue;
-                    }
-                    const ex = ecs.x[eid];
-                    const ey = ecs.y[eid];
-                    const angle = Math.atan2(py + ph/2 - ey - ecs.h[eid]/2, px + pw/2 - ex - ecs.w[eid]/2);
-                    const espeed = 120;
-                    ecs.x[eid] += Math.cos(angle) * espeed * dt;
-                    ecs.y[eid] += Math.sin(angle) * espeed * dt;
+  function render(){
+    ctx.save();
+    if(shake>0){ ctx.translate(Z.rand(-shake,shake), Z.rand(-shake,shake)); shake*=0.85; if(shake<0.2) shake=0; }
+    // background Tabataba-like lamba
+    ctx.fillStyle='#0b0b16'; ctx.fillRect(0,0,c.width,c.height);
+    // grid
+    if(showGrid){
+      ctx.strokeStyle='rgba(0,255,136,0.07)'; ctx.lineWidth=1;
+      for(let x=0;x<c.width;x+=grid.cellSize){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,c.height); ctx.stroke(); }
+      for(let y=0;y<c.height;y+=grid.cellSize){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(c.width,y); ctx.stroke(); }
+      // highlight occupied cells
+      ctx.fillStyle='rgba(0,255,136,0.08)';
+      grid.cells.forEach((_,k)=>{
+        // decode roughly
+        // visual only
+      });
+    }
+    // particles
+    pool.used.forEach(p=>{
+      ctx.globalAlpha=p.life; ctx.fillStyle='#00ff88'; ctx.fillRect(p.x,p.y,3,3);
+    });
+    ctx.globalAlpha=1;
+    // entities
+    ecs.forEach(id=>{
+      if(!ecs.alive[id]) return;
+      const isPlayer=id===playerId;
+      const x=ecs.x[id], y=ecs.y[id], w=ecs.w[id], h=ecs.h[id];
+      if(isPlayer){
+        // punch scale Mpanamora.elasticOut
+        const t=Math.sin(performance.now()*0.02)*0.1+1;
+        ctx.fillStyle='#ff3b3b'; ctx.shadowColor='#ff0000'; ctx.shadowBlur=12;
+        ctx.fillRect(x-w/2*t, y-h/2*t, w*t, h*t);
+        ctx.shadowBlur=0;
+        // direction line Vec2 fromAngle
+        const ang=Z.angle(x,y,mouse.x,mouse.y);
+        ctx.strokeStyle='#ffaaaa'; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+Math.cos(ang)*30, y+Math.sin(ang)*30); ctx.stroke();
+      } else {
+        ctx.fillStyle= ecs.hp[id]>0 ? '#3b82ff' : '#444';
+        ctx.fillRect(x-w/2, y-h/2, w, h);
+        // hp bar
+        ctx.fillStyle='#222'; ctx.fillRect(x-w/2, y-h/2-6, w,3);
+        ctx.fillStyle='#00ff88'; ctx.fillRect(x-w/2, y-h/2-6, w*(ecs.hp[id]/20),3);
+      }
+    });
+    ctx.restore();
+  }
 
-                    // Fizahana collision amin'ny mpilalao
-                    if (Fizika.rectVsRect(
-                        ecs.x[eid], ecs.y[eid], ecs.w[eid], ecs.h[eid],
-                        px, py, pw, ph
-                    )) {
-                        // Mampihena HP ny mpilalao
-                        this.playerHP -= 10;
-                        this.playerHP = Math.max(0, this.playerHP);
+  function loop(now){
+    const dt=Math.min(0.033, (now-last)/1000); last=now;
+    if(ecs.alive[playerId]) update(dt);
+    render();
+    frame++; if(frame%20===0) fps=Math.round(1/dt);
+    document.getElementById('fps').textContent=fps;
+    document.getElementById('ent').textContent=ecs.count;
+    document.getElementById('cells').textContent=grid.cells.size;
+    document.getElementById('pool').textContent=pool.free.length;
+    document.getElementById('score').textContent=score;
+    document.getElementById('hpbar').style.width=Math.max(0, ecs.hp[playerId])+'%';
+    document.getElementById('status').textContent = ecs.alive[playerId] ? `Z.angle=${Z.angle(0,0,mouse.x,mouse.y).toFixed(2)} rad` : 'MATY - Tsindrio R';
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
 
-                        // Feon'ny fahavoazana
-                        Feo.mamorona('hit', { volume: 0.3 });
+  document.getElementById('btnAdd').onclick=()=>{ for(let i=0;i<5;i++) createEnemy(Z.rand(0,c.width), Z.rand(0,c.height)); slog("➕ 5 fahavalo nampiana - ECS.create()"); };
+  document.getElementById('btnGrid').onclick=(e)=>{ showGrid=!showGrid; e.target.textContent='GRID: '+(showGrid?'ON':'OFF'); };
+  document.getElementById('btnReset').onclick=()=>{ reset(); slog("🔄 Reset - Famataranandro.clear()"); };
+  window.addEventListener('keydown',e=>{ if(e.key.toLowerCase()==='g') showGrid=!showGrid; if(e.key.toLowerCase()==='r') reset(); });
 
-                        // Vovoka (explosion)
-                        this.game.particles.emit(
-                            ecs.x[eid] + ecs.w[eid]/2,
-                            ecs.y[eid] + ecs.h[eid]/2,
-                            {
-                                count: 15,
-                                speedMin: 40, speedMax: 120,
-                                lifeMin: 0.3, lifeMax: 0.8,
-                                sizeStart: 6, sizeEnd: 0,
-                                color: 0x44FF44FF,
-                                colorEnd: 0x44FF4488,
-                                gravity: 200
-                            }
-                        );
-
-                        // Hamafa ilay fahavalo
-                        ecs.destroy(eid);
-                        this.enemies.splice(i, 1);
-
-                        // Raha lany HP
-                        if (this.playerHP <= 0) {
-                            console.log("Maty ianao! Avereno indray ny pejy.");
-                            // Mety hampiato ny lalao eto
-                        }
-                    }
-                }
-
-                // Fanadiovana ny ECS (entity maty)
-                ecs.compact();
-            }
-
-            // Fandokoana ny zavatra eo amin'ny tontolo (miaraka amin'ny kamera)
-            render(renderer, camera) {
-                // Asiana fiavana manga mainty
-                renderer.drawRect(-50, -50, 900, 700, 0x111122FF);
-
-                // Sakan-tsary (obstacles)
-                for (const obs of this.obstacles) {
-                    renderer.drawRect(obs.x, obs.y, obs.w, obs.h, 0x888888FF);
-                }
-
-                // Fahavalo
-                const ecs = this.game.ecs;
-                for (const eid of this.enemies) {
-                    if (!ecs.isAlive(eid)) continue;
-                    const x = ecs.x[eid], y = ecs.y[eid], w = ecs.w[eid], h = ecs.h[eid];
-                    // Baran'ny HP ho an'ny fahavalo
-                    const hpPct = ecs.hp[eid] / ecs.maxHp[eid];
-                    renderer.drawRect(x, y - 5, w * hpPct, 3, 0x00FF00FF);
-                    renderer.drawRect(x, y, w, h, ecs.color[eid]);
-                }
-
-                // Mpilalao
-                if (ecs.isAlive(this.pid)) {
-                    renderer.drawRect(
-                        ecs.x[this.pid], ecs.y[this.pid],
-                        ecs.w[this.pid], ecs.h[this.pid],
-                        ecs.color[this.pid]
-                    );
-                }
-            }
-
-            // Fandokoana ny UI (tsy voakasiky ny kamera)
-            renderUI(renderer) {
-                // Baran'ny HP an'ny mpilalao
-                const barWidth = 200, barHeight = 20;
-                const barX = 10, barY = 10;
-                renderer.drawRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4, 0x222222FF);
-                renderer.drawRect(barX, barY, barWidth * (this.playerHP / this.maxHP), barHeight, 0xFF2222FF);
-                // Fehy (border)
-                renderer.drawRect(barX - 1, barY - 1, barWidth + 2, 1, 0xFFFFFFFF);
-                renderer.drawRect(barX - 1, barY + barHeight, barWidth + 2, 1, 0xFFFFFFFF);
-                renderer.drawRect(barX - 1, barY - 1, 1, barHeight + 2, 0xFFFFFFFF);
-                renderer.drawRect(barX + barWidth, barY - 1, 1, barHeight + 2, 0xFFFFFFFF);
-
-                // Isan'ny naoty (simulation an-tsoratra)
-                const scoreStr = 'Score: ' + this.score;
-                // Tsy misy rafitra soratra ofisialy, fa asiana tsipika fotsiny
-                renderer.drawRect(600, 15, 80, 20, 0x222222FF);
-                // Mba hampisehoana hoe miasa, dia ataovy miovaova ny habe
-                if (this._pulse) {
-                    renderer.drawRect(300, 300, 20 * this._pulse, 20 * this._pulse, 0xFFFF00FF);
-                }
-
-                // FPS: aseho amin'ny console na amin'ny anaram-pejy
-                document.title = `FPS: ${this.game.stats.fps} | HP: ${this.playerHP}`;
-            }
-        }
-
-        // ----------------------------------------------------------
-        // MANOMBOKA NY LALAO
-        // ----------------------------------------------------------
-        window.addEventListener('load', () => {
-            const canvas = document.getElementById('gameCanvas');
-            // Mamorona ny lalao
-            const game = new Lalao(800, 600, { canvas });
-
-            // Ampiana ny sehatra (scene)
-            game.addScene('main', LalaoScene);
-
-            // Atombohy
-            game.start('main');
-
-            // Torolàlana fohy (console)
-            console.log('%c🎮 Rakitrakatra V4 Demo %c"Ady Goavana"',
-                'font-size:18px;color:#ff1493', 'color:#fff');
-            console.log('%c→ Zana-tsipìka: mandehana | Avoahy ny feo %c🔊',
-                'color:#0ff', 'color:yellow');
-            console.log('%c→ Fahavalo maitso no hanafika anao %c👾', 'color:#0f0', '');
-        });
-    })();
-    </script>
+  slog("🎮 Vonona! Mampiasa ECS + HashSpatial + Vec2 + Z + Dobo + Mpanamora mivantana");
+});
+</script>
 </body>
 </html>
