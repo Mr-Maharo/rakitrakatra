@@ -3,1012 +3,296 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rakitrakatra V2 – Plugins 40+ (Démos complètes)</title>
-    <script src="rakitrakatra.js"></script>
+    <title>Rakitrakatra V4 Demo – Ady Goavana</title>
     <style>
-        :root {
-            --bg: #0a0a1a;
-            --card: #1a1a2e;
-            --pink: #ff1493;
-            --cyan: #00ffff;
-            --gold: #ffd700;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
         }
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { background:var(--bg); color:#fff; font-family:'Courier New',monospace; }
-        .container { max-width:1300px; margin:0 auto; padding:20px; }
-        .header { text-align:center; padding:40px 10px; border-bottom:2px solid var(--pink); }
-        .header h1 { font-size:2.5em; background:linear-gradient(45deg,var(--pink),var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-        .nav { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; padding:15px; position:sticky; top:0; background:var(--bg); z-index:10; border-bottom:1px solid var(--pink); }
-        .nav a { color:var(--cyan); text-decoration:none; padding:5px 10px; border:1px solid var(--cyan); border-radius:20px; font-size:0.8em; }
-        .nav a:hover { background:var(--cyan); color:#000; }
-        .plugin-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px; margin:30px 0; }
-        .plugin-card { background:var(--card); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:12px; cursor:pointer; }
-        .plugin-card:hover { border-color:var(--pink); }
-        .plugin-card h4 { color:var(--cyan); font-size:0.9em; }
-        .plugin-card p { font-size:0.7em; color:#aaa; }
-        .demo-section { border:1px solid var(--pink); border-radius:15px; padding:20px; margin:30px 0; background:var(--card); }
-        .demo-section h2 { color:var(--cyan); }
-        canvas { display:block; margin:15px auto; border:2px solid var(--pink); border-radius:10px; background:#000; }
-        .controls { text-align:center; margin:10px 0; }
-        .btn { background:var(--pink); color:#fff; border:none; padding:6px 14px; margin:4px; border-radius:6px; cursor:pointer; font-family:monospace; font-size:0.85em; }
-        .btn:hover { background:#ff69b4; }
-        .code-block { background:#111; padding:10px; border-radius:8px; overflow-x:auto; color:#0f0; font-size:0.75em; margin-top:8px; }
-        .code-block pre { white-space:pre-wrap; word-break:break-all; }
-        .footer { text-align:center; padding:30px; border-top:1px solid var(--pink); margin-top:40px; color:#666; }
+        canvas {
+            border: 2px solid #ff1493;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(255,20,147,0.5);
+        }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <h1>🎮 Rakitrakatra V2</h1>
-        <p style="color:var(--cyan);">"Motera Goavana" – Framework 2D Malagasy</p>
-        <p style="color:#aaa;">© 2026 MIT – 40+ Plugins (démos complètes)</p>
-    </div>
+    <!-- Laharana ny canvas dia ho soloan'i Rakitrakatra hoazy -->
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
 
-    <!-- Navigation rapide -->
-    <div class="nav" id="top">
-        <a href="#grid">📦 Grille des Plugins</a>
-        <!-- génération dynamique des liens via JS, mais on les met en dur pour simplicité -->
-        <!-- On va juste mettre des liens vers quelques démos -->
-        <a href="#demo1">1</a><a href="#demo2">2</a><a href="#demo3">3</a><a href="#demo4">4</a><a href="#demo5">5</a>
-        <a href="#demo6">6</a><a href="#demo7">7</a><a href="#demo8">8</a><a href="#demo9">9</a><a href="#demo10">10</a>
-        <a href="#demo11">11</a>...<a href="#demo40">40</a>
-    </div>
+    <!-- Mampiditra ilay motera -->
+    <script src="https://raw.githubusercontent.com/Mr-Maharo/rakitrakatra/main/rakitrakatra.js"></script>
 
-    <!-- Grille des 40 plugins (liens vers les démos) -->
-    <div class="plugin-grid" id="grid">
-        <!-- Généré en JS ? Faisons-le en dur, c'est plus simple -->
-        <div class="plugin-card" onclick="document.getElementById('demo1').scrollIntoView()"><h4>1. Moteur Fototra</h4><p>Scène, draw, update</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo2').scrollIntoView()"><h4>2. Fizika Arcade</h4><p>Corps physiques</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo3').scrollIntoView()"><h4>3. Vovoka</h4><p>Particules</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo4').scrollIntoView()"><h4>4. Feo</h4><p>Audio synth</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo5').scrollIntoView()"><h4>5. Fanindry</h4><p>Input</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo6').scrollIntoView()"><h4>6. Tahantara</h4><p>Dialogues</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo7').scrollIntoView()"><h4>7. Lalana</h4><p>A* pathfinding</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo8').scrollIntoView()"><h4>8. Hazavana</h4><p>Éclairage</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo9').scrollIntoView()"><h4>9. Fable</h4><p>Quêtes/XP</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo10').scrollIntoView()"><h4>10. Toetrandro</h4><p>Météo</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo11').scrollIntoView()"><h4>11. Drafitra</h4><p>Tilemap</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo12').scrollIntoView()"><h4>12. Sarimihetsika</h4><p>Animation</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo13').scrollIntoView()"><h4>13. Sary</h4><p>Images</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo14').scrollIntoView()"><h4>14. Kamera</h4><p>Caméra</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo15').scrollIntoView()"><h4>15. Mpanamora</h4><p>Easing</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo16').scrollIntoView()"><h4>16. Tween</h4><p>Animation fluide</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo17').scrollIntoView()"><h4>17. Fizotryfotoana</h4><p>Timeline</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo18').scrollIntoView()"><h4>18. Mpampiditra</h4><p>Loader</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo19').scrollIntoView()"><h4>19. Famataranandro</h4><p>Timer</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo20').scrollIntoView()"><h4>20. PRNG</h4><p>Aléatoire seedé</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo21').scrollIntoView()"><h4>21. Tabataba</h4><p>Bruit 2D</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo22').scrollIntoView()"><h4>22. Doboka</h4><p>ObjectPool</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo23').scrollIntoView()"><h4>23. Hetsika</h4><p>EventEmitter</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo24').scrollIntoView()"><h4>24. Vec2 / Rect</h4><p>Géométrie</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo25').scrollIntoView()"><h4>25. Quadtree</h4><p>Partition spatiale</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo26').scrollIntoView()"><h4>26. Rano</h4><p>Eau</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo27').scrollIntoView()"><h4>27. Spline</h4><p>Courbes</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo28').scrollIntoView()"><h4>28. Polygon</h4><p>Collision SAT</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo29').scrollIntoView()"><h4>29. IK</h4><p>Cinématique inverse</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo30').scrollIntoView()"><h4>30. Tehirizo</h4><p>Sauvegarde</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo31').scrollIntoView()"><h4>31. Teny</h4><p>i18n</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo32').scrollIntoView()"><h4>32. UI</h4><p>Boutons, barres</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo33').scrollIntoView()"><h4>33. Sarintany</h4><p>Minimap</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo34').scrollIntoView()"><h4>34. Zavona</h4><p>Fog of War</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo35').scrollIntoView()"><h4>35. Console Debug</h4><p>Debug</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo36').scrollIntoView()"><h4>36. Plugin Manager</h4><p>Gestion plugins</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo37').scrollIntoView()"><h4>37. Parallax</h4><p>Défilement</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo38').scrollIntoView()"><h4>38. Fizika boribory</h4><p>Cercles</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo39').scrollIntoView()"><h4>39. Raycast</h4><p>Lancer de rayon</p></div>
-        <div class="plugin-card" onclick="document.getElementById('demo40').scrollIntoView()"><h4>40. Efijery feno</h4><p>Fullscreen</p></div>
-    </div>
+    <script>
+    // ============================================================
+    // DEMO: Lalao Tsotra Mampiseho Ny Fahaizan'i Rakitrakatra V4
+    // ============================================================
+    (function() {
+        // Alaina avy amin'ny motera ireo kilasy sy rafitra ilaina
+        const { Lalao, Sehatra, Fanindry, Feo, Fizika, MpitantanaTween, Mpanamora, Vovoka, Kamera, Stats } = R;
 
-    <!-- ========== DEMOS ========== -->
-
-    <!-- 1. Moteur Fototra -->
-    <div class="demo-section" id="demo1">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">1</span> Moteur Fototra</h2>
-        <canvas id="c1" width="400" height="150"></canvas>
-        <div class="controls"><button class="btn" onclick="demo1_start()">▶ Démarrer</button></div>
-        <div class="code-block"><pre>Rakitrakatra2.Lalao(400,150,{canvas:c1}).scene('main',()=>({draw(ctx){ctx.fillText('Salama!',150,80);}})).start('main');</pre></div>
-    </div>
-
-    <!-- 2. Fizika Arcade -->
-    <div class="demo-section" id="demo2">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">2</span> Fizika Arcade</h2>
-        <canvas id="c2" width="400" height="250"></canvas>
-        <div class="controls"><button class="btn" onclick="demo2_start()">▶ Démarrer</button><button class="btn" onclick="demo2_addBall()">+ Balle</button></div>
-        <div class="code-block"><pre>const b = new Rakitrakatra2.Vatana(x,y,20,20,{bounce:0.6}); physics.ampio(b);</pre></div>
-    </div>
-
-    <!-- 3. Vovoka (Particules) -->
-    <div class="demo-section" id="demo3">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">3</span> Vovoka</h2>
-        <canvas id="c3" width="400" height="250"></canvas>
-        <div class="controls"><button class="btn" onclick="demo3_start()">▶ Démarrer</button><button class="btn" onclick="demo3_burst()">💥</button></div>
-        <div class="code-block"><pre>particles.emitter(x,y,{cols:['#f80','#ff0']});</pre></div>
-    </div>
-
-    <!-- 4. Feo -->
-    <div class="demo-section" id="demo4">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">4</span> Feo</h2>
-        <canvas id="c4" width="400" height="100"></canvas>
-        <div class="controls">
-            <button class="btn" onclick="Rakitrakatra2.Feo.mamorona('jump')">Jump</button>
-            <button class="btn" onclick="Rakitrakatra2.Feo.mamorona('coin')">Coin</button>
-            <button class="btn" onclick="Rakitrakatra2.Feo.mamorona('power')">Power</button>
-        </div>
-        <div class="code-block"><pre>Rakitrakatra2.Feo.mamorona('jump');</pre></div>
-    </div>
-
-    <!-- 5. Fanindry -->
-    <div class="demo-section" id="demo5">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">5</span> Fanindry</h2>
-        <canvas id="c5" width="400" height="250"></canvas>
-        <div class="controls"><button class="btn" onclick="demo5_start()">▶ Démarrer</button></div>
-        <div class="code-block"><pre>F.axis() // {x,y} ; F.justPressed(' ')</pre></div>
-    </div>
-
-    <!-- 6. Tahantara -->
-    <div class="demo-section" id="demo6">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">6</span> Tahantara</h2>
-        <canvas id="c6" width="400" height="200"></canvas>
-        <div class="controls"><button class="btn" onclick="demo6_start()">▶ Démarrer</button></div>
-        <div class="code-block"><pre>new Rakitrakatra2.Tahantara().node('start',{txt:'Salama!',choices:[...]}).atombohy('start');</pre></div>
-    </div>
-
-    <!-- 7. Lalana -->
-    <div class="demo-section" id="demo7">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">7</span> Lalana (A*)</h2>
-        <canvas id="c7" width="400" height="300"></canvas>
-        <div class="controls"><button class="btn" onclick="demo7_find()">🔍 Calculer</button></div>
-        <div class="code-block"><pre>Rakitrakatra2.Lalana.tadiavo(grid,0,0,9,6);</pre></div>
-    </div>
-
-    <!-- 8. Hazavana -->
-    <div class="demo-section" id="demo8">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">8</span> Hazavana</h2>
-        <canvas id="c8" width="400" height="250"></canvas>
-        <div class="controls"><button class="btn" onclick="demo8_start()">▶ Démarrer</button></div>
-        <div class="code-block"><pre>haz.ampioJiro(200,150,{halavirana:150});</pre></div>
-    </div>
-
-    <!-- 9. Fable -->
-    <div class="demo-section" id="demo9">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">9</span> Fable</h2>
-        <canvas id="c9" width="400" height="150"></canvas>
-        <div class="controls"><button class="btn" onclick="demo9_start()">▶ Démarrer</button><button class="btn" onclick="demo9_xp()">+XP</button></div>
-        <div class="code-block"><pre>fable.quest('q1','Titre',['obj1']); fable.progress('q1',0,1);</pre></div>
-    </div>
-
-    <!-- 10. Toetrandro -->
-    <div class="demo-section" id="demo10">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">10</span> Toetrandro</h2>
-        <canvas id="c10" width="400" height="200"></canvas>
-        <div class="controls"><button class="btn" onclick="demo10_start()">▶ Pluie</button></div>
-        <div class="code-block"><pre>toetrandro.ovay('orana',1);</pre></div>
-    </div>
-
-    <!-- 11. Drafitra (Tilemap) -->
-    <div class="demo-section" id="demo11">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">11</span> Drafitra</h2>
-        <canvas id="c11" width="400" height="200"></canvas>
-        <div class="controls"><button class="btn" onclick="demo11_start()">▶ Afficher</button></div>
-        <div class="code-block"><pre>new Rakitrakatra2.Drafitra({tileSize:20,w:20,h:10}).ampioSosona('tany',data);</pre></div>
-    </div>
-
-    <!-- 12. Sarimihetsika -->
-    <div class="demo-section" id="demo12">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">12</span> Sarimihetsika</h2>
-        <canvas id="c12" width="200" height="200"></canvas>
-        <div class="controls"><button class="btn" onclick="demo12_start()">▶ Animer</button></div>
-        <div class="code-block"><pre>new Rakitrakatra2.Sarimihetsika(img,32,32).famaritana('marche',[0,1,2],5);</pre></div>
-    </div>
-
-    <!-- 13. Sary -->
-    <div class="demo-section" id="demo13">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">13</span> Sary</h2>
-        <canvas id="c13" width="300" height="200"></canvas>
-        <div class="controls"><button class="btn" onclick="demo13_start()">▶ Afficher</button></div>
-        <div class="code-block"><pre>new Rakitrakatra2.Sary(image).soraty(ctx,10,10);</pre></div>
-    </div>
-
-    <!-- 14. Kamera -->
-    <div class="demo-section" id="demo14">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">14</span> Kamera</h2>
-        <canvas id="c14" width="400" height="200"></canvas>
-        <div class="controls"><button class="btn" onclick="demo14_start()">▶ Suivre</button></div>
-        <div class="code-block"><pre>kamera.manaraka(cible,0.1); kamera.havaozy(dt);</pre></div>
-    </div>
-
-    <!-- 15. Mpanamora -->
-    <div class="demo-section" id="demo15">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">15</span> Mpanamora (Easing)</h2>
-        <canvas id="c15" width="400" height="150"></canvas>
-        <div class="controls"><button class="btn" onclick="demo15_animate()">▶ Animer</button></div>
-        <div class="code-block"><pre>Rakitrakatra2.Mpanamora.bounceOut(t)</pre></div>
-    </div>
-
-    <!-- 16. Tween -->
-    <div class="demo-section" id="demo16">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">16</span> Tween</h2>
-        <canvas id="c16" width="400" height="150"></canvas>
-        <div class="controls"><button class="btn" onclick="demo16_start()">▶ Lancer</button></div>
-        <div class="code-block"><pre>Rakitrakatra2.Tween.to(obj,{x:300},1000,{ease:'bounceOut'})</pre></div>
-    </div>
-
-    <!-- 17. Fizotryfotoana -->
-    <div class="demo-section" id="demo17">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">17</span> Fizotryfotoana</h2>
-        <canvas id="c17" width="400" height="100"></canvas>
-        <div class="controls"><button class="btn" onclick="demo17_start()">▶ Exécuter</button></div>
-        <div class="code-block"><pre>tl.add(500,()=>console.log('action'));</pre></div>
-    </div>
-
-    <!-- 18. Mpampiditra -->
-    <div class="demo-section" id="demo18">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">18</span> Mpampiditra (Loader)</h2>
-        <canvas id="c18" width="400" height="100"></canvas>
-        <div class="controls"><button class="btn" onclick="demo18_load()">▶ Charger</button></div>
-        <div class="code-block"><pre>loader.sary('img','image.png').load().then(...)</pre></div>
-    </div>
-
-    <!-- 19. Famataranandro -->
-    <div class="demo-section" id="demo19">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">19</span> Famataranandro (Timer)</h2>
-        <canvas id="c19" width="400" height="100"></canvas>
-        <div class="controls"><button class="btn" onclick="demo19_start()">▶ Démarrer</button></div>
-        <div class="code-block"><pre>timer.every(1000, ()=> console.log('tick'));</pre></div>
-    </div>
-
-    <!-- 20. PRNG -->
-    <div class="demo-section" id="demo20">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">20</span> PRNG</h2>
-        <canvas id="c20" width="400" height="150"></canvas>
-        <div class="controls"><button class="btn" onclick="demo20_gen()">▶ Générer</button></div>
-        <div class="code-block"><pre>const prng = new Rakitrakatra2.PRNG(42); prng.next();</pre></div>
-    </div>
-
-    <!-- 21. Tabataba -->
-    <div class="demo-section" id="demo21">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">21</span> Tabataba</h2>
-        <canvas id="c21" width="300" height="200"></canvas>
-        <div class="controls"><button class="btn" onclick="demo21_draw()">▶ Dessiner</button></div>
-        <div class="code-block"><pre>Rakitrakatra2.Tabataba.fbm(x,y,4)</pre></div>
-    </div>
-
-    <!-- 22. Doboka -->
-    <div class="demo-section" id="demo22">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">22</span> Doboka (Pool)</h2>
-        <canvas id="c22" width="400" height="120"></canvas>
-        <div class="controls"><button class="btn" onclick="demo22_alloc()">▶ Allouer</button><button class="btn" onclick="demo22_free()">▶ Libérer</button></div>
-        <div class="code-block"><pre>const o = pool.alaina(); pool.avereno(o);</pre></div>
-    </div>
-
-    <!-- 23. Hetsika -->
-    <div class="demo-section" id="demo23">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">23</span> Hetsika (Events)</h2>
-        <canvas id="c23" width="400" height="100"></canvas>
-        <div class="controls"><button class="btn" onclick="demo23_emit()">▶ Émettre</button></div>
-        <div class="code-block"><pre>emitter.on('test', ()=>...); emitter.emit('test');</pre></div>
-    </div>
-
-    <!-- 24. Vec2 / Rect -->
-    <div class="demo-section" id="demo24">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">24</span> Vec2 & Rect</h2>
-        <canvas id="c24" width="400" height="200"></canvas>
-        <div class="controls"><button class="btn" onclick="demo24_draw()">▶ Dessiner</button></div>
-        <div class="code-block"><pre>new Rakitrakatra2.Vec2(100,100).add(v); new Rakitrakatra2.Rect(50,50,100,80);</pre></div>
-    </div>
-
-    <!-- 25. Quadtree -->
-    <div class="demo-section" id="demo25">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">25</span> Quadtree</h2>
-        <canvas id="c25" width="400" height="300"></canvas>
-        <div class="controls"><button class="btn" onclick="demo25_insert()">▶ Insérer</button><button class="btn" onclick="demo25_query()">▶ Requête</button></div>
-        <div class="code-block"><pre>qt.insert(obj); qt.retrieve(rect);</pre></div>
-    </div>
-
-    <!-- 26. Rano -->
-    <div class="demo-section" id="demo26">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">26</span> Rano</h2>
-        <canvas id="c26" width="400" height="200"></canvas>
-        <div class="controls"><button class="btn" onclick="demo26_start()">▶ Vagues</button><button class="btn" onclick="demo26_splash()">💧</button></div>
-        <div class="code-block"><pre>rano.latsaka(x,10);</pre></div>
-    </div>
-
-    <!-- 27. Spline -->
-    <div class="demo-section" id="demo27">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">27</span> Spline</h2>
-        <canvas id="c27" width="400" height="250"></canvas>
-        <div class="controls"><button class="btn" onclick="demo27_draw()">▶ Tracer</button></div>
-        <div class="code-block"><pre>new Rakitrakatra2.Spline(points).soraty(ctx);</pre></div>
-    </div>
-
-    <!-- 28. Polygon -->
-    <div class="demo-section" id="demo28">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">28</span> Polygon</h2>
-        <canvas id="c28" width="400" height="250"></canvas>
-        <div class="controls"><button class="btn" onclick="demo28_draw()">▶ Afficher</button></div>
-        <div class="code-block"><pre>new Rakitrakatra2.Polygon([...]).mifandona(other)</pre></div>
-    </div>
-
-    <!-- 29. IK -->
-    <div class="demo-section" id="demo29">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">29</span> IK (Cinématique inverse)</h2>
-        <canvas id="c29" width="400" height="300"></canvas>
-        <div class="controls"><button class="btn" onclick="demo29_start()">▶ Suivre souris</button></div>
-        <div class="code-block"><pre>ik.solve(mx,my); ik.soraty(ctx);</pre></div>
-    </div>
-
-    <!-- 30. Tehirizo -->
-    <div class="demo-section" id="demo30">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">30</span> Tehirizo</h2>
-        <canvas id="c30" width="400" height="100"></canvas>
-        <div class="controls"><button class="btn" onclick="demo30_save()">💾 Sauver</button><button class="btn" onclick="demo30_load()">📂 Charger</button></div>
-        <div class="code-block"><pre>tehirizo.mitahiry(0, {vie:100}); tehirizo.mampiditra(0);</pre></div>
-    </div>
-
-    <!-- 31. Teny -->
-    <div class="demo-section" id="demo31">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">31</span> Teny (i18n)</h2>
-        <canvas id="c31" width="400" height="100"></canvas>
-        <div class="controls"><button class="btn" onclick="demo31_fr()">🇫🇷 Français</button><button class="btn" onclick="demo31_mg()">🇲🇬 Malagasy</button><button class="btn" onclick="demo31_en()">🇬🇧 English</button></div>
-        <div class="code-block"><pre>Rakitrakatra2.Teny.set('fr'); Rakitrakatra2.Teny.t('hello',{name:'Jean'});</pre></div>
-    </div>
-
-    <!-- 32. UI -->
-    <div class="demo-section" id="demo32">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">32</span> UI (Bouton / Barre)</h2>
-        <canvas id="c32" width="400" height="200"></canvas>
-        <div class="controls"><button class="btn" onclick="demo32_start()">▶ Afficher</button></div>
-        <div class="code-block"><pre>new Rakitrakatra2.UI.Bokotra(10,10,100,30,'Kitiho',()=>alert('Click!'))</pre></div>
-    </div>
-
-    <!-- 33. Sarintany -->
-    <div class="demo-section" id="demo33">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">33</span> Sarintany (Minimap)</h2>
-        <canvas id="c33" width="400" height="300"></canvas>
-        <div class="controls"><button class="btn" onclick="demo33_start()">▶ Afficher</button></div>
-        <div class="code-block"><pre>new Rakitrakatra2.Sarintany({worldW:800,worldH:600,cam:kamera});</pre></div>
-    </div>
-
-    <!-- 34. Zavona -->
-    <div class="demo-section" id="demo34">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">34</span> Zavona (Fog of War)</h2>
-        <canvas id="c34" width="400" height="300"></canvas>
-        <div class="controls"><button class="btn" onclick="demo34_start()">▶ Révéler</button></div>
-        <div class="code-block"><pre>zavona.manokatra(200,150,2);</pre></div>
-    </div>
-
-    <!-- 35. Console Debug -->
-    <div class="demo-section" id="demo35">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">35</span> Console Debug</h2>
-        <canvas id="c35" width="400" height="100"></canvas>
-        <div class="controls"><button class="btn" onclick="demo35_toggle()">▶ Toggle</button></div>
-        <div class="code-block"><pre>engine.debug(true); // active l'overlay FPS</pre></div>
-    </div>
-
-    <!-- 36. Plugin Manager -->
-    <div class="demo-section" id="demo36">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">36</span> Plugin Manager</h2>
-        <canvas id="c36" width="400" height="100"></canvas>
-        <div class="controls"><button class="btn" onclick="demo36_list()">📋 Lister</button></div>
-        <div class="code-block"><pre>pluginManager.list();</pre></div>
-    </div>
-
-    <!-- 37. Parallax -->
-    <div class="demo-section" id="demo37">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">37</span> Parallax</h2>
-        <canvas id="c37" width="400" height="200"></canvas>
-        <div class="controls"><button class="btn" onclick="demo37_start()">▶ Défiler</button></div>
-        <div class="code-block"><pre>new Rakitrakatra2.Parallax().add(img,0.5);</pre></div>
-    </div>
-
-    <!-- 38. Fizika boribory -->
-    <div class="demo-section" id="demo38">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">38</span> Fizika boribory</h2>
-        <canvas id="c38" width="400" height="250"></canvas>
-        <div class="controls"><button class="btn" onclick="demo38_start()">▶ Collision</button></div>
-        <div class="code-block"><pre>Rakitrakatra2.Fizika.boriboryMifandona(c1,c2);</pre></div>
-    </div>
-
-    <!-- 39. Raycast -->
-    <div class="demo-section" id="demo39">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">39</span> Raycast</h2>
-        <canvas id="c39" width="400" height="250"></canvas>
-        <div class="controls"><button class="btn" onclick="demo39_start()">▶ Lancer</button></div>
-        <div class="code-block"><pre>Rakitrakatra2.Fizika.rayRect(ox,oy,dx,dy,rect);</pre></div>
-    </div>
-
-    <!-- 40. Efijery feno -->
-    <div class="demo-section" id="demo40">
-        <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">40</span> Efijery feno</h2>
-        <canvas id="c40" width="400" height="100"></canvas>
-        <div class="controls"><button class="btn" onclick="document.body.requestFullscreen()">⛶ Plein écran</button></div>
-        <div class="code-block"><pre>document.body.requestFullscreen();</pre></div>
-    </div>
-
-    <div class="footer">
-        <p>Rakitrakatra V2 "Motera Goavana" © 2026 – Tous les plugins sont fonctionnels.</p>
-    </div>
-</div>
-
-<!-- ========== SCRIPTS DES DÉMOS ========== -->
-<script>
-    // Variables globales pour chaque démo (pour éviter les conflits)
-    const demos = {};
-
-    // === DEMO 1 ===
-    function demo1_start() {
-        if (demos.demo1) return;
-        const canvas = document.getElementById('c1');
-        demos.demo1 = Rakitrakatra2.Lalao(400, 150, { canvas });
-        demos.demo1.scene('main', () => ({
-            draw(ctx) {
-                ctx.fillStyle = '#111'; ctx.fillRect(0,0,400,150);
-                ctx.fillStyle = '#ff1493'; ctx.font = '20px monospace';
-                ctx.fillText('Tonga soa!', 120, 80);
+        // ----------------------------------------------------------
+        // Sehatra lehibe anatin'ilay lalao
+        // ----------------------------------------------------------
+        class LalaoScene extends Sehatra {
+            init(data) {
+                this.playerHP = 100;
+                this.maxHP = 100;
+                this.score = 0;
+                this.obstacles = [];
+                this.enemies = [];
+                this.spawnInterval = 2000; // ms
             }
-        })).start('main');
-    }
 
-    // === DEMO 2 ===
-    let balls2 = [];
-    function demo2_start() {
-        if (demos.demo2) return;
-        const canvas = document.getElementById('c2');
-        demos.demo2 = Rakitrakatra2.Lalao(400, 250, { canvas });
-        demos.demo2.scene('fizika', ({ physics }) => {
-            physics.ampio(new Rakitrakatra2.Vatana(0,230,400,20,{static:true}));
-            for(let i=0;i<5;i++){ const b = new Rakitrakatra2.Vatana(50+i*70,20,20,20,{bounce:0.6}); physics.ampio(b); balls2.push(b); }
-            return {
-                update(dt){ physics.havaozy(dt); },
-                draw(ctx){
-                    ctx.fillStyle='#1a1a2e'; ctx.fillRect(0,0,400,250);
-                    ctx.fillStyle='#2d5a27'; ctx.fillRect(0,230,400,20);
-                    balls2.forEach(b=>{ ctx.fillStyle='#ff0'; ctx.beginPath(); ctx.arc(b.x+10,b.y+10,10,0,Math.PI*2); ctx.fill(); });
+            create() {
+                const game = this.game;
+                const ecs = game.ecs;
+                
+                // Mamorona ny mpilalao (entity)
+                this.pid = ecs.create();
+                ecs.x[this.pid] = 400;
+                ecs.y[this.pid] = 300;
+                ecs.w[this.pid] = 32;
+                ecs.h[this.pid] = 32;
+                ecs.color[this.pid] = 0xFF4444FF; // mena
+                ecs.tag[this.pid] = 1; // tag = player
+
+                // Mamorona sakana (obstacles) mitsangana
+                const obsPos = [
+                    [200, 150, 64, 200],
+                    [500, 100, 80, 80],
+                    [300, 400, 120, 60],
+                    [600, 350, 150, 40],
+                    [100, 300, 50, 150]
+                ];
+                obsPos.forEach(([x,y,w,h]) => {
+                    this.obstacles.push({ x, y, w, h });
+                });
+
+                // Fanaraha-maso (kamera) mi-follow mpilalao
+                game.camera.follow(
+                    { x: ecs.x[this.pid], y: ecs.y[this.pid], w: 32, h: 32 },
+                    0.15
+                );
+                game.camera.setBounds(-100, -100, 1000, 800); // tontolo kely
+
+                // Timer: miteraka fahavalo isaky ny 2 segondra
+                game.timer.every(this.spawnInterval, () => this.spawnEnemy());
+
+                // Tween tsotra ho an'ilay "vovoka" (fampisehoana)
+                MpitantanaTween.to({ scale: 1 }, { scale: 2 }, 600, {
+                    ease: 'elasticOut',
+                    yoyo: true,
+                    repeat: -1,
+                    onUpdate: (t) => { this._pulse = t; }
+                });
+
+                // Andramo feo rehefa manindry bokotra (hamerenana ny AudioContext)
+                Feo.init();
+                document.addEventListener('click', () => Feo.resume(), { once: true });
+            }
+
+            // Miteraka fahavalo vaovao
+            spawnEnemy() {
+                const ecs = this.game.ecs;
+                const eid = ecs.create();
+                // Toerana miseho eo amin'ny sisin'ny efijery
+                const side = Math.floor(Math.random() * 4);
+                let x = 0, y = 0;
+                const w = 30, h = 30;
+                switch(side) {
+                    case 0: x = Math.random() * 800; y = -h; break;
+                    case 1: x = Math.random() * 800; y = 600; break;
+                    case 2: x = -w; y = Math.random() * 600; break;
+                    case 3: x = 800; y = Math.random() * 600; break;
                 }
-            };
-        }).start('fizika');
-    }
-    function demo2_addBall(){ if(demos.demo2){ const b = new Rakitrakatra2.Vatana(200,10,20,20,{bounce:0.6}); demos.demo2.physics.ampio(b); balls2.push(b); } else demo2_start(); }
-
-    // === DEMO 3 ===
-    function demo3_start() {
-        if (demos.demo3) return;
-        const canvas = document.getElementById('c3');
-        demos.demo3 = Rakitrakatra2.Lalao(400, 250, { canvas });
-        demos.demo3.scene('part', ({ particles }) => {
-            window._vovoka3 = particles;
-            particles.emitter(200,200,{rate:6, angle:-Math.PI/2, spread:0.4, cols:['#f80','#ff0'], size:4, grav:-0.03, life:Infinity});
-            return { update(dt){ particles.havaozy(dt); }, draw(ctx){ ctx.fillStyle='#000'; ctx.fillRect(0,0,400,250); particles.soraty(ctx); } };
-        }).start('part');
-    }
-    function demo3_burst(){ if(window._vovoka3) window._vovoka3.mipoaka(200,150,{n:50,cols:['#ff1493','#0ff','#ff0']}); else demo3_start(); }
-
-    // === DEMO 5 ===
-    let player5;
-    function demo5_start() {
-        if (demos.demo5) return;
-        const canvas = document.getElementById('c5');
-        demos.demo5 = Rakitrakatra2.Lalao(400, 250, { canvas });
-        player5 = { x:180, y:200, w:30, h:30, vy:0, onGround:true };
-        demos.demo5.scene('input', () => ({
-            update(dt){
-                const F = Rakitrakatra2.Fanindry;
-                const axe = F.axis();
-                player5.x += axe.x * 4;
-                if(F.justPressed(' ') && player5.onGround){ player5.vy = -8; player5.onGround = false; }
-                player5.vy += 0.5;
-                player5.y += player5.vy;
-                if(player5.y >= 220){ player5.y=220; player5.vy=0; player5.onGround=true; }
-                player5.x = Math.max(0, Math.min(370, player5.x));
-            },
-            draw(ctx){
-                ctx.fillStyle='#111'; ctx.fillRect(0,0,400,250);
-                ctx.fillStyle='#2d5a27'; ctx.fillRect(0,220,400,30);
-                ctx.fillStyle='#0ff'; ctx.fillRect(player5.x, player5.y, player5.w, player5.h);
-                ctx.fillStyle='#fff'; ctx.font='12px monospace'; ctx.fillText('Flèches / ZQSD | Espace', 100,30);
+                ecs.x[eid] = x;
+                ecs.y[eid] = y;
+                ecs.w[eid] = w;
+                ecs.h[eid] = h;
+                ecs.color[eid] = 0x44FF44FF; // maitso
+                ecs.tag[eid] = 2; // enemy
+                ecs.hp[eid] = 30;
+                ecs.maxHp[eid] = 30;
+                // Velocité hanakaiky ny mpilalao
+                this.enemies.push(eid);
             }
-        })).start('input');
-    }
 
-    // === DEMO 6 ===
-    function demo6_start() {
-        if (demos.demo6) return;
-        const canvas = document.getElementById('c6');
-        const dialogue = new Rakitrakatra2.Tahantara(400, 200);
-        dialogue.node('start', { txt:'Salama! Inona no vaovao?', speaker:'Maharo', choices:[
-            {label:'Tsara fa misaotra', next:'merci'},
-            {label:'Mangatsiaka andro', action:()=>alert('❄️')}
-        ]});
-        dialogue.node('merci', { txt:'Mahafinaritra! Tonga soa.', speaker:'Maharo' });
-        dialogue.atombohy('start');
-        demos.demo6 = Rakitrakatra2.Lalao(400, 200, { canvas });
-        demos.demo6.scene('dial', () => ({
-            update(dt){ dialogue.havaozy(dt*1000); },
-            draw(ctx){ ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,400,200); dialogue.soraty(ctx); }
-        })).start('dial');
-    }
+            // Fanavaozana ny lalao
+            update(dt, dtMs) {
+                const ecs = this.game.ecs;
+                const pid = this.pid;
 
-    // === DEMO 7 ===
-    const grid7 = [
-        [0,0,0,0,0,0,0,0,0,0],
-        [0,1,1,0,1,1,0,1,1,0],
-        [0,0,0,0,0,0,0,0,0,0],
-        [1,1,0,1,1,0,1,1,0,0],
-        [0,0,0,0,0,0,0,0,0,0],
-        [0,1,1,0,1,1,0,1,1,0],
-        [0,0,0,0,0,0,0,0,0,0]
-    ];
-    let path7 = null;
-    const ctx7 = document.getElementById('c7').getContext('2d');
-    function drawGrid7() {
-        const ctx = ctx7, ts = 38;
-        ctx.fillStyle='#000'; ctx.fillRect(0,0,400,300);
-        for(let y=0;y<7;y++) for(let x=0;x<10;x++){
-            ctx.fillStyle = grid7[y][x] ? '#555' : '#222';
-            ctx.fillRect(x*ts+10, y*ts+10, ts-1, ts-1);
-        }
-        if(path7){
-            ctx.strokeStyle='#ff0'; ctx.lineWidth=2; ctx.beginPath();
-            path7.forEach((p,i)=>{
-                const px=p.x*ts+10+ts/2, py=p.y*ts+10+ts/2;
-                i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
-            });
-            ctx.stroke();
-        }
-    }
-    function demo7_find(){ path7 = Rakitrakatra2.Lalana.tadiavo(grid7,0,0,9,6); drawGrid7(); }
-    drawGrid7();
+                // Hetsiky ny mpilalao (zava-manindry)
+                const axis = Fanindry.axis();
+                const speed = 250;
+                let vx = axis.x * speed;
+                let vy = axis.y * speed;
 
-    // === DEMO 8 ===
-    function demo8_start() {
-        if (demos.demo8) return;
-        const canvas = document.getElementById('c8');
-        const haz = new Rakitrakatra2.Hazavana(400,250);
-        haz.ampioJiro(200,125,{halavirana:150});
-        haz.ampioSakana(80,60,40,130);
-        demos.demo8 = Rakitrakatra2.Lalao(400, 250, { canvas });
-        demos.demo8.scene('haz', () => ({
-            draw(ctx){ ctx.fillStyle='#111'; ctx.fillRect(0,0,400,250); ctx.fillStyle='#444'; ctx.fillRect(80,60,40,130); haz.soraty(ctx); }
-        })).start('haz');
-    }
+                // Fanavaozana ny toerana mpilalao
+                let px = ecs.x[pid];
+                let py = ecs.y[pid];
+                let pw = ecs.w[pid];
+                let ph = ecs.h[pid];
 
-    // === DEMO 9 ===
-    let fable9;
-    function demo9_start() {
-        if (demos.demo9) return;
-        const canvas = document.getElementById('c9');
-        fable9 = new Rakitrakatra2.Fable();
-        fable9.quest('q1','Angony voankazo 5',[{label:'Voankazo',need:5,have:0,done:false}],100);
-        demos.demo9 = Rakitrakatra2.Lalao(400, 150, { canvas });
-        demos.demo9.scene('fable', () => ({
-            draw(ctx){
-                ctx.fillStyle='#111'; ctx.fillRect(0,0,400,150);
-                ctx.fillStyle='#fff'; ctx.font='14px monospace';
-                ctx.fillText(`Niveau: ${fable9.level} | XP: ${fable9.xp}`,20,40);
-                ctx.fillText(`Iraka: ${fable9.quests[0]?.objectives[0]?.have || 0}/5`,20,70);
-            }
-        })).start('fable');
-    }
-    function demo9_xp(){ if(fable9) fable9.addXp(30); else demo9_start(); }
+                // Hetsika miaraka amin'ny collision amin'ny sakana
+                const newX = px + vx * dt;
+                const newY = py + vy * dt;
 
-    // === DEMO 10 ===
-    function demo10_start() {
-        if (demos.demo10) return;
-        const canvas = document.getElementById('c10');
-        const meteo = new Rakitrakatra2.Toetrandro(400,200);
-        meteo.ovay('orana',1);
-        demos.demo10 = Rakitrakatra2.Lalao(400, 200, { canvas });
-        demos.demo10.scene('meteo', () => ({
-            update(dt){ meteo.havaozy(dt); },
-            draw(ctx){ ctx.fillStyle='#1a1a2e'; ctx.fillRect(0,0,400,200); meteo.soraty(ctx); }
-        })).start('meteo');
-    }
-
-    // === DEMO 11 ===
-    function demo11_start() {
-        const ctx = document.getElementById('c11').getContext('2d');
-        const map = new Rakitrakatra2.Drafitra({ tileSize:20, w:20, h:10 });
-        const data = [];
-        for(let y=0;y<10;y++){ const row=[]; for(let x=0;x<20;x++) row.push(Math.random()>0.7?1:0); data.push(row); }
-        map.ampioSosona('tany', data);
-        ctx.fillStyle='#000'; ctx.fillRect(0,0,400,200);
-        map.soraty(ctx);
-    }
-
-    // === DEMO 12 ===
-    function demo12_start() {
-        const canvas = document.getElementById('c12');
-        const ctx = canvas.getContext('2d');
-        // Créer une petite spritesheet simulée
-        const off = document.createElement('canvas'); off.width=96; off.height=32;
-        const octx = off.getContext('2d');
-        octx.fillStyle='#f00'; octx.fillRect(0,0,32,32);
-        octx.fillStyle='#0f0'; octx.fillRect(32,0,32,32);
-        octx.fillStyle='#00f'; octx.fillRect(64,0,32,32);
-        const anim = new Rakitrakatra2.Sarimihetsika(off,32,32);
-        anim.famaritana('couleurs',[0,1,2],3);
-        anim.milalao('couleurs');
-        function step(){
-            anim.havaozy(100);
-            ctx.fillStyle='#000'; ctx.fillRect(0,0,200,200);
-            anim.soraty(ctx,80,80);
-            if(demos.demo12) requestAnimationFrame(step);
-        }
-        demos.demo12 = true;
-        step();
-    }
-
-    // === DEMO 13 ===
-    function demo13_start() {
-        const canvas = document.getElementById('c13');
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        img.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><circle cx="50" cy="50" r="40" fill="#ff1493"/></svg>');
-        img.onload = () => {
-            const sary = new Rakitrakatra2.Sary(img);
-            ctx.fillStyle='#000'; ctx.fillRect(0,0,300,200);
-            sary.soraty(ctx, 100, 50, 100, 100);
-        };
-    }
-
-    // === DEMO 14 ===
-    function demo14_start() {
-        if (demos.demo14) return;
-        const canvas = document.getElementById('c14');
-        const cible = { x:200, y:100, w:20, h:20 };
-        demos.demo14 = Rakitrakatra2.Lalao(400, 200, { canvas });
-        demos.demo14.scene('kamera', ({ camera }) => {
-            camera.manaraka(cible, 0.05);
-            let t=0;
-            return {
-                update(dt){
-                    t+=dt;
-                    cible.x = 200 + Math.cos(t)*100;
-                    cible.y = 100 + Math.sin(t*0.7)*50;
-                    camera.havaozy(dt*1000);
-                },
-                draw(ctx){
-                    ctx.fillStyle='#111'; ctx.fillRect(0,0,400,200);
-                    camera.ampiharo(ctx);
-                    ctx.fillStyle='#0ff'; ctx.fillRect(cible.x-10,cible.y-10,20,20);
-                    camera.avereno(ctx);
+                // Hamarinina raha misy fifandonana amin'ny sakana
+                let canMoveX = true, canMoveY = true;
+                for (const obs of this.obstacles) {
+                    if (Fizika.rectVsRect(newX, py, pw, ph, obs.x, obs.y, obs.w, obs.h)) canMoveX = false;
+                    if (Fizika.rectVsRect(px, newY, pw, ph, obs.x, obs.y, obs.w, obs.h)) canMoveY = false;
                 }
-            };
-        }).start('kamera');
-    }
+                if (canMoveX) px = newX;
+                if (canMoveY) py = newY;
 
-    // === DEMO 15 ===
-    function demo15_animate() {
-        const canvas = document.getElementById('c15');
-        const ctx = canvas.getContext('2d');
-        let start;
-        function anim(ts){
-            if(!start) start=ts;
-            const t = Math.min((ts-start)/2000, 1);
-            const y = Rakitrakatra2.Mpanamora.bounceOut(t) * 100;
-            ctx.fillStyle='#000'; ctx.fillRect(0,0,400,150);
-            ctx.fillStyle='#ff0'; ctx.beginPath(); ctx.arc(50 + t*300, 30+y, 10, 0, Math.PI*2); ctx.fill();
-            if(t<1) requestAnimationFrame(anim);
-        }
-        requestAnimationFrame(anim);
-    }
+                ecs.x[pid] = px;
+                ecs.y[pid] = py;
 
-    // === DEMO 16 ===
-    function demo16_start() {
-        const canvas = document.getElementById('c16');
-        const ctx = canvas.getContext('2d');
-        const obj = { x:50, y:75 };
-        Rakitrakatra2.Tween.to(obj, {x:300}, 2000, {ease:'elasticOut', onUpdate:()=>{
-            ctx.fillStyle='#000'; ctx.fillRect(0,0,400,150);
-            ctx.fillStyle='#0ff'; ctx.fillRect(obj.x, obj.y-15,30,30);
-        }});
-    }
+                // Fanavaozana ny fahavalo
+                for (let i = this.enemies.length - 1; i >= 0; i--) {
+                    const eid = this.enemies[i];
+                    if (!ecs.isAlive(eid)) {
+                        this.enemies.splice(i, 1);
+                        continue;
+                    }
+                    const ex = ecs.x[eid];
+                    const ey = ecs.y[eid];
+                    const angle = Math.atan2(py + ph/2 - ey - ecs.h[eid]/2, px + pw/2 - ex - ecs.w[eid]/2);
+                    const espeed = 120;
+                    ecs.x[eid] += Math.cos(angle) * espeed * dt;
+                    ecs.y[eid] += Math.sin(angle) * espeed * dt;
 
-    // === DEMO 17 ===
-    function demo17_start() {
-        const tl = new Rakitrakatra2.Fizotryfotoana();
-        const out = document.getElementById('c17').getContext('2d');
-        let txt = '';
-        tl.add(500, ()=> txt += 'Étape 1 ');
-        tl.add(1500, ()=> txt += 'Étape 2 ');
-        tl.add(2500, ()=> txt += 'Fin!');
-        function loop(ts){
-            tl.update(16);
-            out.fillStyle='#000'; out.fillRect(0,0,400,100);
-            out.fillStyle='#fff'; out.font='14px monospace'; out.fillText(txt,20,50);
-            if(!tl.done) requestAnimationFrame(loop);
-        }
-        requestAnimationFrame(loop);
-    }
+                    // Fizahana collision amin'ny mpilalao
+                    if (Fizika.rectVsRect(
+                        ecs.x[eid], ecs.y[eid], ecs.w[eid], ecs.h[eid],
+                        px, py, pw, ph
+                    )) {
+                        // Mampihena HP ny mpilalao
+                        this.playerHP -= 10;
+                        this.playerHP = Math.max(0, this.playerHP);
 
-    // === DEMO 18 ===
-    function demo18_load() {
-        const loader = new Rakitrakatra2.Mpampiditra();
-        loader.json('test', 'data:application/json,{"msg":"Salama"}').load().then(assets => {
-            document.getElementById('c18').getContext('2d').fillText(assets.test.msg, 20,40);
-        });
-    }
+                        // Feon'ny fahavoazana
+                        Feo.mamorona('hit', { volume: 0.3 });
 
-    // === DEMO 19 ===
-    function demo19_start() {
-        const ctx = document.getElementById('c19').getContext('2d');
-        const timer = new Rakitrakatra2.Famataranandro();
-        let count=0;
-        timer.every(500, ()=>{ count++; ctx.fillStyle='#000'; ctx.fillRect(0,0,400,100); ctx.fillStyle='#fff'; ctx.fillText('Tick: '+count,20,50); });
-        function loop(ts){ timer.update(16); if(count<10) requestAnimationFrame(loop); }
-        requestAnimationFrame(loop);
-    }
+                        // Vovoka (explosion)
+                        this.game.particles.emit(
+                            ecs.x[eid] + ecs.w[eid]/2,
+                            ecs.y[eid] + ecs.h[eid]/2,
+                            {
+                                count: 15,
+                                speedMin: 40, speedMax: 120,
+                                lifeMin: 0.3, lifeMax: 0.8,
+                                sizeStart: 6, sizeEnd: 0,
+                                color: 0x44FF44FF,
+                                colorEnd: 0x44FF4488,
+                                gravity: 200
+                            }
+                        );
 
-    // === DEMO 20 ===
-    function demo20_gen() {
-        const ctx = document.getElementById('c20').getContext('2d');
-        const prng = new Rakitrakatra2.PRNG(Date.now());
-        ctx.fillStyle='#000'; ctx.fillRect(0,0,400,150);
-        for(let i=0;i<100;i++){
-            const x = prng.range(10,390);
-            const y = prng.range(10,140);
-            ctx.fillStyle = `hsl(${prng.range(0,360)},100%,50%)`;
-            ctx.fillRect(x,y,5,5);
-        }
-    }
+                        // Hamafa ilay fahavalo
+                        ecs.destroy(eid);
+                        this.enemies.splice(i, 1);
 
-    // === DEMO 21 ===
-    function demo21_draw() {
-        const canvas = document.getElementById('c21');
-        const ctx = canvas.getContext('2d');
-        const img = ctx.createImageData(300,200);
-        for(let y=0;y<200;y++) for(let x=0;x<300;x++){
-            const v = Rakitrakatra2.Tabataba.fbm(x*0.05, y*0.05, 4);
-            const c = Math.floor(v*255);
-            img.data[(y*300+x)*4] = c;
-            img.data[(y*300+x)*4+1] = c;
-            img.data[(y*300+x)*4+2] = c;
-            img.data[(y*300+x)*4+3] = 255;
-        }
-        ctx.putImageData(img,0,0);
-    }
+                        // Raha lany HP
+                        if (this.playerHP <= 0) {
+                            console.log("Maty ianao! Avereno indray ny pejy.");
+                            // Mety hampiato ny lalao eto
+                        }
+                    }
+                }
 
-    // === DEMO 22 ===
-    const pool22 = new Rakitrakatra2.Dobo(()=> ({}), o=>o);
-    let allocated = [];
-    function demo22_alloc() { allocated.push(pool22.alaina()); updatePoolDisplay(); }
-    function demo22_free() { if(allocated.length){ pool22.avereno(allocated.pop()); updatePoolDisplay(); } }
-    function updatePoolDisplay() {
-        const ctx = document.getElementById('c22').getContext('2d');
-        ctx.fillStyle='#000'; ctx.fillRect(0,0,400,120);
-        ctx.fillStyle='#fff'; ctx.font='14px monospace';
-        ctx.fillText(`Libres: ${pool22.free.length} | Utilisés: ${pool22.used.size}`,20,50);
-    }
-    updatePoolDisplay();
-
-    // === DEMO 23 ===
-    const emitter23 = new Rakitrakatra2.Hetsika();
-    emitter23.on('test', ()=> {
-        const ctx = document.getElementById('c23').getContext('2d');
-        ctx.fillStyle='#000'; ctx.fillRect(0,0,400,100);
-        ctx.fillStyle='#0f0'; ctx.fillText('Événement reçu!',20,50);
-    });
-    function demo23_emit(){ emitter23.emit('test'); }
-
-    // === DEMO 24 ===
-    function demo24_draw() {
-        const ctx = document.getElementById('c24').getContext('2d');
-        const v = new Rakitrakatra2.Vec2(100,50);
-        const r = new Rakitrakatra2.Rect(150,60,100,80);
-        ctx.fillStyle='#000'; ctx.fillRect(0,0,400,200);
-        ctx.strokeStyle='#0ff'; ctx.strokeRect(r.x,r.y,r.w,r.h);
-        ctx.fillStyle='#ff0'; ctx.beginPath(); ctx.arc(v.x,v.y,5,0,Math.PI*2); ctx.fill();
-    }
-
-    // === DEMO 25 ===
-    const qt25 = new Rakitrakatra2.Quadtree(new Rakitrakatra2.Rect(0,0,400,300));
-    const objs25 = [];
-    function demo25_insert() {
-        const o = { rect: new Rakitrakatra2.Rect(Math.random()*350, Math.random()*250, 20,20) };
-        qt25.insert(o); objs25.push(o);
-        draw25();
-    }
-    function demo25_query() {
-        const qrect = new Rakitrakatra2.Rect(150,100,100,100);
-        const found = qt25.retrieve(qrect);
-        draw25(qrect, found);
-    }
-    function draw25(qrect, found) {
-        const ctx = document.getElementById('c25').getContext('2d');
-        ctx.fillStyle='#000'; ctx.fillRect(0,0,400,300);
-        ctx.strokeStyle='#555'; ctx.strokeRect(0,0,400,300);
-        objs25.forEach(o=>{ ctx.fillStyle='#fff'; ctx.fillRect(o.rect.x,o.rect.y,o.rect.w,o.rect.h); });
-        if(qrect){ ctx.strokeStyle='#ff0'; ctx.strokeRect(qrect.x,qrect.y,qrect.w,qrect.h); }
-        if(found){ found.forEach(o=>{ ctx.fillStyle='#f00'; ctx.fillRect(o.rect.x,o.rect.y,o.rect.w,o.rect.h); }); }
-    }
-    draw25();
-
-    // === DEMO 26 ===
-    let rano26;
-    function demo26_start() {
-        if (demos.demo26) return;
-        const canvas = document.getElementById('c26');
-        rano26 = new Rakitrakatra2.Rano(0,120,400,80,{loko:'rgba(0,160,230,0.7)'});
-        demos.demo26 = Rakitrakatra2.Lalao(400, 200, { canvas });
-        demos.demo26.scene('rano', () => ({
-            update(dt){ rano26.havaozy(dt); },
-            draw(ctx){ ctx.fillStyle='#111'; ctx.fillRect(0,0,400,200); rano26.soraty(ctx); }
-        })).start('rano');
-    }
-    function demo26_splash(){ if(rano26) rano26.latsaka(200,10); }
-
-    // === DEMO 27 ===
-    function demo27_draw() {
-        const ctx = document.getElementById('c27').getContext('2d');
-        const pts = [{x:50,y:200},{x:100,y:50},{x:200,y:150},{x:300,y:30},{x:350,y:180}];
-        const spline = new Rakitrakatra2.Spline(pts);
-        ctx.fillStyle='#000'; ctx.fillRect(0,0,400,250);
-        spline.soraty(ctx,{showPoints:true});
-    }
-
-    // === DEMO 28 ===
-    function demo28_draw() {
-        const ctx = document.getElementById('c28').getContext('2d');
-        const poly = new Rakitrakatra2.Polygon([{x:0,y:-50},{x:43,y:-25},{x:43,y:25},{x:0,y:50},{x:-43,y:25},{x:-43,y:-25}],200,120);
-        ctx.fillStyle='#000'; ctx.fillRect(0,0,400,250);
-        poly.soraty(ctx);
-    }
-
-    // === DEMO 29 ===
-    function demo29_start() {
-        if (demos.demo29) return;
-        const canvas = document.getElementById('c29');
-        const ik = new Rakitrakatra2.IK(200,280,[80,60,40]);
-        demos.demo29 = Rakitrakatra2.Lalao(400, 300, { canvas });
-        demos.demo29.scene('ik', () => ({
-            update(){
-                const m = Rakitrakatra2.Fanindry.mouse;
-                ik.solve(m.x, m.y);
-            },
-            draw(ctx){
-                ctx.fillStyle='#000'; ctx.fillRect(0,0,400,300);
-                ik.soraty(ctx);
+                // Fanadiovana ny ECS (entity maty)
+                ecs.compact();
             }
-        })).start('ik');
-    }
 
-    // === DEMO 30 ===
-    const save30 = new Rakitrakatra2.Tehirizo('demo');
-    function demo30_save() { save30.mitahiry(0,{msg:'Voatahiry!'}); document.getElementById('c30').getContext('2d').fillText('Sauvegardé!',20,50); }
-    function demo30_load() { const d = save30.mampiditra(0); document.getElementById('c30').getContext('2d').fillText(d?d.msg:'Vide',20,50); }
+            // Fandokoana ny zavatra eo amin'ny tontolo (miaraka amin'ny kamera)
+            render(renderer, camera) {
+                // Asiana fiavana manga mainty
+                renderer.drawRect(-50, -50, 900, 700, 0x111122FF);
 
-    // === DEMO 31 ===
-    function demo31_fr() { Rakitrakatra2.Teny.set('fr'); demo31_update(); }
-    function demo31_mg() { Rakitrakatra2.Teny.set('mg'); demo31_update(); }
-    function demo31_en() { Rakitrakatra2.Teny.set('en'); demo31_update(); }
-    function demo31_update() {
-        const ctx = document.getElementById('c31').getContext('2d');
-        ctx.fillStyle='#000'; ctx.fillRect(0,0,400,100);
-        ctx.fillStyle='#fff'; ctx.font='16px monospace';
-        ctx.fillText(Rakitrakatra2.Teny.t('hello',{name:'Rova'}),20,50);
-    }
+                // Sakan-tsary (obstacles)
+                for (const obs of this.obstacles) {
+                    renderer.drawRect(obs.x, obs.y, obs.w, obs.h, 0x888888FF);
+                }
 
-    // === DEMO 32 ===
-    function demo32_start() {
-        const canvas = document.getElementById('c32');
-        const ctx = canvas.getContext('2d');
-        const btn = new Rakitrakatra2.UI.Bokotra(150,80,100,30,'Kitiho', ()=> alert('Voakitika!'));
-        canvas.addEventListener('click', (e)=>{
-            const rect = canvas.getBoundingClientRect();
-            const mx = (e.clientX-rect.left)*(canvas.width/rect.width);
-            const my = (e.clientY-rect.top)*(canvas.height/rect.height);
-            Rakitrakatra2.Fanindry.mouse.x = mx;
-            Rakitrakatra2.Fanindry.mouse.y = my;
-            Rakitrakatra2.Fanindry.mouse.down = true;
-            Rakitrakatra2.Fanindry.mouse.justDown = true;
-            btn.havaozy();
-            Rakitrakatra2.Fanindry._endFrame();
-            ctx.fillStyle='#000'; ctx.fillRect(0,0,400,200);
-            btn.soraty(ctx);
-        });
-        ctx.fillStyle='#000'; ctx.fillRect(0,0,400,200);
-        btn.soraty(ctx);
-    }
+                // Fahavalo
+                const ecs = this.game.ecs;
+                for (const eid of this.enemies) {
+                    if (!ecs.isAlive(eid)) continue;
+                    const x = ecs.x[eid], y = ecs.y[eid], w = ecs.w[eid], h = ecs.h[eid];
+                    // Baran'ny HP ho an'ny fahavalo
+                    const hpPct = ecs.hp[eid] / ecs.maxHp[eid];
+                    renderer.drawRect(x, y - 5, w * hpPct, 3, 0x00FF00FF);
+                    renderer.drawRect(x, y, w, h, ecs.color[eid]);
+                }
 
-    // === DEMO 33 ===
-    function demo33_start() {
-        const canvas = document.getElementById('c33');
-        const cam = new Rakitrakatra2.Kamera(400,300);
-        cam.x=100; cam.y=50;
-        const minimap = new Rakitrakatra2.Sarintany({worldW:800,worldH:600,cam});
-        const player = {x:250,y:180,dead:false};
-        minimap.araho(player,'#0ff',4);
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle='#111'; ctx.fillRect(0,0,400,300);
-        minimap.soraty(ctx);
-    }
-
-    // === DEMO 34 ===
-    function demo34_start() {
-        const canvas = document.getElementById('c34');
-        const fog = new Rakitrakatra2.Zavona(400,300,20);
-        fog.manokatra(200,150,3);
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle='#222'; ctx.fillRect(0,0,400,300);
-        fog.soraty(ctx);
-    }
-
-    // === DEMO 35 ===
-    function demo35_toggle() {
-        // Active/désactive l'overlay debug sur tous les jeux (exemple global)
-        if(window._globalDebug === undefined) window._globalDebug = true;
-        else window._globalDebug = !window._globalDebug;
-        document.getElementById('c35').getContext('2d').fillText('Debug: '+(window._globalDebug?'ON':'OFF'),20,50);
-    }
-
-    // === DEMO 36 ===
-    function demo36_list() {
-        const mgr = new Rakitrakatra2.MpitantanaPlugin();
-        // Les plugins par défaut sont déjà enregistrés, on peut les lister
-        const list = mgr.list();
-        const ctx = document.getElementById('c36').getContext('2d');
-        ctx.fillStyle='#000'; ctx.fillRect(0,0,400,100);
-        ctx.fillStyle='#fff'; ctx.font='12px monospace';
-        list.forEach((p,i)=> ctx.fillText(p,10,20+i*15));
-    }
-
-    // === DEMO 37 ===
-    function demo37_start() {
-        const canvas = document.getElementById('c37');
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        img.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200"><rect width="400" height="200" fill="#1a1a3a"/><circle cx="200" cy="100" r="80" fill="#ff1493"/></svg>');
-        img.onload = ()=>{
-            const parallax = new Rakitrakatra2.Parallax();
-            parallax.add(img, 0.5);
-            let x=0;
-            function loop(){
-                x+=0.5;
-                const cam = {x, y:0};
-                ctx.clearRect(0,0,400,200);
-                parallax.soraty(ctx, cam);
-                requestAnimationFrame(loop);
+                // Mpilalao
+                if (ecs.isAlive(this.pid)) {
+                    renderer.drawRect(
+                        ecs.x[this.pid], ecs.y[this.pid],
+                        ecs.w[this.pid], ecs.h[this.pid],
+                        ecs.color[this.pid]
+                    );
+                }
             }
-            loop();
-        };
-    }
 
-    // === DEMO 38 ===
-    function demo38_start() {
-        const canvas = document.getElementById('c38');
-        const ctx = canvas.getContext('2d');
-        const c1 = {x:120, y:120, r:25, vx:1.5, vy:0, mass:1, bounce:0.8};
-        const c2 = {x:280, y:130, r:30, vx:-1, vy:0, mass:1.5, bounce:0.8};
-        function loop(){
-            Rakitrakatra2.Fizika.boriboryMifandona(c1,c2);
-            c1.x += c1.vx; c1.y += c1.vy;
-            c2.x += c2.vx; c2.y += c2.vy;
-            if(c1.x<25||c1.x>375) c1.vx*=-1;
-            if(c2.x<25||c2.x>375) c2.vx*=-1;
-            ctx.fillStyle='#000'; ctx.fillRect(0,0,400,250);
-            ctx.fillStyle='#0ff'; ctx.beginPath(); ctx.arc(c1.x,c1.y,c1.r,0,Math.PI*2); ctx.fill();
-            ctx.fillStyle='#ff0'; ctx.beginPath(); ctx.arc(c2.x,c2.y,c2.r,0,Math.PI*2); ctx.fill();
-            requestAnimationFrame(loop);
+            // Fandokoana ny UI (tsy voakasiky ny kamera)
+            renderUI(renderer) {
+                // Baran'ny HP an'ny mpilalao
+                const barWidth = 200, barHeight = 20;
+                const barX = 10, barY = 10;
+                renderer.drawRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4, 0x222222FF);
+                renderer.drawRect(barX, barY, barWidth * (this.playerHP / this.maxHP), barHeight, 0xFF2222FF);
+                // Fehy (border)
+                renderer.drawRect(barX - 1, barY - 1, barWidth + 2, 1, 0xFFFFFFFF);
+                renderer.drawRect(barX - 1, barY + barHeight, barWidth + 2, 1, 0xFFFFFFFF);
+                renderer.drawRect(barX - 1, barY - 1, 1, barHeight + 2, 0xFFFFFFFF);
+                renderer.drawRect(barX + barWidth, barY - 1, 1, barHeight + 2, 0xFFFFFFFF);
+
+                // Isan'ny naoty (simulation an-tsoratra)
+                const scoreStr = 'Score: ' + this.score;
+                // Tsy misy rafitra soratra ofisialy, fa asiana tsipika fotsiny
+                renderer.drawRect(600, 15, 80, 20, 0x222222FF);
+                // Mba hampisehoana hoe miasa, dia ataovy miovaova ny habe
+                if (this._pulse) {
+                    renderer.drawRect(300, 300, 20 * this._pulse, 20 * this._pulse, 0xFFFF00FF);
+                }
+
+                // FPS: aseho amin'ny console na amin'ny anaram-pejy
+                document.title = `FPS: ${this.game.stats.fps} | HP: ${this.playerHP}`;
+            }
         }
-        loop();
-    }
 
-    // === DEMO 39 ===
-    function demo39_start() {
-        const canvas = document.getElementById('c39');
-        const ctx = canvas.getContext('2d');
-        const rect = {x:200, y:100, w:100, h:80};
-        const ox=50, oy=160, dx=1, dy=-0.3;
-        const hit = Rakitrakatra2.Fizika.rayRect(ox,oy,dx,dy,rect);
-        ctx.fillStyle='#000'; ctx.fillRect(0,0,400,250);
-        ctx.strokeStyle='#0ff'; ctx.strokeRect(rect.x,rect.y,rect.w,rect.h);
-        ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(ox+dx*400,oy+dy*400); ctx.strokeStyle='#fff'; ctx.stroke();
-        if(hit){ ctx.fillStyle='#f00'; ctx.beginPath(); ctx.arc(hit.x,hit.y,5,0,Math.PI*2); ctx.fill(); }
-    }
+        // ----------------------------------------------------------
+        // MANOMBOKA NY LALAO
+        // ----------------------------------------------------------
+        window.addEventListener('load', () => {
+            const canvas = document.getElementById('gameCanvas');
+            // Mamorona ny lalao
+            const game = new Lalao(800, 600, { canvas });
 
-    // === DEMO 40 ===
-    // (Fullscreen est déjà géré par le bouton onclick)
-</script>
+            // Ampiana ny sehatra (scene)
+            game.addScene('main', LalaoScene);
+
+            // Atombohy
+            game.start('main');
+
+            // Torolàlana fohy (console)
+            console.log('%c🎮 Rakitrakatra V4 Demo %c"Ady Goavana"',
+                'font-size:18px;color:#ff1493', 'color:#fff');
+            console.log('%c→ Zana-tsipìka: mandehana | Avoahy ny feo %c🔊',
+                'color:#0ff', 'color:yellow');
+            console.log('%c→ Fahavalo maitso no hanafika anao %c👾', 'color:#0f0', '');
+        });
+    })();
+    </script>
 </body>
 </html>
