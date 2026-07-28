@@ -376,8 +376,8 @@
                             if (!ecs.isAlive(b)) continue;
                             for (const e of this.enemies) {
                                 if (!ecs.isAlive(e)) continue;
-                                if (Fizika.rectVsRect(ecs.x[b], ecs.y[b], ecs.w[b], ecs.h[b],
-                                        ecs.x[e], ecs.y[e], ecs.w[e], ecs.h[e])) {
+                                if (Fizika.rectVsRect(ecs.x[b], ecs.y[b], ecs.w[b] || 6, ecs.h[b] || 6,
+                                        ecs.x[e], ecs.y[e], ecs.w[e] || 20, ecs.h[e] || 20)) {
                                     ecs.hp[e]--;
                                     if (ecs.hp[e] <= 0) {
                                         ecs.destroy(e);
@@ -415,8 +415,8 @@
                         if (ecs.isAlive(p)) {
                             for (const e of this.enemies) {
                                 if (!ecs.isAlive(e)) continue;
-                                if (Fizika.rectVsRect(ecs.x[p], ecs.y[p], ecs.w[p], ecs.h[p],
-                                        ecs.x[e], ecs.y[e], ecs.w[e], ecs.h[e])) {
+                                if (Fizika.rectVsRect(ecs.x[p], ecs.y[p], ecs.w[p] || 30, ecs.h[p] || 30,
+                                        ecs.x[e], ecs.y[e], ecs.w[e] || 20, ecs.h[e] || 20)) {
                                     ecs.hp[p] -= ecs._dmg || 10;
                                     const dx = ecs.x[e] - ecs.x[p];
                                     const dy = ecs.y[e] - ecs.y[p];
@@ -523,7 +523,14 @@
                 // --------------------------------------------------------
                 //  LANCEMENT
                 // --------------------------------------------------------
+                // Mamorona canvas ary ampiana ao amin'ny body
+                const canvas = document.createElement('canvas');
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                document.body.prepend(canvas);
+
                 const game = new Lalao(window.innerWidth, window.innerHeight, {
+                    canvas: canvas,
                     maxEntities: 20000,
                     gameKey: 'demo'
                 });
@@ -533,11 +540,15 @@
 
                 // Redimensionnement
                 window.addEventListener('resize', () => {
-                    game.renderer.resize(window.innerWidth, window.innerHeight);
-                    game.width = window.innerWidth;
-                    game.height = window.innerHeight;
-                    game.camera.viewW = window.innerWidth;
-                    game.camera.viewH = window.innerHeight;
+                    const w = window.innerWidth;
+                    const h = window.innerHeight;
+                    canvas.width = w;
+                    canvas.height = h;
+                    game.renderer.resize(w, h);
+                    game.width = w;
+                    game.height = h;
+                    game.camera.viewW = w;
+                    game.camera.viewH = h;
                 });
 
                 console.log('🎮 Demo Rakitrakatra V4 lancée !');
