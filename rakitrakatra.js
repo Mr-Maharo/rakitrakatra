@@ -154,12 +154,12 @@ function loop(){ vovoka.havaozy(dt); vovoka.soraty(ctx); }</pre></div>
         <h2><span style="background:var(--pink); padding:5px 12px; border-radius:20px;">4</span> Feo (Audio)</h2>
         <canvas id="c4" width="500" height="120"></canvas>
         <div class="controls">
-            <button class="btn" onclick="Rakitrakatra2.Feo.mamorona('jump')">🦘 Jump</button>
-            <button class="btn" onclick="Rakitrakatra2.Feo.mamorona('coin')">🪙 Coin</button>
-            <button class="btn" onclick="Rakitrakatra2.Feo.mamorona('power')">⚡ Power</button>
-            <button class="btn" onclick="Rakitrakatra2.Feo.mamorona('hit')">💢 Hit</button>
-            <button class="btn" onclick="Rakitrakatra2.Feo.mamorona('laser')">🔫 Laser</button>
-            <button class="btn" onclick="Rakitrakatra2.Feo.mamorona('explode')">💥 Explode</button>
+            <button class="btn" onclick="Rakitrakatra2.Feo.mamorona('jump')"> Jump</button>
+            <button class="btn" onclick="Rakitrakatra2.Feo.mamorona('coin')"> Coin</button>
+            <button class="btn" onclick="Rakitrakatra2.Feo.mamorona('power')"> Power</button>
+            <button class="btn" onclick="Rakitrakatra2.Feo.mamorona('hit')"> Hit</button>
+            <button class="btn" onclick="Rakitrakatra2.Feo.mamorona('laser')"> Laser</button>
+            <button class="btn" onclick="Rakitrakatra2.Feo.mamorona('explode')"> Explode</button>
         </div>
         <div class="code-block"><pre>Rakitrakatra2.Feo.mamorona('jump'); // 8 sons disponibles</pre></div>
     </div>
