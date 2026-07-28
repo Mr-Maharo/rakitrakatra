@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Rakitrakatra V4 · Survival Arena</title>
+    <title>Rakitrakatra V4 · Demo</title>
     <style>
         * {
             margin: 0;
@@ -28,27 +28,6 @@
             background: #0d0d16;
             cursor: crosshair;
         }
-        #ui {
-            position: fixed;
-            bottom: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.25);
-            font-size: 13px;
-            letter-spacing: 1px;
-            text-align: center;
-            pointer-events: none;
-            background: rgba(0, 0, 0, 0.4);
-            padding: 6px 18px;
-            border-radius: 20px;
-            backdrop-filter: blur(4px);
-            user-select: none;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            z-index: 10;
-        }
-        #ui span {
-            color: rgba(255, 200, 100, 0.6);
-        }
         #loading {
             position: fixed;
             top: 0;
@@ -60,15 +39,16 @@
             justify-content: center;
             background: #0a0a0f;
             color: #44aaff;
-            font-size: 24px;
+            font-size: 20px;
             font-family: 'Courier New', monospace;
             z-index: 100;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
+            transition: opacity 0.5s;
         }
-        #loading .spinner {
-            width: 40px;
-            height: 40px;
+        .spinner {
+            width: 35px;
+            height: 35px;
             border: 3px solid rgba(68, 170, 255, 0.1);
             border-top-color: #44aaff;
             border-radius: 50%;
@@ -79,184 +59,156 @@
                 transform: rotate(360deg);
             }
         }
-        @media (max-width: 600px) {
-            #ui {
-                font-size: 10px;
-                padding: 4px 12px;
-                bottom: 8px;
-            }
-            #loading {
-                font-size: 18px;
-            }
+        #ui {
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-align: center;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px 16px;
+            border-radius: 12px;
+            backdrop-filter: blur(4px);
+            user-select: none;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            z-index: 10;
+        }
+        #ui span {
+            color: rgba(255, 200, 100, 0.5);
         }
     </style>
 </head>
 <body>
 
+    <!-- LOADING SCREEN -->
     <div id="loading">
         <div class="spinner"></div>
         <div>⏳ Mampiditra motera...</div>
     </div>
 
+    <!-- UI OVERLAY -->
     <div id="ui">⬆ ⬇ ⬅ ➡ &nbsp;·&nbsp; <span>clic / tap</span> &nbsp;·&nbsp; tire</div>
 
+    <!-- ============================================================ -->
+    <!--  LOADER : Mampiditra ilay motera avy any ivelany              -->
+    <!-- ============================================================ -->
     <script>
-        // ═══════════════════════════════════════════════════════════
-        //  LOADER : Mampiditra ny motera avy amin'ny rakitra ivelany
-        // ═══════════════════════════════════════════════════════════
-
         (function() {
-            const loadingEl = document.getElementById('loading');
+            const loading = document.getElementById('loading');
 
-            // 1. Mamorona script tag ho an'ny motera
+            // Mamorona script ho an'ny motera
             const script = document.createElement('script');
-            script.src = 'rakitrakatra.js'; // Ilay rakitra motera
+            script.src = 'rakitrakatra.js';
             script.async = false;
 
-            // 2. Rehefa vita ny loading
             script.onload = function() {
                 console.log('✅ Moteur Rakitrakatra V4 tafiditra!');
 
-                // Esory ny loading screen
-                loadingEl.style.opacity = '0';
-                setTimeout(() => {
-                    loadingEl.style.display = 'none';
-                }, 400);
+                // Esory ny loading
+                loading.style.opacity = '0';
+                setTimeout(() => loading.style.display = 'none', 500);
 
-                // Atombohy ny lalao
+                // Atombohy ny demo raha misy ny R
                 if (typeof R !== 'undefined') {
-                    startGame();
+                    initDemo();
                 } else {
-                    console.error('❌ Tsy hita ny R (moteur)');
-                    loadingEl.innerHTML =
-                        '<div style="color:#ff4466;">❌ Erreur: moteur tsy hita</div>';
+                    loading.innerHTML = '<div style="color:#ff4466;">❌ Erreur: moteur tsy hita</div>';
                 }
             };
 
-            // 3. Raha misy erreur
             script.onerror = function() {
-                console.error('❌ Tsy voarindra ny rakitra motera!');
-                loadingEl.innerHTML = `
+                loading.innerHTML = `
                             <div style="color:#ff4466;text-align:center;line-height:1.6;">
-                                ❌ Tsy hita ny rakitra <strong>rakitrakatra.js</strong><br>
+                                ❌ Tsy hita ny <strong>rakitrakatra.js</strong><br>
                                 <small style="font-size:14px;color:#888;">
-                                    Apetraho amin'ny folder mitovy io rakitra io.
+                                    Apetraho amin'ny folder mitovy ity rakitra ity.
                                 </small>
                             </div>
                         `;
             };
 
-            // 4. Ampidiro ao amin'ny page
             document.head.appendChild(script);
 
-            // ═══════════════════════════════════════════════════════
-            //  LALAO : Survival Arena
-            // ═══════════════════════════════════════════════════════
-            function startGame() {
-                const {
-                    Lalao,
-                    Sehatra,
-                    Vec2,
-                    Z,
-                    Fanindry,
-                    Feo,
-                    UI,
-                    Fizika,
-                    Vovoka,
-                    MpitantanaTween,
-                    Mpanamora
-                } = R;
+            // ============================================================
+            //  DEMO : Mampiasa ny fototry ny framework ihany
+            // ============================================================
+            function initDemo() {
+                // Ampiasaintsika araka ny fomba ofisialin'ny framework
+                const { Lalao, Sehatra, Z, Fanindry, Feo, UI, Fizika, Vovoka } = R;
 
-                // ====================================================
-                //  1. SCÈNE DU JEU
-                // ====================================================
-                class SurvivalArena extends Sehatra {
+                // --------------------------------------------------------
+                //  SCÈNE : "Demo"
+                // --------------------------------------------------------
+                class DemoScene extends Sehatra {
                     constructor(key) {
                         super(key);
+                        this.player = -1;
+                        this.enemies = [];
+                        this.bullets = [];
+                        this.particles = null;
+                        this.hpBar = null;
                         this.score = 0;
                         this.wave = 0;
-                        this.enemyCount = 0;
-                        this.maxEnemies = 20;
-                        this.spawnTimer = 0;
-                        this.spawnInterval = 1.2;
-                        this.playerId = -1;
-                        this.enemyIds = [];
-                        this.projectileIds = [];
-                        this.particleSystem = null;
-                        this.healthBar = null;
                         this.gameOver = false;
-                        this.gameOverTimer = 0;
-                        this.shootCooldown = 0;
-                        this.shootDelay = 0.18;
-                        this.waveTimer = 0;
+                        this.shootCD = 0;
                     }
 
                     init(data) {
                         this.score = 0;
                         this.wave = 0;
-                        this.enemyCount = 0;
+                        this.enemies = [];
+                        this.bullets = [];
                         this.gameOver = false;
-                        this.gameOverTimer = 0;
-                        this.shootCooldown = 0;
-                        this.enemyIds = [];
-                        this.projectileIds = [];
-                        this.spawnTimer = 0;
-                        this.spawnInterval = 1.2;
-                        this.waveTimer = 0;
+                        this.shootCD = 0;
                     }
 
                     create() {
                         const ecs = this.game.ecs;
-                        const camera = this.game.camera;
-                        const renderer = this.game.renderer;
+                        const cam = this.game.camera;
 
                         // --- Joueur ---
-                        this.playerId = ecs.create();
-                        const p = this.playerId;
+                        this.player = ecs.create();
+                        const p = this.player;
                         ecs.x[p] = 400;
                         ecs.y[p] = 300;
-                        ecs.w[p] = 36;
-                        ecs.h[p] = 36;
-                        ecs.vx[p] = 0;
-                        ecs.vy[p] = 0;
+                        ecs.w[p] = 30;
+                        ecs.h[p] = 30;
                         ecs.color[p] = 0xFF44AAFF;
-                        ecs.alpha[p] = 1;
                         ecs.hp[p] = 100;
                         ecs.maxHp[p] = 100;
-                        ecs.mass[p] = 1;
-                        ecs.isSolid[p] = 1;
                         ecs.tag[p] = 1;
 
                         // --- Caméra ---
-                        camera.follow(ecs, p, 0.08);
-                        camera.setBounds(-100, -100, 1600, 1200);
-                        camera.zoom = 1;
+                        cam.follow(ecs, p, 0.08);
+                        cam.setBounds(-50, -50, 900, 700);
+                        cam.zoom = 1;
 
-                        // --- Système de particules ---
-                        this.particleSystem = new Vovoka(5000);
+                        // --- Particules ---
+                        this.particles = new Vovoka(3000);
 
-                        // --- UI ---
-                        this.healthBar = new UI.Bara(20, 20, 200, 18, {
+                        // --- Barre de vie ---
+                        this.hpBar = new UI.Bara(20, 20, 180, 16, {
                             max: 100,
                             value: 100,
                             bgColor: 0xCC222244,
                             fillColor: 0xFF44FF44
                         });
 
-                        // --- Premiers ennemis ---
-                        for (let i = 0; i < 4; i++) {
-                            this.spawnEnemy();
-                        }
+                        // --- Ennemis initiaux ---
+                        for (let i = 0; i < 4; i++) this.spawnEnemy();
 
-                        // --- Vagues automatiques ---
-                        this.game.timer.every(6000, () => {
+                        // --- Vagues ---
+                        this.game.timer.every(5000, () => {
                             if (!this.gameOver) {
                                 this.wave++;
-                                this.spawnInterval = Math.max(0.35, 1.2 - this.wave * 0.04);
-                                for (let i = 0; i < Math.min(3 + this.wave, 8); i++) {
+                                for (let i = 0; i < Math.min(2 + this.wave, 6); i++) {
                                     this.spawnEnemy();
                                 }
-                                this.game.camera.shake(4, 150);
+                                cam.shake(3, 120);
                                 Feo.mamorona('power');
                             }
                         });
@@ -264,332 +216,236 @@
 
                     spawnEnemy() {
                         const ecs = this.game.ecs;
-                        const camera = this.game.camera;
+                        const cam = this.game.camera.getBounds();
 
-                        if (this.enemyIds.length >= this.maxEnemies + this.wave * 2) return;
-
-                        const cam = camera.getBounds();
                         const side = Math.floor(Math.random() * 4);
                         let x, y;
                         const cx = cam.x + cam.w / 2;
                         const cy = cam.y + cam.h / 2;
-                        const halfW = cam.w / 2 + 120;
-                        const halfH = cam.h / 2 + 120;
 
                         switch (side) {
                             case 0:
-                                x = cx - halfW + Math.random() * 60;
-                                y = cy - halfH + Math.random() * 30 - 15;
+                                x = cx - cam.w / 2 - 20 + Math.random() * 40;
+                                y = cy - cam.h / 2 + Math.random() * cam.h;
                                 break;
                             case 1:
-                                x = cx + halfW - 60 + Math.random() * 60;
-                                y = cy - halfH + Math.random() * 30 - 15;
+                                x = cx + cam.w / 2 + 20 - Math.random() * 40;
+                                y = cy - cam.h / 2 + Math.random() * cam.h;
                                 break;
                             case 2:
-                                x = cx - halfW + Math.random() * 30 - 15;
-                                y = cy - halfH + Math.random() * 60;
+                                x = cx - cam.w / 2 + Math.random() * cam.w;
+                                y = cy - cam.h / 2 - 20 + Math.random() * 40;
                                 break;
                             case 3:
-                                x = cx - halfW + Math.random() * 30 - 15;
-                                y = cy + halfH - 60 + Math.random() * 60;
+                                x = cx - cam.w / 2 + Math.random() * cam.w;
+                                y = cy + cam.h / 2 + 20 - Math.random() * 40;
                                 break;
                         }
 
-                        x = Z.clamp(x, -50, 1600);
-                        y = Z.clamp(y, -50, 1200);
-
                         const id = ecs.create();
-                        const size = 20 + Math.random() * 16 + Math.min(this.wave * 0.5, 8);
-                        ecs.x[id] = x;
-                        ecs.y[id] = y;
+                        const size = 18 + Math.random() * 14;
+                        ecs.x[id] = Z.clamp(x, 20, 880);
+                        ecs.y[id] = Z.clamp(y, 20, 680);
                         ecs.w[id] = size;
                         ecs.h[id] = size;
-                        ecs.vx[id] = 0;
-                        ecs.vy[id] = 0;
                         ecs.color[id] = 0xFFFF6644;
-                        ecs.alpha[id] = 1;
-                        ecs.hp[id] = 1 + Math.floor(this.wave / 3);
+                        ecs.hp[id] = 1 + Math.floor(this.wave / 2);
                         ecs.maxHp[id] = ecs.hp[id];
-                        ecs.mass[id] = 0.5;
-                        ecs.isSolid[id] = 1;
                         ecs.tag[id] = 2;
-                        ecs._maxSpeed = Math.min(60 + this.wave * 4, 220);
-                        ecs._damage = 8 + Math.floor(this.wave / 2);
+                        ecs._speed = 50 + this.wave * 3;
+                        ecs._dmg = 8 + Math.floor(this.wave / 2);
 
-                        this.enemyIds.push(id);
-                        this.enemyCount++;
+                        this.enemies.push(id);
                     }
 
                     shoot(targetX, targetY) {
                         if (this.gameOver) return;
-                        if (this.shootCooldown > 0) return;
-                        if (this.playerId < 0 || !this.game.ecs.isAlive(this.playerId)) return;
+                        if (this.shootCD > 0) return;
+                        if (this.player < 0 || !this.game.ecs.isAlive(this.player)) return;
 
                         const ecs = this.game.ecs;
-                        const p = this.playerId;
+                        const p = this.player;
                         const px = ecs.x[p] + ecs.w[p] / 2;
                         const py = ecs.y[p] + ecs.h[p] / 2;
 
                         const angle = Math.atan2(targetY - py, targetX - px);
-                        const speed = 420;
+                        const speed = 400;
 
                         const id = ecs.create();
                         ecs.x[id] = px;
                         ecs.y[id] = py;
-                        ecs.w[id] = 8;
-                        ecs.h[id] = 8;
+                        ecs.w[id] = 6;
+                        ecs.h[id] = 6;
                         ecs.vx[id] = Math.cos(angle) * speed;
                         ecs.vy[id] = Math.sin(angle) * speed;
                         ecs.color[id] = 0xFF44FF88;
-                        ecs.alpha[id] = 1;
-                        ecs.hp[id] = 1;
                         ecs.tag[id] = 3;
-                        ecs.lifetime[id] = 1.8;
+                        ecs.lifetime[id] = 1.5;
 
-                        this.projectileIds.push(id);
-                        this.shootCooldown = this.shootDelay;
+                        this.bullets.push(id);
+                        this.shootCD = 0.15;
                         Feo.mamorona('laser');
-
-                        for (let i = 0; i < 6; i++) {
-                            const a = angle + (Math.random() - 0.5) * 0.8;
-                            const s = 60 + Math.random() * 80;
-                            this.particleSystem.emit(px, py, {
-                                count: 1,
-                                speedMin: s * 0.5,
-                                speedMax: s,
-                                angle: a,
-                                angleSpread: 0.3,
-                                lifeMin: 0.15,
-                                lifeMax: 0.35,
-                                sizeStart: 3,
-                                sizeEnd: 0,
-                                color: 0xFF44FF88,
-                                gravity: 0
-                            });
-                        }
                     }
 
                     update(dt, dtMs) {
                         if (this.gameOver) {
-                            this.gameOverTimer += dt;
-                            if (this.gameOverTimer > 1.5 && Fanindry.justPressed(' ')) {
-                                this.restartGame();
-                            }
+                            if (Fanindry.justPressed(' ')) this.restart();
                             return;
                         }
 
                         const ecs = this.game.ecs;
-                        const camera = this.game.camera;
-                        const dtF = dt;
+                        const cam = this.game.camera;
 
-                        if (this.shootCooldown > 0) this.shootCooldown -= dt;
+                        // Cooldown
+                        if (this.shootCD > 0) this.shootCD -= dt;
 
-                        // --- Mouvement joueur ---
-                        const p = this.playerId;
+                        // --- Joueur ---
+                        const p = this.player;
                         if (ecs.isAlive(p)) {
                             const axis = Fanindry.axis();
-                            const speed = 200;
-                            const targetVx = axis.x * speed;
-                            const targetVy = axis.y * speed;
-                            ecs.vx[p] = Z.approach(ecs.vx[p], targetVx, 800 * dt);
-                            ecs.vy[p] = Z.approach(ecs.vy[p], targetVy, 800 * dt);
+                            const speed = 180;
+                            ecs.vx[p] = Z.approach(ecs.vx[p], axis.x * speed, 600 * dt);
+                            ecs.vy[p] = Z.approach(ecs.vy[p], axis.y * speed, 600 * dt);
 
-                            const maxSpd = 250;
-                            const spd = Math.hypot(ecs.vx[p], ecs.vy[p]);
-                            if (spd > maxSpd) {
-                                ecs.vx[p] = (ecs.vx[p] / spd) * maxSpd;
-                                ecs.vy[p] = (ecs.vy[p] / spd) * maxSpd;
-                            }
-
-                            ecs.x[p] = Z.clamp(ecs.x[p] + ecs.vx[p] * dt, 20, 1580);
-                            ecs.y[p] = Z.clamp(ecs.y[p] + ecs.vy[p] * dt, 20, 1180);
+                            ecs.x[p] = Z.clamp(ecs.x[p] + ecs.vx[p] * dt, 20, 880);
+                            ecs.y[p] = Z.clamp(ecs.y[p] + ecs.vy[p] * dt, 20, 680);
 
                             // Tir
-                            const mx = Fanindry.mouse.worldX;
-                            const my = Fanindry.mouse.worldY;
                             if (Fanindry.mouse.justDown[0]) {
-                                this.shoot(mx, my);
+                                this.shoot(Fanindry.mouse.worldX, Fanindry.mouse.worldY);
                             }
-                            if (Fanindry.justPressed(' ') || Fanindry.justPressed('z')) {
-                                const dir = Vec2.fromAngle(Math.atan2(ecs.vy[p], ecs.vx[p]));
-                                if (dir.len() > 0.1) {
-                                    this.shoot(ecs.x[p] + dir.x * 100, ecs.y[p] + dir.y * 100);
+                            if (Fanindry.justPressed(' ')) {
+                                const dir = Math.atan2(ecs.vy[p], ecs.vx[p]);
+                                if (Math.hypot(ecs.vx[p], ecs.vy[p]) > 10) {
+                                    this.shoot(ecs.x[p] + Math.cos(dir) * 100, ecs.y[p] + Math.sin(dir) * 100);
                                 } else {
                                     this.shoot(ecs.x[p] + 50, ecs.y[p]);
                                 }
                             }
 
-                            this.healthBar.value = ecs.hp[p];
-                            this.healthBar.max = ecs.maxHp[p];
+                            this.hpBar.value = ecs.hp[p];
+                            this.hpBar.max = ecs.maxHp[p];
                         }
 
                         // --- IA ennemis ---
-                        const playerPos = ecs.isAlive(p) ? { x: ecs.x[p], y: ecs.y[p] } : null;
-                        const toRemove = [];
-                        for (let i = 0; i < this.enemyIds.length; i++) {
-                            const e = this.enemyIds[i];
-                            if (!ecs.isAlive(e)) {
-                                toRemove.push(i);
-                                continue;
-                            }
+                        const pPos = ecs.isAlive(p) ? { x: ecs.x[p], y: ecs.y[p] } : null;
+                        const dead = [];
+                        for (let i = 0; i < this.enemies.length; i++) {
+                            const e = this.enemies[i];
+                            if (!ecs.isAlive(e)) { dead.push(i); continue; }
 
-                            if (playerPos) {
-                                const dx = playerPos.x - ecs.x[e];
-                                const dy = playerPos.y - ecs.y[e];
-                                const dist = Math.hypot(dx, dy);
-                                if (dist > 1) {
-                                    const speed = ecs._maxSpeed || 80;
-                                    const accel = 120 + this.wave * 5;
-                                    const normX = dx / dist;
-                                    const normY = dy / dist;
-                                    ecs.vx[e] = Z.approach(ecs.vx[e], normX * speed, accel * dt);
-                                    ecs.vy[e] = Z.approach(ecs.vy[e], normY * speed, accel * dt);
+                            if (pPos) {
+                                const dx = pPos.x - ecs.x[e];
+                                const dy = pPos.y - ecs.y[e];
+                                const d = Math.hypot(dx, dy);
+                                if (d > 1) {
+                                    const spd = ecs._speed || 60;
+                                    ecs.vx[e] = Z.approach(ecs.vx[e], (dx / d) * spd, 100 * dt);
+                                    ecs.vy[e] = Z.approach(ecs.vy[e], (dy / d) * spd, 100 * dt);
                                 }
                             }
-
-                            ecs.x[e] = Z.clamp(ecs.x[e] + ecs.vx[e] * dt, 10, 1590);
-                            ecs.y[e] = Z.clamp(ecs.y[e] + ecs.vy[e] * dt, 10, 1190);
+                            ecs.x[e] = Z.clamp(ecs.x[e] + ecs.vx[e] * dt, 10, 890);
+                            ecs.y[e] = Z.clamp(ecs.y[e] + ecs.vy[e] * dt, 10, 690);
                         }
-
-                        for (let i = toRemove.length - 1; i >= 0; i--) {
-                            this.enemyIds.splice(toRemove[i], 1);
-                            this.enemyCount--;
+                        for (let i = dead.length - 1; i >= 0; i--) {
+                            this.enemies.splice(dead[i], 1);
                         }
 
                         // --- Projectiles ---
-                        const projToRemove = [];
-                        for (let i = 0; i < this.projectileIds.length; i++) {
-                            const pr = this.projectileIds[i];
-                            if (!ecs.isAlive(pr)) {
-                                projToRemove.push(i);
-                                continue;
-                            }
+                        const deadBullets = [];
+                        for (let i = 0; i < this.bullets.length; i++) {
+                            const b = this.bullets[i];
+                            if (!ecs.isAlive(b)) { deadBullets.push(i); continue; }
 
-                            ecs.x[pr] += ecs.vx[pr] * dt;
-                            ecs.y[pr] += ecs.vy[pr] * dt;
+                            ecs.x[b] += ecs.vx[b] * dt;
+                            ecs.y[b] += ecs.vy[b] * dt;
 
-                            ecs.lifetime[pr] -= dt;
-                            if (ecs.lifetime[pr] <= 0) {
-                                ecs.destroy(pr);
-                                projToRemove.push(i);
-                                continue;
-                            }
-
-                            if (ecs.x[pr] < -50 || ecs.x[pr] > 1650 || ecs.y[pr] < -50 || ecs.y[pr] > 1250) {
-                                ecs.destroy(pr);
-                                projToRemove.push(i);
+                            ecs.lifetime[b] -= dt;
+                            if (ecs.lifetime[b] <= 0 || ecs.x[b] < -50 || ecs.x[b] > 950 || ecs.y[b] < -50 || ecs.y[b] >
+                                750) {
+                                ecs.destroy(b);
+                                deadBullets.push(i);
                             }
                         }
-                        for (let i = projToRemove.length - 1; i >= 0; i--) {
-                            this.projectileIds.splice(projToRemove[i], 1);
+                        for (let i = deadBullets.length - 1; i >= 0; i--) {
+                            this.bullets.splice(deadBullets[i], 1);
                         }
 
-                        // --- Collisions projectile → ennemi ---
-                        for (const pr of this.projectileIds) {
-                            if (!ecs.isAlive(pr)) continue;
-                            const px = ecs.x[pr],
-                                py = ecs.y[pr];
-                            const pw = ecs.w[pr] || 8,
-                                ph = ecs.h[pr] || 8;
-                            for (const e of this.enemyIds) {
+                        // --- Collisions bullet → enemy ---
+                        for (const b of this.bullets) {
+                            if (!ecs.isAlive(b)) continue;
+                            for (const e of this.enemies) {
                                 if (!ecs.isAlive(e)) continue;
-                                if (Fizika.rectVsRect(px, py, pw, ph, ecs.x[e], ecs.y[e], ecs.w[e], ecs.h[e])) {
-                                    ecs.hp[e] -= 1;
+                                if (Fizika.rectVsRect(ecs.x[b], ecs.y[b], ecs.w[b], ecs.h[b],
+                                        ecs.x[e], ecs.y[e], ecs.w[e], ecs.h[e])) {
+                                    ecs.hp[e]--;
                                     if (ecs.hp[e] <= 0) {
                                         ecs.destroy(e);
                                         this.score++;
-                                        this.enemyCount--;
+                                        // Effet
                                         const cx = ecs.x[e] + ecs.w[e] / 2;
                                         const cy = ecs.y[e] + ecs.h[e] / 2;
-                                        for (let j = 0; j < 20; j++) {
+                                        for (let j = 0; j < 15; j++) {
                                             const a = Math.random() * Math.PI * 2;
-                                            const s = 50 + Math.random() * 120;
-                                            this.particleSystem.emit(cx, cy, {
+                                            const s = 40 + Math.random() * 100;
+                                            this.particles.emit(cx, cy, {
                                                 count: 1,
                                                 speedMin: s * 0.4,
                                                 speedMax: s,
                                                 angle: a,
                                                 angleSpread: 0.6,
                                                 lifeMin: 0.2,
-                                                lifeMax: 0.6,
-                                                sizeStart: 6 + Math.random() * 6,
+                                                lifeMax: 0.5,
+                                                sizeStart: 4 + Math.random() * 6,
                                                 sizeEnd: 0,
                                                 color: 0xFFFF6644,
-                                                gravity: 60
+                                                gravity: 50
                                             });
                                         }
                                         Feo.mamorona('hit');
-                                        this.game.camera.shake(3, 100);
-
-                                        if (Math.random() < 0.12 && ecs.isAlive(this.playerId)) {
-                                            ecs.hp[this.playerId] = Math.min(ecs.maxHp[this.playerId],
-                                                ecs.hp[this.playerId] + 8);
-                                            Feo.mamorona('pickup');
-                                        }
+                                        cam.shake(2, 80);
                                     }
-                                    ecs.destroy(pr);
+                                    ecs.destroy(b);
                                     break;
                                 }
                             }
                         }
 
-                        // --- Collisions ennemi → joueur ---
+                        // --- Collisions enemy → player ---
                         if (ecs.isAlive(p)) {
-                            const pRect = { x: ecs.x[p], y: ecs.y[p], w: ecs.w[p] || 36, h: ecs.h[p] || 36 };
-                            for (const e of this.enemyIds) {
+                            for (const e of this.enemies) {
                                 if (!ecs.isAlive(e)) continue;
-                                if (Fizika.rectVsRect(pRect.x, pRect.y, pRect.w, pRect.h,
+                                if (Fizika.rectVsRect(ecs.x[p], ecs.y[p], ecs.w[p], ecs.h[p],
                                         ecs.x[e], ecs.y[e], ecs.w[e], ecs.h[e])) {
-                                    const dmg = ecs._damage || 10;
-                                    ecs.hp[p] -= dmg;
+                                    ecs.hp[p] -= ecs._dmg || 10;
                                     const dx = ecs.x[e] - ecs.x[p];
                                     const dy = ecs.y[e] - ecs.y[p];
                                     const d = Math.hypot(dx, dy) || 1;
-                                    ecs.x[e] += (dx / d) * 30;
-                                    ecs.y[e] += (dy / d) * 30;
-                                    ecs.vx[e] += (dx / d) * 80;
-                                    ecs.vy[e] += (dy / d) * 80;
+                                    ecs.x[e] += (dx / d) * 20;
+                                    ecs.y[e] += (dy / d) * 20;
                                     Feo.mamorona('hit');
-                                    this.game.camera.shake(5, 120);
-                                    for (let j = 0; j < 12; j++) {
-                                        const a = Math.random() * Math.PI * 2;
-                                        const s = 40 + Math.random() * 80;
-                                        this.particleSystem.emit(ecs.x[p] + pRect.w / 2, ecs.y[p] + pRect.h / 2, {
-                                            count: 1,
-                                            speedMin: s * 0.3,
-                                            speedMax: s,
-                                            angle: a,
-                                            angleSpread: 1,
-                                            lifeMin: 0.2,
-                                            lifeMax: 0.6,
-                                            sizeStart: 5 + Math.random() * 5,
-                                            sizeEnd: 0,
-                                            color: 0xFFFF4444,
-                                            gravity: 40
-                                        });
-                                    }
+                                    cam.shake(4, 100);
 
                                     if (ecs.hp[p] <= 0) {
                                         ecs.hp[p] = 0;
                                         this.gameOver = true;
-                                        this.gameOverTimer = 0;
                                         ecs.alpha[p] = 0.3;
                                         Feo.mamorona('explode');
-                                        for (let j = 0; j < 30; j++) {
+                                        for (let j = 0; j < 25; j++) {
                                             const a = Math.random() * Math.PI * 2;
-                                            const s = 60 + Math.random() * 150;
-                                            this.particleSystem.emit(ecs.x[p] + pRect.w / 2, ecs.y[p] + pRect.h / 2, {
+                                            const s = 50 + Math.random() * 150;
+                                            this.particles.emit(ecs.x[p] + ecs.w[p] / 2, ecs.y[p] + ecs.h[p] / 2, {
                                                 count: 1,
                                                 speedMin: s * 0.3,
                                                 speedMax: s,
                                                 angle: a,
                                                 angleSpread: 1.2,
                                                 lifeMin: 0.3,
-                                                lifeMax: 0.9,
-                                                sizeStart: 8 + Math.random() * 8,
+                                                lifeMax: 0.8,
+                                                sizeStart: 6 + Math.random() * 8,
                                                 sizeEnd: 0,
                                                 color: 0xFF44AAFF,
-                                                gravity: 30
+                                                gravity: 20
                                             });
                                         }
                                     }
@@ -598,23 +454,19 @@
                             }
                         }
 
-                        // --- Mise à jour particules ---
-                        this.particleSystem.update(dt);
+                        // --- Particules ---
+                        this.particles.update(dt);
                     }
 
-                    restartGame() {
+                    restart() {
                         this.gameOver = false;
-                        this.gameOverTimer = 0;
                         this.score = 0;
                         this.wave = 0;
-                        this.enemyCount = 0;
-                        this.enemyIds = [];
-                        this.projectileIds = [];
-                        this.spawnTimer = 0;
-                        this.spawnInterval = 1.2;
+                        this.enemies = [];
+                        this.bullets = [];
 
                         const ecs = this.game.ecs;
-                        const p = this.playerId;
+                        const p = this.player;
                         if (ecs.isAlive(p)) {
                             ecs.hp[p] = ecs.maxHp[p];
                             ecs.x[p] = 400;
@@ -622,117 +474,62 @@
                             ecs.vx[p] = 0;
                             ecs.vy[p] = 0;
                             ecs.alpha[p] = 1;
-                        } else {
-                            this.playerId = ecs.create();
-                            const p2 = this.playerId;
-                            ecs.x[p2] = 400;
-                            ecs.y[p2] = 300;
-                            ecs.w[p2] = 36;
-                            ecs.h[p2] = 36;
-                            ecs.vx[p2] = 0;
-                            ecs.vy[p2] = 0;
-                            ecs.color[p2] = 0xFF44AAFF;
-                            ecs.alpha[p2] = 1;
-                            ecs.hp[p2] = 100;
-                            ecs.maxHp[p2] = 100;
-                            ecs.mass[p2] = 1;
-                            ecs.isSolid[p2] = 1;
-                            ecs.tag[p2] = 1;
-                            this.game.camera.follow(ecs, p2, 0.08);
                         }
 
-                        for (let i = 0; i < 4; i++) {
-                            this.spawnEnemy();
-                        }
-
-                        this.game.camera.shake(8, 200);
+                        for (let i = 0; i < 4; i++) this.spawnEnemy();
+                        this.game.camera.shake(6, 150);
                         Feo.mamorona('power');
                     }
 
                     render(renderer, camera) {
                         const ecs = this.game.ecs;
 
-                        // Dessiner les entités
-                        const allIds = [];
-                        if (this.playerId >= 0 && ecs.isAlive(this.playerId)) {
-                            allIds.push(this.playerId);
-                        }
-                        for (const e of this.enemyIds) {
-                            if (ecs.isAlive(e)) allIds.push(e);
-                        }
-                        for (const p of this.projectileIds) {
-                            if (ecs.isAlive(p)) allIds.push(p);
-                        }
+                        // Entités
+                        const draw = (id) => {
+                            if (!ecs.isAlive(id)) return;
+                            const x = ecs.x[id],
+                                y = ecs.y[id];
+                            const w = ecs.w[id] || 20,
+                                h = ecs.h[id] || 20;
+                            const c = ecs.color[id] || 0xFFFFFFFF;
+                            const a = ecs.alpha[id] || 1;
+                            const col = ((c >>> 24) << 24) | ((c >>> 16) << 16) | ((c >>> 8) << 8) | Math.floor(a * 255);
+                            renderer.drawRect(x, y, w, h, col);
+                        };
 
-                        for (const id of allIds) {
-                            const x = ecs.x[id];
-                            const y = ecs.y[id];
-                            const w = ecs.w[id] || 20;
-                            const h = ecs.h[id] || 20;
-                            const color = ecs.color[id] || 0xFFFFFFFF;
-                            const alpha = ecs.alpha[id] || 1;
-
-                            // Pack color avec alpha
-                            const r = (color >>> 24) & 0xFF;
-                            const g = (color >>> 16) & 0xFF;
-                            const b = (color >>> 8) & 0xFF;
-                            const packedColor = (r << 24) | (g << 16) | (b << 8) | Math.floor(alpha * 255);
-
-                            renderer.drawRect(x, y, w, h, packedColor);
-
-                            // Bordure pour les ennemis
-                            if (ecs.tag[id] === 2) {
-                                renderer.drawRect(x - 1, y - 1, w + 2, 2, 0x33FF8844);
-                                renderer.drawRect(x - 1, y + h, w + 2, 2, 0x33FF8844);
-                                renderer.drawRect(x - 1, y, 2, h, 0x33FF8844);
-                                renderer.drawRect(x + w - 1, y, 2, h, 0x33FF8844);
-                            }
-                        }
+                        if (this.player >= 0) draw(this.player);
+                        for (const e of this.enemies) draw(e);
+                        for (const b of this.bullets) draw(b);
                     }
 
                     renderUI(renderer) {
-                        // Barre de vie
-                        if (this.healthBar) {
-                            this.healthBar.render(renderer);
-                        }
+                        if (this.hpBar) this.hpBar.render(renderer);
 
-                        // Score et vague
-                        const info = `Score: ${this.score}  ·  Vague: ${this.wave}  ·  Ennemis: ${this.enemyCount}`;
-                        renderer.drawRect(20, 50, 300, 24, 0x88000000);
-                        // On simule du texte avec des rectangles (pour l'exemple)
-                        // Dans la vraie version on utiliserait un système de texte
-                        renderer.drawRect(24, 54, 292, 16, 0x44FFFFFF);
+                        // Score
+                        renderer.drawRect(20, 50, 220, 22, 0x88000000);
+                        renderer.drawRect(22, 52, 216, 18, 0x44FFFFFF);
 
                         // Game Over
                         if (this.gameOver) {
-                            renderer.drawRect(200, 220, 400, 120, 0xCC000000);
-                            renderer.drawRect(210, 230, 380, 100, 0xCCFF2244);
-                            // Message
-                            const msg = '💀 GAME OVER 💀\nScore: ' + this.score +
-                                '\nAppuie sur ESPACE pour recommencer';
-                            // Dessin approximatif du texte
-                            renderer.drawRect(240, 270, 320, 4, 0xFFFFFFFF);
-                            renderer.drawRect(240, 290, 200, 4, 0xFFFFFFFF);
-                            renderer.drawRect(240, 310, 280, 4, 0xFFFFFFFF);
+                            renderer.drawRect(180, 200, 340, 120, 0xCC000000);
+                            renderer.drawRect(190, 210, 320, 100, 0xCCFF2244);
+                            renderer.drawRect(230, 250, 240, 4, 0xFFFFFFFF);
+                            renderer.drawRect(230, 270, 180, 4, 0xFFFFFFFF);
+                            renderer.drawRect(230, 290, 260, 4, 0xFFFFFFFF);
                         }
                     }
                 }
 
-                // ====================================================
-                //  2. LANCEMENT DU JEU
-                // ====================================================
-
-                // Créer l'instance du jeu
-                const game = new R.Lalao(window.innerWidth, window.innerHeight, {
-                    maxEntities: 30000,
-                    gameKey: 'survival_arena'
+                // --------------------------------------------------------
+                //  LANCEMENT
+                // --------------------------------------------------------
+                const game = new Lalao(window.innerWidth, window.innerHeight, {
+                    maxEntities: 20000,
+                    gameKey: 'demo'
                 });
 
-                // Ajouter la scène
-                game.addScene('arena', SurvivalArena);
-
-                // Démarrer
-                game.start('arena');
+                game.addScene('demo', DemoScene);
+                game.start('demo');
 
                 // Redimensionnement
                 window.addEventListener('resize', () => {
@@ -743,15 +540,9 @@
                     game.camera.viewH = window.innerHeight;
                 });
 
-                // Gérer le focus (pour le clavier)
-                window.addEventListener('click', () => {
-                    if (game.canvas) game.canvas.focus();
-                });
-
-                console.log('🎮 Survival Arena lancé !');
+                console.log('🎮 Demo Rakitrakatra V4 lancée !');
             }
         })();
     </script>
-
 </body>
 </html>
