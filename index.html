@@ -2,309 +2,305 @@
 <html lang="mg">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RAKITRAKATRA V4 - Ady Goavana - Demo Tena Miasa</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>RAKITRAKATRA V4 - Ady Goavana Demo</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{background:#07070d;color:#e8ffe8;font-family:ui-monospace,Menlo,monospace;overflow-x:hidden}
-  header{padding:24px 32px;border-bottom:1px solid #1a1a2a;display:flex;justify-content:space-between;align-items:center}
-  h1{font-size:22px;letter-spacing:0.15em;color:#00ff88;text-shadow:0 0 12px #00ff88}
-  h1 span{color:#b44dff}
-  .sub{font-size:11px;opacity:0.6;margin-top:4px}
-  .wrap{max-width:1120px;margin:0 auto;padding:20px;display:grid;grid-template-columns:220px 1fr 220px;gap:16px}
-  .panel{background:#12121f;border:1px solid #222236;border-radius:12px;padding:14px;font-size:12px;line-height:1.6}
-  .panel h3{font-size:11px;letter-spacing:0.2em;color:#00ff88;margin-bottom:8px}
-  canvas{background:#0a0a14;display:block;width:100%;border-radius:12px;border:1px solid #00ff8844;box-shadow:0 0 40px #00ff8815, inset 0 0 80px #000}
-  #hud{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
-  .chip{background:#1a1a2e;border:1px solid #2a2a4a;border-radius:999px;padding:4px 10px;font-size:10px}
-  .chip b{color:#00ff88}
-  button{background:#00ff88;color:#000;border:none;padding:8px 12px;border-radius:8px;font-weight:700;font-size:11px;cursor:pointer;letter-spacing:0.05em}
-  button:hover{background:#b44dff;color:#fff}
-  button.sec{background:#1e1e32;color:#aaffcc;border:1px solid #2a3a4a}
-  .hp{height:6px;background:#222;border-radius:999px;overflow:hidden;margin-top:4px}
-  .hp i{display:block;height:100%;background:linear-gradient(90deg,#00ff88,#b4ff00);width:100%}
-  .log{height:120px;overflow-y:auto;font-size:10px;opacity:0.7}
-  @media(max-width:980px){.wrap{grid-template-columns:1fr}.panel{order:2} .game{order:1}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#050510;color:#eafff0;font-family:ui-monospace,Consolas,monospace;overflow:hidden}
+header{height:56px;background:#0e0e1e;border-bottom:1px solid #1e1e3a;display:flex;align-items:center;justify-content:space-between;padding:0 18px}
+header b{color:#00ff88;letter-spacing:.18em;font-size:18px}
+header b span{color:#b44dff}
+header small{opacity:.5;font-size:10px}
+#wrap{display:flex;height:calc(100vh - 56px)}
+#left{width:260px;background:#0a0a18;border-right:1px solid #1e1e3a;padding:12px;overflow-y:auto}
+#center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at center,#11112a 0%,#050510 80%);padding:12px}
+canvas{background:#08081a;border:1px solid #00ff8840;border-radius:14px;box-shadow:0 0 60px #00ff8815, 0 0 0 1px #000;width:100%;max-width:960px;aspect-ratio:16/9;touch-action:none}
+#hud{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center}
+.chip{background:#15152e;border:1px solid #2a2a5a;border-radius:999px;padding:4px 10px;font-size:11px}
+.chip b{color:#00ff88}
+button{width:100%;padding:10px;border-radius:10px;border:1px solid #2a2a5a;background:#15152e;color:#aaffcc;font-size:11px;font-weight:700;cursor:pointer;margin-top:8px;text-align:left}
+button:hover{border-color:#00ff88;color:#00ff88}
+button.primary{background:#00ff88;color:#000;border:none;text-align:center}
+button.primary:hover{background:#b44dff;color:#fff}
+h3{font-size:10px;color:#00ff88;letter-spacing:.2em;margin:16px 0 8px}
+h3:first-child{margin-top:0}
+kbd{background:#1e1e3a;border:1px solid #333;padding:1px 5px;border-radius:3px;font-size:10px}
+.log{font-size:10px;opacity:.6;line-height:1.5;max-height:120px;overflow:auto}
+#hpwrap{width:100%;max-width:960px;margin-top:10px;display:flex;gap:10px;align-items:center}
+.hpbar{flex:1;height:8px;background:#1a1a32;border-radius:999px;overflow:hidden}
+.hpbar i{display:block;height:100%;background:linear-gradient(90deg,#00ff88,#a3ff12);width:100%;transition:.15s}
+@media(max-width:900px){#left{display:none}#wrap{flex-direction:column}#center{padding:8px}}
 </style>
 </head>
 <body>
 <header>
-  <div>
-    <h1>RAKITRAKATRA <span>V4 ADY GOAVANA</span></h1>
-    <div class="sub">Moteur 2D Malagasy • WebGL2 + ECS (SoA) + Spatial Hash • © 2026 MIT • Mr-Maharo</div>
-  </div>
-  <div style="text-align:right;font-size:10px;opacity:0.5">Efa mampiasa mivantana ny moteranao<br>Vec2 • Z • ECS • HashSpatial • Dobo • Mpanamora</div>
+  <div><b>RAKITRAKATRA <span>V4 ADY GOAVANA</span></b><br><small style="color:#777">Moteur 2D Malagasy • WebGL2 + ECS • https://mr-maharo.github.io/rakitrakatra/</small></div>
+  <small id="engineBadge" style="background:#222;padding:4px 8px;border-radius:999px">loading engine...</small>
 </header>
-
-<div class="wrap">
-  <div class="panel">
-    <h3>FANAZAVANA</h3>
-    <b style="color:#00ff88">WASD / ZQSD</b> - Mihetsika<br>
-    <b>Mouse / Click</b> - Mamely (punch)<br>
-    <b>Space</b> - Dash mitsambikina<br>
-    <b>G</b> - Grid HashSpatial<br>
-    <b>R</b> - Reset<br><br>
-    <h3>INONA NO MAMPIASA MOTERA?</h3>
-    • <b>ECS</b> - id, x,y,vx,vy,w,h,hp, team<br>
-    • <b>HashSpatial(64)</b> - broadphase collision<br>
-    • <b>Z.dist / angle / lerp</b> - kajy rehetra<br>
-    • <b>Vec2</b> - direction & knockback<br>
-    • <b>Dobo</b> - object pool particules<br>
-    • <b>Mpanamora</b> - easing punch elasticOut<br>
-    • <b>Famataranandro</b> - timer spawn<br>
-    • <b>Hetsika</b> - event onHit onDeath<br>
-    <div style="margin-top:12px">
-      <button id="btnAdd">MAMORONA FAHAVALO +5</button>
-      <button class="sec" id="btnGrid">GRID: ON</button>
-      <button class="sec" id="btnReset">RESET</button>
+<div id="wrap">
+  <div id="left">
+    <h3>CONTROLS</h3>
+    <div style="font-size:12px;line-height:1.9">
+      <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>Z</kbd><kbd>Q</kbd> mihetsika<br>
+      <kbd>Mouse</kbd> + <kbd>Click</kbd> mamely<br>
+      <kbd>Space</kbd> dash<br>
+      <kbd>G</kbd> grid HashSpatial<br>
+      <kbd>R</kbd> reset
     </div>
-  </div>
-
-  <div class="game">
-    <canvas id="c" width="640" height="400"></canvas>
-    <div id="hud">
-      <div class="chip">FPS: <b id="fps">0</b></div>
-      <div class="chip">Entities: <b id="ent">0</b></div>
-      <div class="chip">Grid Cells: <b id="cells">0</b></div>
-      <div class="chip">Pool free: <b id="pool">0</b></div>
-      <div class="chip">Score: <b id="score">0</b></div>
+    <h3>ACTIONS</h3>
+    <button class="primary" id="btnAdd">+5 FAHAVALO (ECS.create)</button>
+    <button id="btnGrid">GRID HashSpatial: ON</button>
+    <button id="btnBoom">DOBO particules +150</button>
+    <button id="btnReset">RESET</button>
+    <h3>MOTERA FOIBE</h3>
+    <div style="font-size:11px;line-height:1.6;opacity:.8">
+      Mampiasa mivantana avy amin'ny<br>
+      <code>https://mr-maharo.github.io/rakitrakatra/rakitrakatra.js</code><br><br>
+      • Z.lerp/clamp/dist/angle/rand<br>
+      • Vec2, Mat2D, Rect, Cercle<br>
+      • ECS SoA 100k entities<br>
+      • HashSpatial, Quadtree<br>
+      • Dobo pool, Hetsika, PRNG<br>
+      • Mpanamora 30+ easing<br>
+      • Tabataba Perlin/FBM
     </div>
-    <div class="panel" style="margin-top:12px;display:flex;gap:12px;align-items:center">
-      <div style="flex:1">HP Mpitolona Mena
-        <div class="hp"><i id="hpbar"></i></div>
-      </div>
-      <div style="font-size:10px;opacity:0.6" id="status">Miandry...</div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <h3>DEBUG LIVE</h3>
+    <h3>LOG</h3>
     <div class="log" id="log"></div>
-    <h3 style="margin-top:12px">CODE SNIPPET</h3>
-<pre style="font-size:9px;opacity:0.6;white-space:pre-wrap">const ecs = new ECS(10000);
-const grid = new HashSpatial(64);
-const pool = new Dobo(()=>({x:0,y:0}), reset, 200);
-
-function loop(dt){
-  grid.clear();
-  ecs.forEach(id=>{
-    grid.insert(id, ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id]);
-  });
-  const near = grid.query(x,y,w,h);
-  // Z.dist, Vec2
-}</pre>
+  </div>
+  <div id="center">
+    <canvas id="game" width="960" height="540"></canvas>
+    <div id="hud">
+      <div class="chip">FPS <b id="fps">0</b></div>
+      <div class="chip">ENT <b id="ent">0</b></div>
+      <div class="chip">CELLS <b id="cells">0</b></div>
+      <div class="chip">POOL <b id="pool">0</b></div>
+      <div class="chip">SCORE <b id="score">0</b></div>
+    </div>
+    <div id="hpwrap">
+      <span style="font-size:11px">HP MENA</span>
+      <div class="hpbar"><i id="hpbar"></i></div>
+      <span style="font-size:10px;opacity:.5" id="dbg"></span>
+    </div>
   </div>
 </div>
 
-<!-- MAMPIDITRA ILAY MOTERAO MIVANTANA -->
-<script src="rakitrakatra.js"></script>
+<!-- MAMPIASA MIVANTANA ILAY JS ANAO AVY AMIN'NY GITHUB PAGES -->
+<script src="https://mr-maharo.github.io/rakitrakatra/rakitrakatra.js"></script>
 <script>
-// Rakitrakatra V4 dia IIFE, mamoaka global: Z, Vec2, ECS, HashSpatial, Dobo, Mpanamora, etc.
-// Raha tsy tafiditra (CORS), fallback minimal mitovy API
-function waitForEngine(cb){
-  let tries=0;
-  const it=setInterval(()=>{
-    tries++;
-    if(window.Z && window.ECS && window.Vec2){
-      clearInterval(it); cb(true);
-    } else if(tries>30){
-      clearInterval(it); cb(false);
+// Miandry engine ho loaded
+(function(){
+  const $=id=>document.getElementById(id);
+  const logEl=$('log');
+  const log=m=>{ logEl.innerHTML=`<div>> ${m}</div>`+logEl.innerHTML; };
+
+  function init(){
+    if(!window.Z || !window.Vec2 || !window.ECS){
+      $('engineBadge').textContent='❌ rakitrakatra.js tsy hita';
+      $('engineBadge').style.background='#440000';
+      log('❌ Tsy voa-load ny rakitrakatra.js - jereo network');
+      return;
     }
-  },100);
-}
+    $('engineBadge').textContent='✅ RAKITRAKATRA V4 LOADED (4851 lines)';
+    $('engineBadge').style.background='#00ff8840';
+    $('engineBadge').style.color='#00ff88';
+    log('✅ Motera loaded - Z, Vec2, ECS, HashSpatial, Dobo, Mpanamora, Hetsika, Famataranandro, Tabataba OK');
 
-waitForEngine((loaded)=>{
-  const logEl=document.getElementById('log');
-  function slog(s){ logEl.innerHTML = `<div>[${new Date().toLocaleTimeString()}] ${s}</div>` + logEl.innerHTML; }
+    const Z=window.Z, Vec2=window.Vec2, ECS=window.ECS, HashSpatial=window.HashSpatial, Dobo=window.Dobo;
+    const Mpanamora=window.Mpanamora || {linear:t=>t, elasticOut:t=>t};
+    
+    const canvas=$('game'), ctx=canvas.getContext('2d');
+    const ecs=new ECS(10000);
+    const grid=new HashSpatial(64);
+    const pool=new Dobo(()=>({x:0,y:0,vx:0,vy:0,life:0}), (o,x,y)=>{o.x=x;o.y=y;o.vx=Z.rand(-260,260);o.vy=Z.rand(-260,260);o.life=1;}, 500);
 
-  if(loaded) slog("✅ MOTERA RAKITRAKATRA V4 VOATAINGA - mampiasa direct CDN");
-  else {
-    slog("⚠️ CDN tsy tafiditra, mampiasa fallback mitovy API (kopian'ny moteranao)");
-    // ---- FALLBACK MINIMAL mitovy API ----
-    window.Z = window.Z || {
-      lerp:(a,b,t)=>a+(b-a)*t, clamp:(v,mn,mx)=>Math.max(mn,Math.min(mx,v)),
-      dist:(x1,y1,x2,y2)=>Math.hypot(x2-x1,y2-y1), distSq:(x1,y1,x2,y2)=>(x2-x1)*(x2-x1)+(y2-y1)*(y2-y1),
-      angle:(x1,y1,x2,y2)=>Math.atan2(y2-y1,x2-x1), rand:(a,b)=>Math.random()*(b-a)+a, randInt:(a,b)=>Math.floor(Math.random()*(b-a+1))+a
-    };
-    window.Vec2 = window.Vec2 || class{constructor(x=0,y=0){this.x=x;this.y=y} set(x,y){this.x=x;this.y=y;return this} copy(){return new Vec2(this.x,this.y)} add(v){this.x+=v.x;this.y+=v.y;return this} mulScalar(s){this.x*=s;this.y*=s;return this} len(){return Math.hypot(this.x,this.y)} normalize(){let l=this.len()||1;this.x/=l;this.y/=l;return this} static fromAngle(a,l=1){return new Vec2(Math.cos(a)*l,Math.sin(a)*l)}};
-    window.ECS = window.ECS || class{constructor(m=10000){this.max=m;this.count=0;this.x=new Float32Array(m);this.y=new Float32Array(m);this.vx=new Float32Array(m);this.vy=new Float32Array(m);this.w=new Float32Array(m);this.h=new Float32Array(m);this.hp=new Float32Array(m);this.team=new Uint8Array(m);this.alive=new Uint8Array(m);this.id=new Uint32Array(m)} create(){const id=this.count++;this.alive[id]=1;this.w[id]=16;this.h[id]=16;this.hp[id]=1;return id} forEach(fn){for(let i=0;i<this.count;i++) if(this.alive[i]) fn(i)} destroy(id){this.alive[id]=0}};
-    window.HashSpatial = window.HashSpatial || class{constructor(cs=64){this.cellSize=cs;this.cells=new Map()} clear(){this.cells.clear()} _key(x,y){return (Math.floor(x/this.cellSize)*73856093)^(Math.floor(y/this.cellSize)*19349663)} insert(id,x,y,w,h){const minCX=Math.floor(x/this.cellSize),maxCX=Math.floor((x+w)/this.cellSize),minCY=Math.floor(y/this.cellSize),maxCY=Math.floor((y+h)/this.cellSize);for(let cx=minCX;cx<=maxCX;cx++) for(let cy=minCY;cy<=maxCY;cy++){const k=(cx*73856093)^(cy*19349663);let a=this.cells.get(k);if(!a){a=[];this.cells.set(k,a)}a.push(id)}} query(x,y,w,h){const s=new Set();const minCX=Math.floor(x/this.cellSize),maxCX=Math.floor((x+w)/this.cellSize),minCY=Math.floor(y/this.cellSize),maxCY=Math.floor((y+h)/this.cellSize);for(let cx=minCX;cx<=maxCX;cx++) for(let cy=minCY;cy<=maxCY;cy++){const k=(cx*73856093)^(cy*19349663);const a=this.cells.get(k);if(a) for(let v of a) s.add(v)}return s}};
-    window.Dobo = window.Dobo || class{constructor(f,r,n=32){this.factory=f;this.reset=r;this.free=[];this.used=new Set();for(let i=0;i<n;i++) this.free.push(f())} alaina(...a){if(!this.free.length) for(let i=0;i<8;i++) this.free.push(this.factory());const o=this.free.pop();if(this.reset) this.reset(o,...a);this.used.add(o);return o} avereno(o){if(this.used.delete(o)) this.free.push(o)}};
-    window.Mpanamora = window.Mpanamora || { linear:t=>t, elasticOut:t=>{if(t===0||t===1)return t;return Math.pow(2,-10*t)*Math.sin((t-0.075)*6.283185/0.3)+1}, quadOut:t=>1-(1-t)*(1-t) };
-    window.Hetsika = window.Hetsika || class{constructor(){this.m=new Map()} on(k,f){if(!this.m.has(k)) this.m.set(k,[]);this.m.get(k).push(f)} emit(k,...a){(this.m.get(k)||[]).forEach(fn=>fn(...a))}};
-  }
+    let keys={}, mouse={x:480,y:270}, score=0, showGrid=true, shake=0, playerId=null, last=performance.now(), fps=0, frame=0;
 
-  // ---- LALAO TENA MAMPIASA MOTERA ----
-  const Z=window.Z, Vec2=window.Vec2, ECS=window.ECS, HashSpatial=window.HashSpatial, Dobo=window.Dobo, Mpanamora=window.Mpanamora;
-  const c=document.getElementById('c'), ctx=c.getContext('2d');
-  const ecs=new ECS(5000);
-  const grid=new HashSpatial(64);
-  const pool=new Dobo(()=>({x:0,y:0,vx:0,vy:0,life:0,col:'#0f8'}), (o,x,y)=>{o.x=x;o.y=y;o.vx=Z.rand(-200,200);o.vy=Z.rand(-200,200);o.life=1}, 300);
-  const hetsika = new (window.Hetsika || class{constructor(){this.m=new Map()} on(k,f){(this.m.get(k)||this.m.set(k,[]).get(k)).push(f)} emit(){}})();
-  
-  let keys={}, mouse={x:320,y:200,down:false}, score=0, showGrid=true;
-  let playerId, last=performance.now(), fps=0, frame=0, shake=0;
-
-  function createPlayer(){
-    const id=ecs.create();
-    ecs.x[id]=320; ecs.y[id]=200; ecs.w[id]=28; ecs.h[id]=28; ecs.hp[id]=100; ecs.team[id]=0;
-    ecs.vx[id]=0; ecs.vy[id]=0;
-    return id;
-  }
-  function createEnemy(x,y){
-    const id=ecs.create();
-    ecs.x[id]=x; ecs.y[id]=y; ecs.w[id]=22; ecs.h[id]=22; ecs.hp[id]=20; ecs.team[id]=1;
-    ecs.vx[id]=Z.rand(-20,20); ecs.vy[id]=Z.rand(-20,20);
-    return id;
-  }
-
-  function reset(){
-    ecs.count=0; for(let i=0;i<ecs.alive.length;i++) ecs.alive[i]=0;
-    playerId=createPlayer();
-    for(let i=0;i<8;i++) createEnemy(Z.rand(40,600), Z.rand(40,360));
-    score=0;
-  }
-  reset();
-
-  window.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true; if(e.code==='Space') keys[' ']=true});
-  window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false; if(e.code==='Space') keys[' ']=false});
-  c.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect(); mouse.x=(e.clientX-r.left)*(c.width/r.width); mouse.y=(e.clientY-r.top)*(c.height/r.height)});
-  c.addEventListener('mousedown',()=>{mouse.down=true; doPunch()});
-  c.addEventListener('mouseup',()=>mouse.down=false);
-
-  function doPunch(){
-    if(!ecs.alive[playerId]) return;
-    // Mampiasa Z.dist + HashSpatial query
-    const q=grid.query(ecs.x[playerId]-60, ecs.y[playerId]-60, 120, 120);
-    let hit=0;
-    q.forEach(id=>{
-      if(id===playerId || !ecs.alive[id] || ecs.team[id]===0) return;
-      const d=Z.dist(ecs.x[playerId], ecs.y[playerId], ecs.x[id], ecs.y[id]);
-      if(d<55){
-        ecs.hp[id]-=12;
-        const dir=new Vec2(ecs.x[id]-ecs.x[playerId], ecs.y[id]-ecs.y[playerId]).normalize().mulScalar(300);
-        ecs.vx[id]=dir.x; ecs.vy[id]=dir.y;
-        for(let i=0;i<12;i++) pool.alaina(ecs.x[id], ecs.y[id]);
-        hit++; shake=8;
-        if(ecs.hp[id]<=0){ ecs.alive[id]=0; score+=10; }
-      }
-    });
-    if(hit>0) slog(`💥 NAMELY ${hit} fahavalo! Mpanamora.elasticOut punch!`);
-  }
-
-  function update(dt){
-    // player input mampiasa Vec2
-    const dir=new Vec2(0,0);
-    if(keys['w']||keys['z']) dir.y-=1;
-    if(keys['s']) dir.y+=1;
-    if(keys['a']||keys['q']) dir.x-=1;
-    if(keys['d']) dir.x+=1;
-    if(dir.len()>0){ dir.normalize().mulScalar(220*dt); ecs.x[playerId]+=dir.x; ecs.y[playerId]+=dir.y; }
-    if(keys[' ']){ // dash
-      const ang=Z.angle(ecs.x[playerId], ecs.y[playerId], mouse.x, mouse.y);
-      const v=Vec2.fromAngle(ang, 500*dt); ecs.x[playerId]+=v.x; ecs.y[playerId]+=v.y;
+    function createPlayer(){
+      const id=ecs.create();
+      ecs.x[id]=480; ecs.y[id]=270; ecs.w[id]=30; ecs.h[id]=30; ecs.hp[id]=100; ecs.team[id]=0; ecs.vx[id]=0; ecs.vy[id]=0;
+      return id;
     }
-    // enemies AI - manenjika mampiasa Z.angle
-    ecs.forEach(id=>{
-      if(id===playerId || !ecs.alive[id]) return;
-      const ang=Z.angle(ecs.x[id], ecs.y[id], ecs.x[playerId], ecs.y[playerId]);
-      const spd=60*dt;
-      ecs.vx[id]=Z.lerp(ecs.vx[id], Math.cos(ang)*spd*1.5, 0.1);
-      ecs.vy[id]=Z.lerp(ecs.vy[id], Math.sin(ang)*spd*1.5, 0.1);
-      ecs.x[id]+=ecs.vx[id]; ecs.y[id]+=ecs.vy[id];
-      // friction
-      ecs.vx[id]*=0.92; ecs.vy[id]*=0.92;
-      // collision player
-      if(Z.dist(ecs.x[id], ecs.y[id], ecs.x[playerId], ecs.y[playerId]) < (ecs.w[id]+ecs.w[playerId])/2){
-        ecs.hp[playerId]-=10*dt;
+    function createEnemy(x,y){
+      const id=ecs.create();
+      ecs.x[id]=x; ecs.y[id]=y; ecs.w[id]=22; ecs.h[id]=22; ecs.hp[id]=20; ecs.team[id]=1;
+      ecs.vx[id]=Z.rand(-20,20); ecs.vy[id]=Z.rand(-20,20);
+      return id;
+    }
+    function reset(){
+      ecs.count=0;
+      for(let i=0;i<ecs.alive.length;i++) ecs.alive[i]=0;
+      playerId=createPlayer();
+      for(let i=0;i<12;i++) createEnemy(Z.rand(40,920), Z.rand(40,500));
+      score=0;
+      log('🔄 Reset - ECS compact');
+    }
+    reset();
+
+    // Inputs
+    window.addEventListener('keydown',e=>{
+      const k=e.key.toLowerCase();
+      keys[k]=true;
+      if(e.code==='Space') keys[' ']=true;
+      if(k==='g'){ showGrid=!showGrid; $('btnGrid').textContent='GRID HashSpatial: '+(showGrid?'ON':'OFF'); }
+      if(k==='r') reset();
+    });
+    window.addEventListener('keyup',e=>{
+      const k=e.key.toLowerCase();
+      keys[k]=false;
+      if(e.code==='Space') keys[' ']=false;
+    });
+    function getMousePos(ev){
+      const r=canvas.getBoundingClientRect();
+      const x=(ev.clientX - r.left)*(canvas.width / r.width);
+      const y=(ev.clientY - r.top)*(canvas.height / r.height);
+      return {x,y};
+    }
+    canvas.addEventListener('mousemove',e=>{ const p=getMousePos(e); mouse.x=p.x; mouse.y=p.y; });
+    canvas.addEventListener('mousedown',e=>{ const p=getMousePos(e); mouse.x=p.x; mouse.y=p.y; punch(); });
+    canvas.addEventListener('touchstart',e=>{ e.preventDefault(); const p=getMousePos(e.touches[0]); mouse.x=p.x; mouse.y=p.y; punch(); },{passive:false});
+    
+    // Mobile joystick simple
+    let touchStart=null;
+    canvas.addEventListener('touchmove',e=>{
+      e.preventDefault();
+      if(!touchStart) touchStart=getMousePos(e.touches[0]);
+      const cur=getMousePos(e.touches[0]);
+      const dx=cur.x-touchStart.x, dy=cur.y-touchStart.y;
+      keys['w']=dy<-15; keys['s']=dy>15; keys['a']=dx<-15; keys['d']=dx>15;
+      mouse.x=cur.x; mouse.y=cur.y;
+    },{passive:false});
+    canvas.addEventListener('touchend',e=>{ touchStart=null; keys['w']=keys['a']=keys['s']=keys['d']=false; });
+
+    function punch(){
+      if(!ecs.alive[playerId]) return;
+      const q=grid.query(ecs.x[playerId]-75, ecs.y[playerId]-75, 150,150);
+      let hit=0;
+      q.forEach(id=>{
+        if(id===playerId || !ecs.alive[id] || ecs.team[id]===0) return;
+        const d=Z.dist(ecs.x[playerId], ecs.y[playerId], ecs.x[id], ecs.y[id]);
+        if(d<65){
+          ecs.hp[id]-=18;
+          const ang=Z.angle(ecs.x[playerId], ecs.y[playerId], ecs.x[id], ecs.y[id]);
+          const v=Vec2.fromAngle(ang, 340); ecs.vx[id]=v.x; ecs.vy[id]=v.y;
+          for(let i=0;i<14;i++) pool.alaina(ecs.x[id], ecs.y[id]);
+          hit++; shake=12;
+          if(ecs.hp[id]<=0){ ecs.alive[id]=0; score+=10; }
+        }
+      });
+      if(hit>0) log(`💥 NAMELY ${hit} - Z.dist + Vec2.fromAngle`);
+    }
+
+    function update(dt){
+      let mx=0,my=0;
+      if(keys['w']||keys['z']) my-=1;
+      if(keys['s']) my+=1;
+      if(keys['a']||keys['q']) mx-=1;
+      if(keys['d']) mx+=1;
+      if(mx||my){
+        const l=Math.hypot(mx,my)||1; mx/=l; my/=l;
+        ecs.x[playerId]+=mx*280*dt;
+        ecs.y[playerId]+=my*280*dt;
       }
-      ecs.x[id]=Z.clamp(ecs.x[id], 10, c.width-10); ecs.y[id]=Z.clamp(ecs.y[id],10,c.height-10);
-    });
-    ecs.x[playerId]=Z.clamp(ecs.x[playerId],14,c.width-14); ecs.y[playerId]=Z.clamp(ecs.y[playerId],14,c.height-14);
+      if(keys[' ']){
+        const ang=Z.angle(ecs.x[playerId], ecs.y[playerId], mouse.x, mouse.y);
+        const v=Vec2.fromAngle(ang, 600*dt);
+        ecs.x[playerId]+=v.x; ecs.y[playerId]+=v.y;
+      }
+      ecs.forEach(id=>{
+        if(id===playerId || !ecs.alive[id]) return;
+        const ang=Z.angle(ecs.x[id], ecs.y[id], ecs.x[playerId], ecs.y[playerId]);
+        ecs.vx[id]=Z.lerp(ecs.vx[id], Math.cos(ang)*80*dt, 0.18);
+        ecs.vy[id]=Z.lerp(ecs.vy[id], Math.sin(ang)*80*dt, 0.18);
+        ecs.x[id]+=ecs.vx[id]*60;
+        ecs.y[id]+=ecs.vy[id]*60;
+        ecs.vx[id]*=0.9; ecs.vy[id]*=0.9;
+        if(Z.dist(ecs.x[id], ecs.y[id], ecs.x[playerId], ecs.y[playerId]) < 28) ecs.hp[playerId]-=15*dt;
+        ecs.x[id]=Z.clamp(ecs.x[id], 15, 945);
+        ecs.y[id]=Z.clamp(ecs.y[id], 15, 525);
+      });
+      ecs.x[playerId]=Z.clamp(ecs.x[playerId], 15, 945);
+      ecs.y[playerId]=Z.clamp(ecs.y[playerId], 15, 525);
 
-    // HashSpatial rebuild isan-frame
-    grid.clear();
-    ecs.forEach(id=>{ if(ecs.alive[id]) grid.insert(id, ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id]); });
+      grid.clear();
+      ecs.forEach(id=>{ if(ecs.alive[id]) grid.insert(id, ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id]); });
 
-    // particles via Dobo
-    pool.used.forEach(p=>{
-      p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt*2; p.vy+=200*dt;
-      if(p.life<=0) pool.averno(p);
-    });
-
-    if(ecs.hp[playerId]<=0){ slog("☠️ MATY! R hamerina"); ecs.alive[playerId]=0; }
-  }
-
-  function render(){
-    ctx.save();
-    if(shake>0){ ctx.translate(Z.rand(-shake,shake), Z.rand(-shake,shake)); shake*=0.85; if(shake<0.2) shake=0; }
-    // background Tabataba-like lamba
-    ctx.fillStyle='#0b0b16'; ctx.fillRect(0,0,c.width,c.height);
-    // grid
-    if(showGrid){
-      ctx.strokeStyle='rgba(0,255,136,0.07)'; ctx.lineWidth=1;
-      for(let x=0;x<c.width;x+=grid.cellSize){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,c.height); ctx.stroke(); }
-      for(let y=0;y<c.height;y+=grid.cellSize){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(c.width,y); ctx.stroke(); }
-      // highlight occupied cells
-      ctx.fillStyle='rgba(0,255,136,0.08)';
-      grid.cells.forEach((_,k)=>{
-        // decode roughly
-        // visual only
+      pool.used.forEach(p=>{
+        p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt*2.2; p.vy+=400*dt;
+        if(p.life<=0) pool.averno(p);
       });
     }
-    // particles
-    pool.used.forEach(p=>{
-      ctx.globalAlpha=p.life; ctx.fillStyle='#00ff88'; ctx.fillRect(p.x,p.y,3,3);
-    });
-    ctx.globalAlpha=1;
-    // entities
-    ecs.forEach(id=>{
-      if(!ecs.alive[id]) return;
-      const isPlayer=id===playerId;
-      const x=ecs.x[id], y=ecs.y[id], w=ecs.w[id], h=ecs.h[id];
-      if(isPlayer){
-        // punch scale Mpanamora.elasticOut
-        const t=Math.sin(performance.now()*0.02)*0.1+1;
-        ctx.fillStyle='#ff3b3b'; ctx.shadowColor='#ff0000'; ctx.shadowBlur=12;
-        ctx.fillRect(x-w/2*t, y-h/2*t, w*t, h*t);
-        ctx.shadowBlur=0;
-        // direction line Vec2 fromAngle
-        const ang=Z.angle(x,y,mouse.x,mouse.y);
-        ctx.strokeStyle='#ffaaaa'; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+Math.cos(ang)*30, y+Math.sin(ang)*30); ctx.stroke();
-      } else {
-        ctx.fillStyle= ecs.hp[id]>0 ? '#3b82ff' : '#444';
-        ctx.fillRect(x-w/2, y-h/2, w, h);
-        // hp bar
-        ctx.fillStyle='#222'; ctx.fillRect(x-w/2, y-h/2-6, w,3);
-        ctx.fillStyle='#00ff88'; ctx.fillRect(x-w/2, y-h/2-6, w*(ecs.hp[id]/20),3);
+
+    function render(){
+      ctx.save();
+      if(shake>0){ ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake); shake*=0.86; if(shake<0.4) shake=0; }
+      ctx.fillStyle='#08081a'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      // lamba noise subtle
+      ctx.fillStyle='rgba(255,255,255,0.02)';
+      for(let i=0;i<100;i++) ctx.fillRect(Math.random()*960, Math.random()*540, 1,1);
+
+      if(showGrid){
+        ctx.strokeStyle='rgba(0,255,136,0.07)'; ctx.lineWidth=1;
+        for(let x=0;x<960;x+=64){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,540); ctx.stroke(); }
+        for(let y=0;y<540;y+=64){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(960,y); ctx.stroke(); }
       }
-    });
-    ctx.restore();
-  }
+      // particles
+      pool.used.forEach(p=>{
+        ctx.globalAlpha=p.life; ctx.fillStyle='#00ff88'; ctx.fillRect(p.x,p.y,3,3);
+      });
+      ctx.globalAlpha=1;
+      // entities
+      ecs.forEach(id=>{
+        if(!ecs.alive[id]) return;
+        const x=ecs.x[id], y=ecs.y[id], w=ecs.w[id], h=ecs.h[id];
+        if(id===playerId){
+          const pulse = 1 + Math.sin(performance.now()*0.01)*0.06;
+          ctx.shadowColor='#ff0022'; ctx.shadowBlur=16; ctx.fillStyle='#ff2a3a';
+          ctx.fillRect(x-w/2*pulse, y-h/2*pulse, w*pulse, h*pulse);
+          ctx.shadowBlur=0;
+          const ang=Z.angle(x,y,mouse.x,mouse.y);
+          ctx.strokeStyle='rgba(255,200,200,0.7)'; ctx.lineWidth=2;
+          ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+Math.cos(ang)*40, y+Math.sin(ang)*40); ctx.stroke();
+        } else {
+          ctx.fillStyle='#3a7bff'; ctx.fillRect(x-w/2, y-h/2, w, h);
+          ctx.fillStyle='#111'; ctx.fillRect(x-w/2, y-h/2-8, w, 3);
+          ctx.fillStyle='#00ff88'; ctx.fillRect(x-w/2, y-h/2-8, w*Z.clamp(ecs.hp[id]/20,0,1), 3);
+        }
+      });
+      ctx.restore();
+    }
 
-  function loop(now){
-    const dt=Math.min(0.033, (now-last)/1000); last=now;
-    if(ecs.alive[playerId]) update(dt);
-    render();
-    frame++; if(frame%20===0) fps=Math.round(1/dt);
-    document.getElementById('fps').textContent=fps;
-    document.getElementById('ent').textContent=ecs.count;
-    document.getElementById('cells').textContent=grid.cells.size;
-    document.getElementById('pool').textContent=pool.free.length;
-    document.getElementById('score').textContent=score;
-    document.getElementById('hpbar').style.width=Math.max(0, ecs.hp[playerId])+'%';
-    document.getElementById('status').textContent = ecs.alive[playerId] ? `Z.angle=${Z.angle(0,0,mouse.x,mouse.y).toFixed(2)} rad` : 'MATY - Tsindrio R';
+    function loop(now){
+      const dt=Math.min(0.033, (now-last)/1000); last=now;
+      if(ecs.alive[playerId]) update(dt);
+      render();
+      frame++; if(frame%12===0) fps=Math.round(1/dt);
+      $('fps').textContent=fps;
+      $('ent').textContent=ecs.count;
+      $('cells').textContent=grid.cells.size;
+      $('pool').textContent=pool.free.length;
+      $('score').textContent=score;
+      $('hpbar').style.width=Math.max(0, ecs.hp[playerId])+'%';
+      $('dbg').textContent=`angle ${Z.angle(ecs.x[playerId]||0, ecs.y[playerId]||0, mouse.x, mouse.y).toFixed(2)} | pos ${Math.round(ecs.x[playerId]||0)},${Math.round(ecs.y[playerId]||0)}`;
+      requestAnimationFrame(loop);
+    }
     requestAnimationFrame(loop);
+
+    $('btnAdd').onclick=()=>{ for(let i=0;i<5;i++) createEnemy(Z.rand(30,930), Z.rand(30,510)); log('+5 ECS.create()'); };
+    $('btnGrid').onclick=()=>{ showGrid=!showGrid; $('btnGrid').textContent='GRID HashSpatial: '+(showGrid?'ON':'OFF'); };
+    $('btnBoom').onclick=()=>{ for(let i=0;i<150;i++) pool.alaina(480,270); log('Dobo pool +150 particules'); shake=14; };
+    $('btnReset').onclick=reset;
+
+    log('🎮 Vonona! W,A,S,D / Z,Q + Click + Space - Mampiasa direct moterao');
   }
-  requestAnimationFrame(loop);
 
-  document.getElementById('btnAdd').onclick=()=>{ for(let i=0;i<5;i++) createEnemy(Z.rand(0,c.width), Z.rand(0,c.height)); slog("➕ 5 fahavalo nampiana - ECS.create()"); };
-  document.getElementById('btnGrid').onclick=(e)=>{ showGrid=!showGrid; e.target.textContent='GRID: '+(showGrid?'ON':'OFF'); };
-  document.getElementById('btnReset').onclick=()=>{ reset(); slog("🔄 Reset - Famataranandro.clear()"); };
-  window.addEventListener('keydown',e=>{ if(e.key.toLowerCase()==='g') showGrid=!showGrid; if(e.key.toLowerCase()==='r') reset(); });
-
-  slog("🎮 Vonona! Mampiasa ECS + HashSpatial + Vec2 + Z + Dobo + Mpanamora mivantana");
-});
+  // Attendre que le script externe soit chargé
+  let tries=0;
+  const timer=setInterval(()=>{
+    tries++;
+    if(window.Z){ clearInterval(timer); init(); }
+    else if(tries>80){ clearInterval(timer); init(); }
+  },80);
+})();
 </script>
 </body>
 </html>
