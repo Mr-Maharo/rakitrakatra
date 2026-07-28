@@ -3,68 +3,72 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RAKITRAKATRA V4 - 100% MIANKINA AMIN'NY MOTERA</title>
+<title>RAKITRAKATRA V4 - Demo 100% Miankina</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#04040a;color:#e0ffe0;font-family:monospace}
-#err{position:fixed;inset:0;background:#000;color:#ff4444;display:grid;place-items:center;z-index:9999;padding:20px;text-align:center}
-canvas{display:block;width:100%;max-width:960px;aspect-ratio:16/9;background:#08081a;border:1px solid #00ff88;margin:20px auto;border-radius:12px}
-header{padding:12px 20px;background:#0e0e1e;border-bottom:1px solid #222;display:flex;justify-content:space-between}
+body{background:#050510;color:#e0ffe0;font-family:ui-monospace,monospace}
+header{padding:14px 20px;background:#0e0e1e;border-bottom:1px solid #222;display:flex;justify-content:space-between;align-items:center}
+header b{color:#00ff88;letter-spacing:.18em}
+canvas{display:block;width:100%;max-width:960px;aspect-ratio:16/9;background:#08081a;border:1px solid #00ff8844;border-radius:14px;margin:16px auto}
+#center{text-align:center;padding:10px}
+.chip{display:inline-block;background:#15152e;border:1px solid #2a2a5a;border-radius:999px;padding:4px 10px;font-size:11px;margin:2px}
+.chip b{color:#00ff88}
+button{padding:8px 14px;border-radius:8px;border:1px solid #2a2a5a;background:#15152e;color:#aaffcc;margin:4px;cursor:pointer}
+button.primary{background:#00ff88;color:#000;font-weight:800}
 </style>
 </head>
 <body>
 <header>
-  <div><b style="color:#00ff88">RAKITRAKATRA V4 ADY GOAVANA</b> - 100% MIANKINA AMIN'NY rakitrakatra.js</div>
-  <div id="status">MIANDRY MOTERA...</div>
+  <div><b>RAKITRAKATRA V4 ADY GOAVANA</b> - Demo miankina 100% amin'ny moteranao</div>
+  <div id="status" style="font-size:11px">loading...</div>
 </header>
-<canvas id="game" width="960" height="540"></canvas>
-<div style="text-align:center;font-size:12px;opacity:.6">WASD/ZQSD + Click + Space | Mampiasa Z, Vec2, Rect, Cercle, ECS, HashSpatial, Dobo, Mpanamora, Hetsika, Famataranandro - rehetra avy amin'ny rakitrakatra.js</div>
+<div id="center">
+  <canvas id="game" width="960" height="540"></canvas>
+  <div>
+    <span class="chip">FPS <b id="fps">0</b></span>
+    <span class="chip">ENT <b id="ent">0</b></span>
+    <span class="chip">SCORE <b id="score">0</b></span>
+    <span class="chip" id="apiInfo">API: ...</span>
+  </div>
+  <div style="margin-top:10px">
+    <button class="primary" id="btnAdd">+5 FAHAVALO</button>
+    <button id="btnReset">RESET</button>
+  </div>
+  <div style="font-size:11px;opacity:.5;margin-top:8px">WASD/ZQSD + Click mamely + Space dash<br>Rehetra avy amin'ny https://mr-maharo.github.io/rakitrakatra/rakitrakatra.js</div>
+</div>
 
-<!-- 100% MIANKINA - TSY MAINTSY IO FICHIER IO IHANY -->
 <script src="rakitrakatra.js"></script>
 <script>
+// FIX - Mampiasa R / R4 / Rakitrakatra - fa tsy ECS direct
+const Rakit = window.Rakitrakatra || window.R || window.R4;
+if(!Rakit){
+  document.body.innerHTML='<h1 style="color:red;padding:40px">❌ Rakitrakatra.js tsy voa-load!<br>Jereo https://mr-maharo.github.io/rakitrakatra/rakitrakatra.js</h1>';
+  throw new Error('Engine not found');
+}
 
-
-// REHETRA AVY AMIN'NY MOTERANAO IHANY - TSY MISY CODE VAOVAO
-const { } = {}; // Z, Vec2, Rect, Cercle, Polygon, Mat2D, ECS, HashSpatial, Quadtree, Dobo, Hetsika, PRNG, Tabataba, Mpanamora, Famataranandro, MpitantanaTween, Mpampiditra } dia global
-
-document.getElementById('status').textContent='✅ MOTERA VOALOA - '+Object.keys(window).filter(k=>['Z','Vec2','ECS','HashSpatial'].includes(k)).length+'/4 CORE OK';
+document.getElementById('status').textContent='✅ '+Rakit.CODENAME+' v'+Rakit.VERSION+' loaded';
 document.getElementById('status').style.color='#00ff88';
+document.getElementById('apiInfo').innerHTML='API: <b>'+Object.keys(Rakit).slice(0,8).join(', ')+'...</b>';
 
-// LALAO 100% MIANKINA AMIN'NY MOTERA
+const Z=Rakit.Z;
+const Vec2=Rakit.Vec2;
+const ECS=Rakit.ECS;
+const HashSpatial=Rakit.HashSpatial;
+const Dobo=Rakit.Dobo;
+const Hetsika=Rakit.Hetsika;
+const Famataranandro=Rakit.Famataranandro;
+const Rect=Rakit.Rect;
+const Cercle=Rakit.Cercle;
+
+// Lalao - REHETRA AVY AMIN'NY MOTERA
 const canvas=document.getElementById('game'), ctx=canvas.getContext('2d');
-
-// Mampiasa avokoa:
-// - Z.lerp, Z.clamp, Z.dist, Z.angle, Z.rand, Z.randInt
-// - Vec2, Vec2.fromAngle
-// - Rect, Cercle
-// - ECS (SoA)
-// - HashSpatial
-// - Dobo
-// - Hetsika
-// - Famataranandro
-// - Mpanamora
-
-const ecs=new ECS(10000);
+const ecs=new ECS(10000); // METY IZAO - Rakit.ECS
 const grid=new HashSpatial(64);
 const pool=new Dobo(()=>({x:0,y:0,vx:0,vy:0,life:0}), (o,x,y)=>{o.x=x;o.y=y;o.vx=Z.rand(-250,250);o.vy=Z.rand(-250,250);o.life=1;}, 500);
 const hetsika=new Hetsika();
 const timer=new Famataranandro();
-const rng=new PRNG(Date.now());
-
-hetsika.on('hit', (id)=>{ /* event avy amin'ny motera */ });
-hetsika.on('death', (id)=>{ score+=10; });
 
 let keys={}, mouse={x:480,y:270}, score=0, playerId, last=performance.now(), shake=0;
-
-// Famataranandro - spawn automatique
-timer.every(3000, ()=>{
-  if(ecs.count<80) {
-    const e=ecs.create();
-    ecs.x[e]=Z.randInt(30,930); ecs.y[e]=Z.randInt(30,510);
-    ecs.w[e]=22; ecs.h[e]=22; ecs.hp[e]=20; ecs.team[e]=1;
-  }
-});
 
 function createPlayer(){
   const id=ecs.create();
@@ -80,8 +84,7 @@ function createEnemy(x,y){
 playerId=createPlayer();
 for(let i=0;i<12;i++) createEnemy(Z.rand(50,910), Z.rand(50,500));
 
-// Inputs
-window.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true; if(e.code==='Space') keys[' ']=true;});
+window.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true; if(e.code==='Space') keys[' ']=true; if(e.key.toLowerCase()==='r') reset();});
 window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false; if(e.code==='Space') keys[' ']=false;});
 canvas.addEventListener('mousemove',e=>{
   const r=canvas.getBoundingClientRect();
@@ -91,120 +94,102 @@ canvas.addEventListener('mousemove',e=>{
 canvas.addEventListener('mousedown',()=>punch());
 
 function punch(){
-  // Mampiasa HashSpatial + Cercle + Z.dist avy amin'ny motera
-  const playerRect=new Rect(ecs.x[playerId]-70, ecs.y[playerId]-70, 140,140);
-  const near=grid.query(playerRect.x, playerRect.y, playerRect.w, playerRect.h);
-  const playerCircle=new Cercle(ecs.x[playerId], ecs.y[playerId], 65);
-  
+  const near=grid.query(ecs.x[playerId]-75, ecs.y[playerId]-75, 150,150);
+  const playerC=new Cercle(ecs.x[playerId], ecs.y[playerId], 65);
+  let hit=0;
   near.forEach(id=>{
     if(id===playerId || !ecs.alive[id] || ecs.team[id]===0) return;
-    const enemyCircle=new Cercle(ecs.x[id], ecs.y[id], 15);
-    if(playerCircle.intersects(enemyCircle)){
+    const enemyC=new Cercle(ecs.x[id], ecs.y[id], 15);
+    if(playerC.intersects(enemyC)){
       ecs.hp[id]-=20;
-      // Vec2 knockback - avy amin'ny motera
       const dir=Vec2.fromAngle(Z.angle(ecs.x[playerId], ecs.y[playerId], ecs.x[id], ecs.y[id]), 350);
       ecs.vx[id]=dir.x; ecs.vy[id]=dir.y;
       for(let i=0;i<12;i++) pool.alaina(ecs.x[id], ecs.y[id]);
-      hetsika.emit('hit', id);
-      shake=12;
-      if(ecs.hp[id]<=0){ ecs.alive[id]=0; hetsika.emit('death', id); }
+      hit++; shake=12;
+      if(ecs.hp[id]<=0){ ecs.alive[id]=0; score+=10; }
     }
   });
 }
 
-function update(dt){
-  const dtMs=dt*1000;
-  timer.update(dtMs);
-  MpitantanaTween.update(dtMs);
+function reset(){
+  ecs.count=0;
+  for(let i=0;i<ecs.alive.length;i++) ecs.alive[i]=0;
+  playerId=createPlayer();
+  for(let i=0;i<12;i++) createEnemy(Z.rand(50,910), Z.rand(50,500));
+  score=0;
+}
 
-  // Vec2 input
+function update(dt){
+  timer.update(dt*1000);
   let mx=0,my=0;
   if(keys['w']||keys['z']) my-=1;
   if(keys['s']) my+=1;
   if(keys['a']||keys['q']) mx-=1;
   if(keys['d']) mx+=1;
   if(mx||my){
-    const move=new Vec2(mx,my).normalize().mulScalar(280*dt);
-    ecs.x[playerId]+=move.x; ecs.y[playerId]+=move.y;
+    const m=new Vec2(mx,my).normalize().mulScalar(280*dt);
+    ecs.x[playerId]+=m.x; ecs.y[playerId]+=m.y;
   }
   if(keys[' ']){
     const dash=Vec2.fromAngle(Z.angle(ecs.x[playerId], ecs.y[playerId], mouse.x, mouse.y), 600*dt);
     ecs.x[playerId]+=dash.x; ecs.y[playerId]+=dash.y;
   }
-
-  // AI - Z.angle + Z.lerp
   ecs.forEach(id=>{
     if(id===playerId || !ecs.alive[id]) return;
     const ang=Z.angle(ecs.x[id], ecs.y[id], ecs.x[playerId], ecs.y[playerId]);
     ecs.vx[id]=Z.lerp(ecs.vx[id], Math.cos(ang)*90*dt, 0.15);
     ecs.vy[id]=Z.lerp(ecs.vy[id], Math.sin(ang)*90*dt, 0.15);
-    ecs.x[id]+=ecs.vx[id]*60;
-    ecs.y[id]+=ecs.vy[id]*60;
+    ecs.x[id]+=ecs.vx[id]*60; ecs.y[id]+=ecs.vy[id]*60;
     ecs.vx[id]*=0.88; ecs.vy[id]*=0.88;
     if(Z.dist(ecs.x[id], ecs.y[id], ecs.x[playerId], ecs.y[playerId])<28) ecs.hp[playerId]-=14*dt;
     ecs.x[id]=Z.clamp(ecs.x[id],15,945); ecs.y[id]=Z.clamp(ecs.y[id],15,525);
   });
   ecs.x[playerId]=Z.clamp(ecs.x[playerId],15,945); ecs.y[playerId]=Z.clamp(ecs.y[playerId],15,525);
-
-  // HashSpatial rebuild - motera
   grid.clear();
   ecs.forEach(id=>{ if(ecs.alive[id]) grid.insert(id, ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id]); });
-
-  // Dobo update
-  pool.used.forEach(p=>{
-    p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt*2; p.vy+=380*dt;
-    if(p.life<=0) pool.averno(p);
-  });
+  pool.used.forEach(p=>{ p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt*2; p.vy+=380*dt; if(p.life<=0) pool.averno(p); });
 }
 
 function render(){
   ctx.save();
   if(shake>0){ ctx.translate(Z.rand(-shake,shake), Z.rand(-shake,shake)); shake*=0.84; }
   ctx.fillStyle='#08081a'; ctx.fillRect(0,0,960,540);
-  
-  // Grid - HashSpatial cells
   ctx.strokeStyle='rgba(0,255,136,0.06)';
   for(let x=0;x<960;x+=64){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,540); ctx.stroke(); }
   for(let y=0;y<540;y+=64){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(960,y); ctx.stroke(); }
-
-  // Dobo particules
-  pool.used.forEach(p=>{
-    ctx.globalAlpha=p.life;
-    ctx.fillStyle='#00ff88';
-    ctx.fillRect(p.x,p.y,3,3);
-  });
+  pool.used.forEach(p=>{ ctx.globalAlpha=p.life; ctx.fillStyle='#00ff88'; ctx.fillRect(p.x,p.y,3,3); });
   ctx.globalAlpha=1;
-
   ecs.forEach(id=>{
     if(!ecs.alive[id]) return;
     const x=ecs.x[id], y=ecs.y[id], w=ecs.w[id], h=ecs.h[id];
     if(id===playerId){
       ctx.shadowColor='#ff0022'; ctx.shadowBlur=14; ctx.fillStyle='#ff2a3a';
       ctx.fillRect(x-w/2, y-h/2, w, h); ctx.shadowBlur=0;
-      const ang=Z.angle(x,y,mouse.x,mouse.y);
-      ctx.strokeStyle='rgba(255,200,200,.6)'; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+Math.cos(ang)*40, y+Math.sin(ang)*40); ctx.stroke();
     } else {
       ctx.fillStyle='#3a7bff'; ctx.fillRect(x-w/2, y-h/2, w, h);
-      ctx.fillStyle='#111'; ctx.fillRect(x-w/2, y-h/2-8, w,3);
-      ctx.fillStyle='#00ff88'; ctx.fillRect(x-w/2, y-h/2-8, w*Z.clamp(ecs.hp[id]/20,0,1),3);
+      ctx.fillStyle='#00ff88'; ctx.fillRect(x-w/2, y-h/2-8, w*Z.clamp(ecs.hp[id]/20,0,1), 3);
     }
   });
   ctx.restore();
-  
-  // HUD
-  ctx.fillStyle='#00ff88'; ctx.font='12px monospace';
-  ctx.fillText(`FPS:${Math.round(1/((performance.now()-last)/1000))} ENT:${ecs.count} CELLS:${grid.cells.size} POOL:${pool.free.length} SCORE:${score} Z.dist:${Math.round(Z.dist(ecs.x[playerId], ecs.y[playerId], mouse.x, mouse.y))}`, 10, 20);
 }
 
+let fps=0, frame=0;
 function loop(now){
   const dt=Math.min(0.033, (now-last)/1000); last=now;
   if(ecs.alive[playerId]) update(dt);
   render();
+  frame++; if(frame%12===0) fps=Math.round(1/dt);
+  document.getElementById('fps').textContent=fps;
+  document.getElementById('ent').textContent=ecs.count;
+  document.getElementById('score').textContent=score;
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 
-console.log('✅ 100% MIANKINA AMINY RAKITRAKATRA.JS - Z, Vec2, Rect, Cercle, ECS, HashSpatial, Dobo, Hetsika, Famataranandro, PRNG, Mpanamora');
+document.getElementById('btnAdd').onclick=()=>{ for(let i=0;i<5;i++) createEnemy(Z.rand(30,930), Z.rand(30,510)); };
+document.getElementById('btnReset').onclick=reset;
+
+console.log('✅ Mampiasa Rakitrakatra.ECS, Rakitrakatra.Z, Vec2, HashSpatial, Dobo, Hetsika - 100% moterao');
 </script>
 </body>
 </html>
