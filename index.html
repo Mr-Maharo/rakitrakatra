@@ -1,195 +1,757 @@
 <!DOCTYPE html>
 <html lang="mg">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RAKITRAKATRA V4 - Demo 100% Miankina</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#050510;color:#e0ffe0;font-family:ui-monospace,monospace}
-header{padding:14px 20px;background:#0e0e1e;border-bottom:1px solid #222;display:flex;justify-content:space-between;align-items:center}
-header b{color:#00ff88;letter-spacing:.18em}
-canvas{display:block;width:100%;max-width:960px;aspect-ratio:16/9;background:#08081a;border:1px solid #00ff8844;border-radius:14px;margin:16px auto}
-#center{text-align:center;padding:10px}
-.chip{display:inline-block;background:#15152e;border:1px solid #2a2a5a;border-radius:999px;padding:4px 10px;font-size:11px;margin:2px}
-.chip b{color:#00ff88}
-button{padding:8px 14px;border-radius:8px;border:1px solid #2a2a5a;background:#15152e;color:#aaffcc;margin:4px;cursor:pointer}
-button.primary{background:#00ff88;color:#000;font-weight:800}
-</style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Rakitrakatra V4 · Survival Arena</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0a0a0f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            touch-action: none;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            image-rendering: pixelated;
+            background: #0d0d16;
+            cursor: crosshair;
+        }
+        #ui {
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.25);
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-align: center;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 6px 18px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+            user-select: none;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            z-index: 10;
+        }
+        #ui span {
+            color: rgba(255, 200, 100, 0.6);
+        }
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0a0a0f;
+            color: #44aaff;
+            font-size: 24px;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+            flex-direction: column;
+            gap: 20px;
+        }
+        #loading .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(68, 170, 255, 0.1);
+            border-top-color: #44aaff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        @media (max-width: 600px) {
+            #ui {
+                font-size: 10px;
+                padding: 4px 12px;
+                bottom: 8px;
+            }
+            #loading {
+                font-size: 18px;
+            }
+        }
+    </style>
 </head>
 <body>
-<header>
-  <div><b>RAKITRAKATRA V4 ADY GOAVANA</b> - Demo miankina 100% amin'ny moteranao</div>
-  <div id="status" style="font-size:11px">loading...</div>
-</header>
-<div id="center">
-  <canvas id="game" width="960" height="540"></canvas>
-  <div>
-    <span class="chip">FPS <b id="fps">0</b></span>
-    <span class="chip">ENT <b id="ent">0</b></span>
-    <span class="chip">SCORE <b id="score">0</b></span>
-    <span class="chip" id="apiInfo">API: ...</span>
-  </div>
-  <div style="margin-top:10px">
-    <button class="primary" id="btnAdd">+5 FAHAVALO</button>
-    <button id="btnReset">RESET</button>
-  </div>
-  <div style="font-size:11px;opacity:.5;margin-top:8px">WASD/ZQSD + Click mamely + Space dash<br>Rehetra avy amin'ny https://mr-maharo.github.io/rakitrakatra/rakitrakatra.js</div>
-</div>
 
-<script src="rakitrakatra.js"></script>
-<script>
-// FIX - Mampiasa R / R4 / Rakitrakatra - fa tsy ECS direct
-const Rakit = window.Rakitrakatra || window.R || window.R4;
-if(!Rakit){
-  document.body.innerHTML='<h1 style="color:red;padding:40px">❌ Rakitrakatra.js tsy voa-load!<br>Jereo https://mr-maharo.github.io/rakitrakatra/rakitrakatra.js</h1>';
-  throw new Error('Engine not found');
-}
+    <div id="loading">
+        <div class="spinner"></div>
+        <div>⏳ Mampiditra motera...</div>
+    </div>
 
-document.getElementById('status').textContent='✅ '+Rakit.CODENAME+' v'+Rakit.VERSION+' loaded';
-document.getElementById('status').style.color='#00ff88';
-document.getElementById('apiInfo').innerHTML='API: <b>'+Object.keys(Rakit).slice(0,8).join(', ')+'...</b>';
+    <div id="ui">⬆ ⬇ ⬅ ➡ &nbsp;·&nbsp; <span>clic / tap</span> &nbsp;·&nbsp; tire</div>
 
-const Z=Rakit.Z;
-const Vec2=Rakit.Vec2;
-const ECS=Rakit.ECS;
-const HashSpatial=Rakit.HashSpatial;
-const Dobo=Rakit.Dobo;
-const Hetsika=Rakit.Hetsika;
-const Famataranandro=Rakit.Famataranandro;
-const Rect=Rakit.Rect;
-const Cercle=Rakit.Cercle;
+    <script>
+        // ═══════════════════════════════════════════════════════════
+        //  LOADER : Mampiditra ny motera avy amin'ny rakitra ivelany
+        // ═══════════════════════════════════════════════════════════
 
-// Lalao - REHETRA AVY AMIN'NY MOTERA
-const canvas=document.getElementById('game'), ctx=canvas.getContext('2d');
-const ecs=new ECS(10000); // METY IZAO - Rakit.ECS
-const grid=new HashSpatial(64);
-const pool=new Dobo(()=>({x:0,y:0,vx:0,vy:0,life:0}), (o,x,y)=>{o.x=x;o.y=y;o.vx=Z.rand(-250,250);o.vy=Z.rand(-250,250);o.life=1;}, 500);
-const hetsika=new Hetsika();
-const timer=new Famataranandro();
+        (function() {
+            const loadingEl = document.getElementById('loading');
 
-let keys={}, mouse={x:480,y:270}, score=0, playerId, last=performance.now(), shake=0;
+            // 1. Mamorona script tag ho an'ny motera
+            const script = document.createElement('script');
+            script.src = 'rakitrakatra.js'; // Ilay rakitra motera
+            script.async = false;
 
-function createPlayer(){
-  const id=ecs.create();
-  ecs.x[id]=480; ecs.y[id]=270; ecs.w[id]=30; ecs.h[id]=30; ecs.hp[id]=100; ecs.team[id]=0;
-  return id;
-}
-function createEnemy(x,y){
-  const id=ecs.create();
-  ecs.x[id]=x; ecs.y[id]=y; ecs.w[id]=22; ecs.h[id]=22; ecs.hp[id]=20; ecs.team[id]=1;
-  return id;
-}
+            // 2. Rehefa vita ny loading
+            script.onload = function() {
+                console.log('✅ Moteur Rakitrakatra V4 tafiditra!');
 
-playerId=createPlayer();
-for(let i=0;i<12;i++) createEnemy(Z.rand(50,910), Z.rand(50,500));
+                // Esory ny loading screen
+                loadingEl.style.opacity = '0';
+                setTimeout(() => {
+                    loadingEl.style.display = 'none';
+                }, 400);
 
-window.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true; if(e.code==='Space') keys[' ']=true; if(e.key.toLowerCase()==='r') reset();});
-window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false; if(e.code==='Space') keys[' ']=false;});
-canvas.addEventListener('mousemove',e=>{
-  const r=canvas.getBoundingClientRect();
-  mouse.x=(e.clientX-r.left)*(canvas.width/r.width);
-  mouse.y=(e.clientY-r.top)*(canvas.height/r.height);
-});
-canvas.addEventListener('mousedown',()=>punch());
+                // Atombohy ny lalao
+                if (typeof R !== 'undefined') {
+                    startGame();
+                } else {
+                    console.error('❌ Tsy hita ny R (moteur)');
+                    loadingEl.innerHTML =
+                        '<div style="color:#ff4466;">❌ Erreur: moteur tsy hita</div>';
+                }
+            };
 
-function punch(){
-  const near=grid.query(ecs.x[playerId]-75, ecs.y[playerId]-75, 150,150);
-  const playerC=new Cercle(ecs.x[playerId], ecs.y[playerId], 65);
-  let hit=0;
-  near.forEach(id=>{
-    if(id===playerId || !ecs.alive[id] || ecs.team[id]===0) return;
-    const enemyC=new Cercle(ecs.x[id], ecs.y[id], 15);
-    if(playerC.intersects(enemyC)){
-      ecs.hp[id]-=20;
-      const dir=Vec2.fromAngle(Z.angle(ecs.x[playerId], ecs.y[playerId], ecs.x[id], ecs.y[id]), 350);
-      ecs.vx[id]=dir.x; ecs.vy[id]=dir.y;
-      for(let i=0;i<12;i++) pool.alaina(ecs.x[id], ecs.y[id]);
-      hit++; shake=12;
-      if(ecs.hp[id]<=0){ ecs.alive[id]=0; score+=10; }
-    }
-  });
-}
+            // 3. Raha misy erreur
+            script.onerror = function() {
+                console.error('❌ Tsy voarindra ny rakitra motera!');
+                loadingEl.innerHTML = `
+                            <div style="color:#ff4466;text-align:center;line-height:1.6;">
+                                ❌ Tsy hita ny rakitra <strong>rakitrakatra.js</strong><br>
+                                <small style="font-size:14px;color:#888;">
+                                    Apetraho amin'ny folder mitovy io rakitra io.
+                                </small>
+                            </div>
+                        `;
+            };
 
-function reset(){
-  ecs.count=0;
-  for(let i=0;i<ecs.alive.length;i++) ecs.alive[i]=0;
-  playerId=createPlayer();
-  for(let i=0;i<12;i++) createEnemy(Z.rand(50,910), Z.rand(50,500));
-  score=0;
-}
+            // 4. Ampidiro ao amin'ny page
+            document.head.appendChild(script);
 
-function update(dt){
-  timer.update(dt*1000);
-  let mx=0,my=0;
-  if(keys['w']||keys['z']) my-=1;
-  if(keys['s']) my+=1;
-  if(keys['a']||keys['q']) mx-=1;
-  if(keys['d']) mx+=1;
-  if(mx||my){
-    const m=new Vec2(mx,my).normalize().mulScalar(280*dt);
-    ecs.x[playerId]+=m.x; ecs.y[playerId]+=m.y;
-  }
-  if(keys[' ']){
-    const dash=Vec2.fromAngle(Z.angle(ecs.x[playerId], ecs.y[playerId], mouse.x, mouse.y), 600*dt);
-    ecs.x[playerId]+=dash.x; ecs.y[playerId]+=dash.y;
-  }
-  ecs.forEach(id=>{
-    if(id===playerId || !ecs.alive[id]) return;
-    const ang=Z.angle(ecs.x[id], ecs.y[id], ecs.x[playerId], ecs.y[playerId]);
-    ecs.vx[id]=Z.lerp(ecs.vx[id], Math.cos(ang)*90*dt, 0.15);
-    ecs.vy[id]=Z.lerp(ecs.vy[id], Math.sin(ang)*90*dt, 0.15);
-    ecs.x[id]+=ecs.vx[id]*60; ecs.y[id]+=ecs.vy[id]*60;
-    ecs.vx[id]*=0.88; ecs.vy[id]*=0.88;
-    if(Z.dist(ecs.x[id], ecs.y[id], ecs.x[playerId], ecs.y[playerId])<28) ecs.hp[playerId]-=14*dt;
-    ecs.x[id]=Z.clamp(ecs.x[id],15,945); ecs.y[id]=Z.clamp(ecs.y[id],15,525);
-  });
-  ecs.x[playerId]=Z.clamp(ecs.x[playerId],15,945); ecs.y[playerId]=Z.clamp(ecs.y[playerId],15,525);
-  grid.clear();
-  ecs.forEach(id=>{ if(ecs.alive[id]) grid.insert(id, ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id]); });
-  pool.used.forEach(p=>{ p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt*2; p.vy+=380*dt; if(p.life<=0) pool.averno(p); });
-}
+            // ═══════════════════════════════════════════════════════
+            //  LALAO : Survival Arena
+            // ═══════════════════════════════════════════════════════
+            function startGame() {
+                const {
+                    Lalao,
+                    Sehatra,
+                    Vec2,
+                    Z,
+                    Fanindry,
+                    Feo,
+                    UI,
+                    Fizika,
+                    Vovoka,
+                    MpitantanaTween,
+                    Mpanamora
+                } = R;
 
-function render(){
-  ctx.save();
-  if(shake>0){ ctx.translate(Z.rand(-shake,shake), Z.rand(-shake,shake)); shake*=0.84; }
-  ctx.fillStyle='#08081a'; ctx.fillRect(0,0,960,540);
-  ctx.strokeStyle='rgba(0,255,136,0.06)';
-  for(let x=0;x<960;x+=64){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,540); ctx.stroke(); }
-  for(let y=0;y<540;y+=64){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(960,y); ctx.stroke(); }
-  pool.used.forEach(p=>{ ctx.globalAlpha=p.life; ctx.fillStyle='#00ff88'; ctx.fillRect(p.x,p.y,3,3); });
-  ctx.globalAlpha=1;
-  ecs.forEach(id=>{
-    if(!ecs.alive[id]) return;
-    const x=ecs.x[id], y=ecs.y[id], w=ecs.w[id], h=ecs.h[id];
-    if(id===playerId){
-      ctx.shadowColor='#ff0022'; ctx.shadowBlur=14; ctx.fillStyle='#ff2a3a';
-      ctx.fillRect(x-w/2, y-h/2, w, h); ctx.shadowBlur=0;
-    } else {
-      ctx.fillStyle='#3a7bff'; ctx.fillRect(x-w/2, y-h/2, w, h);
-      ctx.fillStyle='#00ff88'; ctx.fillRect(x-w/2, y-h/2-8, w*Z.clamp(ecs.hp[id]/20,0,1), 3);
-    }
-  });
-  ctx.restore();
-}
+                // ====================================================
+                //  1. SCÈNE DU JEU
+                // ====================================================
+                class SurvivalArena extends Sehatra {
+                    constructor(key) {
+                        super(key);
+                        this.score = 0;
+                        this.wave = 0;
+                        this.enemyCount = 0;
+                        this.maxEnemies = 20;
+                        this.spawnTimer = 0;
+                        this.spawnInterval = 1.2;
+                        this.playerId = -1;
+                        this.enemyIds = [];
+                        this.projectileIds = [];
+                        this.particleSystem = null;
+                        this.healthBar = null;
+                        this.gameOver = false;
+                        this.gameOverTimer = 0;
+                        this.shootCooldown = 0;
+                        this.shootDelay = 0.18;
+                        this.waveTimer = 0;
+                    }
 
-let fps=0, frame=0;
-function loop(now){
-  const dt=Math.min(0.033, (now-last)/1000); last=now;
-  if(ecs.alive[playerId]) update(dt);
-  render();
-  frame++; if(frame%12===0) fps=Math.round(1/dt);
-  document.getElementById('fps').textContent=fps;
-  document.getElementById('ent').textContent=ecs.count;
-  document.getElementById('score').textContent=score;
-  requestAnimationFrame(loop);
-}
-requestAnimationFrame(loop);
+                    init(data) {
+                        this.score = 0;
+                        this.wave = 0;
+                        this.enemyCount = 0;
+                        this.gameOver = false;
+                        this.gameOverTimer = 0;
+                        this.shootCooldown = 0;
+                        this.enemyIds = [];
+                        this.projectileIds = [];
+                        this.spawnTimer = 0;
+                        this.spawnInterval = 1.2;
+                        this.waveTimer = 0;
+                    }
 
-document.getElementById('btnAdd').onclick=()=>{ for(let i=0;i<5;i++) createEnemy(Z.rand(30,930), Z.rand(30,510)); };
-document.getElementById('btnReset').onclick=reset;
+                    create() {
+                        const ecs = this.game.ecs;
+                        const camera = this.game.camera;
+                        const renderer = this.game.renderer;
 
-console.log('✅ Mampiasa Rakitrakatra.ECS, Rakitrakatra.Z, Vec2, HashSpatial, Dobo, Hetsika - 100% moterao');
-</script>
+                        // --- Joueur ---
+                        this.playerId = ecs.create();
+                        const p = this.playerId;
+                        ecs.x[p] = 400;
+                        ecs.y[p] = 300;
+                        ecs.w[p] = 36;
+                        ecs.h[p] = 36;
+                        ecs.vx[p] = 0;
+                        ecs.vy[p] = 0;
+                        ecs.color[p] = 0xFF44AAFF;
+                        ecs.alpha[p] = 1;
+                        ecs.hp[p] = 100;
+                        ecs.maxHp[p] = 100;
+                        ecs.mass[p] = 1;
+                        ecs.isSolid[p] = 1;
+                        ecs.tag[p] = 1;
+
+                        // --- Caméra ---
+                        camera.follow(ecs, p, 0.08);
+                        camera.setBounds(-100, -100, 1600, 1200);
+                        camera.zoom = 1;
+
+                        // --- Système de particules ---
+                        this.particleSystem = new Vovoka(5000);
+
+                        // --- UI ---
+                        this.healthBar = new UI.Bara(20, 20, 200, 18, {
+                            max: 100,
+                            value: 100,
+                            bgColor: 0xCC222244,
+                            fillColor: 0xFF44FF44
+                        });
+
+                        // --- Premiers ennemis ---
+                        for (let i = 0; i < 4; i++) {
+                            this.spawnEnemy();
+                        }
+
+                        // --- Vagues automatiques ---
+                        this.game.timer.every(6000, () => {
+                            if (!this.gameOver) {
+                                this.wave++;
+                                this.spawnInterval = Math.max(0.35, 1.2 - this.wave * 0.04);
+                                for (let i = 0; i < Math.min(3 + this.wave, 8); i++) {
+                                    this.spawnEnemy();
+                                }
+                                this.game.camera.shake(4, 150);
+                                Feo.mamorona('power');
+                            }
+                        });
+                    }
+
+                    spawnEnemy() {
+                        const ecs = this.game.ecs;
+                        const camera = this.game.camera;
+
+                        if (this.enemyIds.length >= this.maxEnemies + this.wave * 2) return;
+
+                        const cam = camera.getBounds();
+                        const side = Math.floor(Math.random() * 4);
+                        let x, y;
+                        const cx = cam.x + cam.w / 2;
+                        const cy = cam.y + cam.h / 2;
+                        const halfW = cam.w / 2 + 120;
+                        const halfH = cam.h / 2 + 120;
+
+                        switch (side) {
+                            case 0:
+                                x = cx - halfW + Math.random() * 60;
+                                y = cy - halfH + Math.random() * 30 - 15;
+                                break;
+                            case 1:
+                                x = cx + halfW - 60 + Math.random() * 60;
+                                y = cy - halfH + Math.random() * 30 - 15;
+                                break;
+                            case 2:
+                                x = cx - halfW + Math.random() * 30 - 15;
+                                y = cy - halfH + Math.random() * 60;
+                                break;
+                            case 3:
+                                x = cx - halfW + Math.random() * 30 - 15;
+                                y = cy + halfH - 60 + Math.random() * 60;
+                                break;
+                        }
+
+                        x = Z.clamp(x, -50, 1600);
+                        y = Z.clamp(y, -50, 1200);
+
+                        const id = ecs.create();
+                        const size = 20 + Math.random() * 16 + Math.min(this.wave * 0.5, 8);
+                        ecs.x[id] = x;
+                        ecs.y[id] = y;
+                        ecs.w[id] = size;
+                        ecs.h[id] = size;
+                        ecs.vx[id] = 0;
+                        ecs.vy[id] = 0;
+                        ecs.color[id] = 0xFFFF6644;
+                        ecs.alpha[id] = 1;
+                        ecs.hp[id] = 1 + Math.floor(this.wave / 3);
+                        ecs.maxHp[id] = ecs.hp[id];
+                        ecs.mass[id] = 0.5;
+                        ecs.isSolid[id] = 1;
+                        ecs.tag[id] = 2;
+                        ecs._maxSpeed = Math.min(60 + this.wave * 4, 220);
+                        ecs._damage = 8 + Math.floor(this.wave / 2);
+
+                        this.enemyIds.push(id);
+                        this.enemyCount++;
+                    }
+
+                    shoot(targetX, targetY) {
+                        if (this.gameOver) return;
+                        if (this.shootCooldown > 0) return;
+                        if (this.playerId < 0 || !this.game.ecs.isAlive(this.playerId)) return;
+
+                        const ecs = this.game.ecs;
+                        const p = this.playerId;
+                        const px = ecs.x[p] + ecs.w[p] / 2;
+                        const py = ecs.y[p] + ecs.h[p] / 2;
+
+                        const angle = Math.atan2(targetY - py, targetX - px);
+                        const speed = 420;
+
+                        const id = ecs.create();
+                        ecs.x[id] = px;
+                        ecs.y[id] = py;
+                        ecs.w[id] = 8;
+                        ecs.h[id] = 8;
+                        ecs.vx[id] = Math.cos(angle) * speed;
+                        ecs.vy[id] = Math.sin(angle) * speed;
+                        ecs.color[id] = 0xFF44FF88;
+                        ecs.alpha[id] = 1;
+                        ecs.hp[id] = 1;
+                        ecs.tag[id] = 3;
+                        ecs.lifetime[id] = 1.8;
+
+                        this.projectileIds.push(id);
+                        this.shootCooldown = this.shootDelay;
+                        Feo.mamorona('laser');
+
+                        for (let i = 0; i < 6; i++) {
+                            const a = angle + (Math.random() - 0.5) * 0.8;
+                            const s = 60 + Math.random() * 80;
+                            this.particleSystem.emit(px, py, {
+                                count: 1,
+                                speedMin: s * 0.5,
+                                speedMax: s,
+                                angle: a,
+                                angleSpread: 0.3,
+                                lifeMin: 0.15,
+                                lifeMax: 0.35,
+                                sizeStart: 3,
+                                sizeEnd: 0,
+                                color: 0xFF44FF88,
+                                gravity: 0
+                            });
+                        }
+                    }
+
+                    update(dt, dtMs) {
+                        if (this.gameOver) {
+                            this.gameOverTimer += dt;
+                            if (this.gameOverTimer > 1.5 && Fanindry.justPressed(' ')) {
+                                this.restartGame();
+                            }
+                            return;
+                        }
+
+                        const ecs = this.game.ecs;
+                        const camera = this.game.camera;
+                        const dtF = dt;
+
+                        if (this.shootCooldown > 0) this.shootCooldown -= dt;
+
+                        // --- Mouvement joueur ---
+                        const p = this.playerId;
+                        if (ecs.isAlive(p)) {
+                            const axis = Fanindry.axis();
+                            const speed = 200;
+                            const targetVx = axis.x * speed;
+                            const targetVy = axis.y * speed;
+                            ecs.vx[p] = Z.approach(ecs.vx[p], targetVx, 800 * dt);
+                            ecs.vy[p] = Z.approach(ecs.vy[p], targetVy, 800 * dt);
+
+                            const maxSpd = 250;
+                            const spd = Math.hypot(ecs.vx[p], ecs.vy[p]);
+                            if (spd > maxSpd) {
+                                ecs.vx[p] = (ecs.vx[p] / spd) * maxSpd;
+                                ecs.vy[p] = (ecs.vy[p] / spd) * maxSpd;
+                            }
+
+                            ecs.x[p] = Z.clamp(ecs.x[p] + ecs.vx[p] * dt, 20, 1580);
+                            ecs.y[p] = Z.clamp(ecs.y[p] + ecs.vy[p] * dt, 20, 1180);
+
+                            // Tir
+                            const mx = Fanindry.mouse.worldX;
+                            const my = Fanindry.mouse.worldY;
+                            if (Fanindry.mouse.justDown[0]) {
+                                this.shoot(mx, my);
+                            }
+                            if (Fanindry.justPressed(' ') || Fanindry.justPressed('z')) {
+                                const dir = Vec2.fromAngle(Math.atan2(ecs.vy[p], ecs.vx[p]));
+                                if (dir.len() > 0.1) {
+                                    this.shoot(ecs.x[p] + dir.x * 100, ecs.y[p] + dir.y * 100);
+                                } else {
+                                    this.shoot(ecs.x[p] + 50, ecs.y[p]);
+                                }
+                            }
+
+                            this.healthBar.value = ecs.hp[p];
+                            this.healthBar.max = ecs.maxHp[p];
+                        }
+
+                        // --- IA ennemis ---
+                        const playerPos = ecs.isAlive(p) ? { x: ecs.x[p], y: ecs.y[p] } : null;
+                        const toRemove = [];
+                        for (let i = 0; i < this.enemyIds.length; i++) {
+                            const e = this.enemyIds[i];
+                            if (!ecs.isAlive(e)) {
+                                toRemove.push(i);
+                                continue;
+                            }
+
+                            if (playerPos) {
+                                const dx = playerPos.x - ecs.x[e];
+                                const dy = playerPos.y - ecs.y[e];
+                                const dist = Math.hypot(dx, dy);
+                                if (dist > 1) {
+                                    const speed = ecs._maxSpeed || 80;
+                                    const accel = 120 + this.wave * 5;
+                                    const normX = dx / dist;
+                                    const normY = dy / dist;
+                                    ecs.vx[e] = Z.approach(ecs.vx[e], normX * speed, accel * dt);
+                                    ecs.vy[e] = Z.approach(ecs.vy[e], normY * speed, accel * dt);
+                                }
+                            }
+
+                            ecs.x[e] = Z.clamp(ecs.x[e] + ecs.vx[e] * dt, 10, 1590);
+                            ecs.y[e] = Z.clamp(ecs.y[e] + ecs.vy[e] * dt, 10, 1190);
+                        }
+
+                        for (let i = toRemove.length - 1; i >= 0; i--) {
+                            this.enemyIds.splice(toRemove[i], 1);
+                            this.enemyCount--;
+                        }
+
+                        // --- Projectiles ---
+                        const projToRemove = [];
+                        for (let i = 0; i < this.projectileIds.length; i++) {
+                            const pr = this.projectileIds[i];
+                            if (!ecs.isAlive(pr)) {
+                                projToRemove.push(i);
+                                continue;
+                            }
+
+                            ecs.x[pr] += ecs.vx[pr] * dt;
+                            ecs.y[pr] += ecs.vy[pr] * dt;
+
+                            ecs.lifetime[pr] -= dt;
+                            if (ecs.lifetime[pr] <= 0) {
+                                ecs.destroy(pr);
+                                projToRemove.push(i);
+                                continue;
+                            }
+
+                            if (ecs.x[pr] < -50 || ecs.x[pr] > 1650 || ecs.y[pr] < -50 || ecs.y[pr] > 1250) {
+                                ecs.destroy(pr);
+                                projToRemove.push(i);
+                            }
+                        }
+                        for (let i = projToRemove.length - 1; i >= 0; i--) {
+                            this.projectileIds.splice(projToRemove[i], 1);
+                        }
+
+                        // --- Collisions projectile → ennemi ---
+                        for (const pr of this.projectileIds) {
+                            if (!ecs.isAlive(pr)) continue;
+                            const px = ecs.x[pr],
+                                py = ecs.y[pr];
+                            const pw = ecs.w[pr] || 8,
+                                ph = ecs.h[pr] || 8;
+                            for (const e of this.enemyIds) {
+                                if (!ecs.isAlive(e)) continue;
+                                if (Fizika.rectVsRect(px, py, pw, ph, ecs.x[e], ecs.y[e], ecs.w[e], ecs.h[e])) {
+                                    ecs.hp[e] -= 1;
+                                    if (ecs.hp[e] <= 0) {
+                                        ecs.destroy(e);
+                                        this.score++;
+                                        this.enemyCount--;
+                                        const cx = ecs.x[e] + ecs.w[e] / 2;
+                                        const cy = ecs.y[e] + ecs.h[e] / 2;
+                                        for (let j = 0; j < 20; j++) {
+                                            const a = Math.random() * Math.PI * 2;
+                                            const s = 50 + Math.random() * 120;
+                                            this.particleSystem.emit(cx, cy, {
+                                                count: 1,
+                                                speedMin: s * 0.4,
+                                                speedMax: s,
+                                                angle: a,
+                                                angleSpread: 0.6,
+                                                lifeMin: 0.2,
+                                                lifeMax: 0.6,
+                                                sizeStart: 6 + Math.random() * 6,
+                                                sizeEnd: 0,
+                                                color: 0xFFFF6644,
+                                                gravity: 60
+                                            });
+                                        }
+                                        Feo.mamorona('hit');
+                                        this.game.camera.shake(3, 100);
+
+                                        if (Math.random() < 0.12 && ecs.isAlive(this.playerId)) {
+                                            ecs.hp[this.playerId] = Math.min(ecs.maxHp[this.playerId],
+                                                ecs.hp[this.playerId] + 8);
+                                            Feo.mamorona('pickup');
+                                        }
+                                    }
+                                    ecs.destroy(pr);
+                                    break;
+                                }
+                            }
+                        }
+
+                        // --- Collisions ennemi → joueur ---
+                        if (ecs.isAlive(p)) {
+                            const pRect = { x: ecs.x[p], y: ecs.y[p], w: ecs.w[p] || 36, h: ecs.h[p] || 36 };
+                            for (const e of this.enemyIds) {
+                                if (!ecs.isAlive(e)) continue;
+                                if (Fizika.rectVsRect(pRect.x, pRect.y, pRect.w, pRect.h,
+                                        ecs.x[e], ecs.y[e], ecs.w[e], ecs.h[e])) {
+                                    const dmg = ecs._damage || 10;
+                                    ecs.hp[p] -= dmg;
+                                    const dx = ecs.x[e] - ecs.x[p];
+                                    const dy = ecs.y[e] - ecs.y[p];
+                                    const d = Math.hypot(dx, dy) || 1;
+                                    ecs.x[e] += (dx / d) * 30;
+                                    ecs.y[e] += (dy / d) * 30;
+                                    ecs.vx[e] += (dx / d) * 80;
+                                    ecs.vy[e] += (dy / d) * 80;
+                                    Feo.mamorona('hit');
+                                    this.game.camera.shake(5, 120);
+                                    for (let j = 0; j < 12; j++) {
+                                        const a = Math.random() * Math.PI * 2;
+                                        const s = 40 + Math.random() * 80;
+                                        this.particleSystem.emit(ecs.x[p] + pRect.w / 2, ecs.y[p] + pRect.h / 2, {
+                                            count: 1,
+                                            speedMin: s * 0.3,
+                                            speedMax: s,
+                                            angle: a,
+                                            angleSpread: 1,
+                                            lifeMin: 0.2,
+                                            lifeMax: 0.6,
+                                            sizeStart: 5 + Math.random() * 5,
+                                            sizeEnd: 0,
+                                            color: 0xFFFF4444,
+                                            gravity: 40
+                                        });
+                                    }
+
+                                    if (ecs.hp[p] <= 0) {
+                                        ecs.hp[p] = 0;
+                                        this.gameOver = true;
+                                        this.gameOverTimer = 0;
+                                        ecs.alpha[p] = 0.3;
+                                        Feo.mamorona('explode');
+                                        for (let j = 0; j < 30; j++) {
+                                            const a = Math.random() * Math.PI * 2;
+                                            const s = 60 + Math.random() * 150;
+                                            this.particleSystem.emit(ecs.x[p] + pRect.w / 2, ecs.y[p] + pRect.h / 2, {
+                                                count: 1,
+                                                speedMin: s * 0.3,
+                                                speedMax: s,
+                                                angle: a,
+                                                angleSpread: 1.2,
+                                                lifeMin: 0.3,
+                                                lifeMax: 0.9,
+                                                sizeStart: 8 + Math.random() * 8,
+                                                sizeEnd: 0,
+                                                color: 0xFF44AAFF,
+                                                gravity: 30
+                                            });
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+
+                        // --- Mise à jour particules ---
+                        this.particleSystem.update(dt);
+                    }
+
+                    restartGame() {
+                        this.gameOver = false;
+                        this.gameOverTimer = 0;
+                        this.score = 0;
+                        this.wave = 0;
+                        this.enemyCount = 0;
+                        this.enemyIds = [];
+                        this.projectileIds = [];
+                        this.spawnTimer = 0;
+                        this.spawnInterval = 1.2;
+
+                        const ecs = this.game.ecs;
+                        const p = this.playerId;
+                        if (ecs.isAlive(p)) {
+                            ecs.hp[p] = ecs.maxHp[p];
+                            ecs.x[p] = 400;
+                            ecs.y[p] = 300;
+                            ecs.vx[p] = 0;
+                            ecs.vy[p] = 0;
+                            ecs.alpha[p] = 1;
+                        } else {
+                            this.playerId = ecs.create();
+                            const p2 = this.playerId;
+                            ecs.x[p2] = 400;
+                            ecs.y[p2] = 300;
+                            ecs.w[p2] = 36;
+                            ecs.h[p2] = 36;
+                            ecs.vx[p2] = 0;
+                            ecs.vy[p2] = 0;
+                            ecs.color[p2] = 0xFF44AAFF;
+                            ecs.alpha[p2] = 1;
+                            ecs.hp[p2] = 100;
+                            ecs.maxHp[p2] = 100;
+                            ecs.mass[p2] = 1;
+                            ecs.isSolid[p2] = 1;
+                            ecs.tag[p2] = 1;
+                            this.game.camera.follow(ecs, p2, 0.08);
+                        }
+
+                        for (let i = 0; i < 4; i++) {
+                            this.spawnEnemy();
+                        }
+
+                        this.game.camera.shake(8, 200);
+                        Feo.mamorona('power');
+                    }
+
+                    render(renderer, camera) {
+                        const ecs = this.game.ecs;
+
+                        // Dessiner les entités
+                        const allIds = [];
+                        if (this.playerId >= 0 && ecs.isAlive(this.playerId)) {
+                            allIds.push(this.playerId);
+                        }
+                        for (const e of this.enemyIds) {
+                            if (ecs.isAlive(e)) allIds.push(e);
+                        }
+                        for (const p of this.projectileIds) {
+                            if (ecs.isAlive(p)) allIds.push(p);
+                        }
+
+                        for (const id of allIds) {
+                            const x = ecs.x[id];
+                            const y = ecs.y[id];
+                            const w = ecs.w[id] || 20;
+                            const h = ecs.h[id] || 20;
+                            const color = ecs.color[id] || 0xFFFFFFFF;
+                            const alpha = ecs.alpha[id] || 1;
+
+                            // Pack color avec alpha
+                            const r = (color >>> 24) & 0xFF;
+                            const g = (color >>> 16) & 0xFF;
+                            const b = (color >>> 8) & 0xFF;
+                            const packedColor = (r << 24) | (g << 16) | (b << 8) | Math.floor(alpha * 255);
+
+                            renderer.drawRect(x, y, w, h, packedColor);
+
+                            // Bordure pour les ennemis
+                            if (ecs.tag[id] === 2) {
+                                renderer.drawRect(x - 1, y - 1, w + 2, 2, 0x33FF8844);
+                                renderer.drawRect(x - 1, y + h, w + 2, 2, 0x33FF8844);
+                                renderer.drawRect(x - 1, y, 2, h, 0x33FF8844);
+                                renderer.drawRect(x + w - 1, y, 2, h, 0x33FF8844);
+                            }
+                        }
+                    }
+
+                    renderUI(renderer) {
+                        // Barre de vie
+                        if (this.healthBar) {
+                            this.healthBar.render(renderer);
+                        }
+
+                        // Score et vague
+                        const info = `Score: ${this.score}  ·  Vague: ${this.wave}  ·  Ennemis: ${this.enemyCount}`;
+                        renderer.drawRect(20, 50, 300, 24, 0x88000000);
+                        // On simule du texte avec des rectangles (pour l'exemple)
+                        // Dans la vraie version on utiliserait un système de texte
+                        renderer.drawRect(24, 54, 292, 16, 0x44FFFFFF);
+
+                        // Game Over
+                        if (this.gameOver) {
+                            renderer.drawRect(200, 220, 400, 120, 0xCC000000);
+                            renderer.drawRect(210, 230, 380, 100, 0xCCFF2244);
+                            // Message
+                            const msg = '💀 GAME OVER 💀\nScore: ' + this.score +
+                                '\nAppuie sur ESPACE pour recommencer';
+                            // Dessin approximatif du texte
+                            renderer.drawRect(240, 270, 320, 4, 0xFFFFFFFF);
+                            renderer.drawRect(240, 290, 200, 4, 0xFFFFFFFF);
+                            renderer.drawRect(240, 310, 280, 4, 0xFFFFFFFF);
+                        }
+                    }
+                }
+
+                // ====================================================
+                //  2. LANCEMENT DU JEU
+                // ====================================================
+
+                // Créer l'instance du jeu
+                const game = new R.Lalao(window.innerWidth, window.innerHeight, {
+                    maxEntities: 30000,
+                    gameKey: 'survival_arena'
+                });
+
+                // Ajouter la scène
+                game.addScene('arena', SurvivalArena);
+
+                // Démarrer
+                game.start('arena');
+
+                // Redimensionnement
+                window.addEventListener('resize', () => {
+                    game.renderer.resize(window.innerWidth, window.innerHeight);
+                    game.width = window.innerWidth;
+                    game.height = window.innerHeight;
+                    game.camera.viewW = window.innerWidth;
+                    game.camera.viewH = window.innerHeight;
+                });
+
+                // Gérer le focus (pour le clavier)
+                window.addEventListener('click', () => {
+                    if (game.canvas) game.canvas.focus();
+                });
+
+                console.log('🎮 Survival Arena lancé !');
+            }
+        })();
+    </script>
+
 </body>
 </html>
