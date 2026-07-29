@@ -3524,6 +3524,6 @@
     }
 
     console.log('%c⚡ RAKITRAKATRA V4 "ADY GOAVANA" ⚡', 'color: #ff1493; font-size: 16px; font-weight: bold');
-    console.log('%cWebGL 2 + Vondrona + 50 Systems - Vonona handresy Phaser 3.60!', 'color: #00ffff; font-size: 12px');
+    console.log('%cWebGL 2 + Vondrona + 50 Systems!', 'color: #00ffff; font-size: 12px');
 
 })(typeof window !== 'undefined' ? window : globalThis);
