@@ -1,7 +1,7 @@
 /**
  * ═══════════════════════════════════════════════════════════
  * RAKITRAKATRA V4 "ADY GOAVANA" 
- * Moteur lalao 2D matihanina - WebGL 2 + ECS
+ * Moteur lalao 2D matihanina - WebGL 2 + Vondrona
  * © 2026 MIT Licence
  * 
  * Architecture:
@@ -81,13 +81,13 @@
     };
 
     // ============================================================
-    // 1. MATEMATIKA - Vec2 (Vecteur 2D optimized)
+    // 1. MATEMATIKA - Vektora2 (Vecteur 2D optimized)
     // ============================================================
-    class Vec2 {
+    class Vektora2 {
         constructor(x = 0, y = 0) { this.x = x; this.y = y; }
         set(x, y) { this.x = x; this.y = y; return this; }
-        copy() { return new Vec2(this.x, this.y); }
-        clone() { return new Vec2(this.x, this.y); }
+        copy() { return new Vektora2(this.x, this.y); }
+        clone() { return new Vektora2(this.x, this.y); }
         equals(v) { return Math.abs(this.x - v.x) < EPSILON && Math.abs(this.y - v.y) < EPSILON; }
         add(v) { this.x += v.x; this.y += v.y; return this; }
         addScalar(s) { this.x += s; this.y += s; return this; }
@@ -128,21 +128,21 @@
             this.y -= normal.y * d;
             return this;
         }
-        static fromAngle(a, len = 1) { return new Vec2(Math.cos(a) * len, Math.sin(a) * len); }
-        static add(a, b) { return new Vec2(a.x + b.x, a.y + b.y); }
-        static sub(a, b) { return new Vec2(a.x - b.x, a.y - b.y); }
-        static mul(a, b) { return new Vec2(a.x * b.x, a.y * b.y); }
-        static lerp(a, b, t) { return new Vec2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t); }
+        static fromAngle(a, len = 1) { return new Vektora2(Math.cos(a) * len, Math.sin(a) * len); }
+        static add(a, b) { return new Vektora2(a.x + b.x, a.y + b.y); }
+        static sub(a, b) { return new Vektora2(a.x - b.x, a.y - b.y); }
+        static mul(a, b) { return new Vektora2(a.x * b.x, a.y * b.y); }
+        static lerp(a, b, t) { return new Vektora2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t); }
         static distance(a, b) { return Math.hypot(b.x - a.x, b.y - a.y); }
     }
 
     // ============================================================
-    // 2. MATEMATIKA - Vec3 (Vecteur 3D ho an'ny shader)
+    // 2. MATEMATIKA - Vektora3 (Vecteur 3D ho an'ny shader)
     // ============================================================
-    class Vec3 {
+    class Vektora3 {
         constructor(x = 0, y = 0, z = 0) { this.x = x; this.y = y; this.z = z; }
         set(x, y, z) { this.x = x; this.y = y; this.z = z; return this; }
-        copy() { return new Vec3(this.x, this.y, this.z); }
+        copy() { return new Vektora3(this.x, this.y, this.z); }
         add(v) { this.x += v.x; this.y += v.y; this.z += v.z; return this; }
         sub(v) { this.x -= v.x; this.y -= v.y; this.z -= v.z; return this; }
         mul(s) { this.x *= s; this.y *= s; this.z *= s; return this; }
@@ -159,12 +159,12 @@
     }
 
     // ============================================================
-    // 3. MATEMATIKA - Mat2D (Matrice 2D 3x2 optimized)
+    // 3. MATEMATIKA - Lamina2D (Matrice 2D 3x2 optimized)
     // ============================================================
-    class Mat2D {
+    class Lamina2D {
         constructor() { this.m = new Float32Array([1, 0, 0, 1, 0, 0]); }
         identity() { this.m.set([1, 0, 0, 1, 0, 0]); return this; }
-        copy() { const n = new Mat2D(); n.m.set(this.m); return n; }
+        copy() { const n = new Lamina2D(); n.m.set(this.m); return n; }
         set(a, b, c, d, e, f) {
             this.m[0] = a; this.m[1] = b; this.m[2] = c;
             this.m[3] = d; this.m[4] = e; this.m[5] = f;
@@ -213,7 +213,7 @@
             this.m[5] = (b * e - a * f) * invDet;
             return this;
         }
-        transformPoint(x, y, out = new Vec2()) {
+        transformPoint(x, y, out = new Vektora2()) {
             out.x = this.m[0] * x + this.m[2] * y + this.m[4];
             out.y = this.m[1] * x + this.m[3] * y + this.m[5];
             return out;
@@ -223,7 +223,7 @@
     // ============================================================
     // 4. RECT - Mahitsizoro (Rectangle)
     // ============================================================
-    class Rect {
+    class Efajoro {
         constructor(x = 0, y = 0, w = 0, h = 0) {
             this.x = x; this.y = y; this.w = w; this.h = h;
         }
@@ -234,7 +234,7 @@
         get cx() { return this.x + this.w / 2; }
         get cy() { return this.y + this.h / 2; }
         set(x, y, w, h) { this.x = x; this.y = y; this.w = w; this.h = h; return this; }
-        copy() { return new Rect(this.x, this.y, this.w, this.h); }
+        copy() { return new Efajoro(this.x, this.y, this.w, this.h); }
         contains(px, py) {
             return px >= this.x && px <= this.right && py >= this.y && py <= this.bottom;
         }
@@ -249,7 +249,7 @@
             const y = Math.max(this.y, r.y);
             const w = Math.min(this.right, r.right) - x;
             const h = Math.min(this.bottom, r.bottom) - y;
-            if (w > 0 && h > 0) return new Rect(x, y, w, h);
+            if (w > 0 && h > 0) return new Efajoro(x, y, w, h);
             return null;
         }
         union(r) {
@@ -257,7 +257,7 @@
             const y = Math.min(this.y, r.y);
             const w = Math.max(this.right, r.right) - x;
             const h = Math.max(this.bottom, r.bottom) - y;
-            return new Rect(x, y, w, h);
+            return new Efajoro(x, y, w, h);
         }
         expand(dx, dy) {
             this.x -= dx; this.y -= dy;
@@ -274,7 +274,7 @@
     // ============================================================
     // 5. CERCLE - Boribory
     // ============================================================
-    class Cercle {
+    class Boribory {
         constructor(x = 0, y = 0, r = 0) { this.x = x; this.y = y; this.r = r; }
         contains(px, py) { return Z.distSq(this.x, this.y, px, py) <= this.r * this.r; }
         intersects(c) {
@@ -292,9 +292,9 @@
     // ============================================================
     // 6. POLYGON - Polygone (SAT collision ready)
     // ============================================================
-    class Polygon {
+    class Lafomaro {
         constructor(points = []) {
-            this.points = points.map(p => p instanceof Vec2 ? p : new Vec2(p.x, p.y));
+            this.points = points.map(p => p instanceof Vektora2 ? p : new Vektora2(p.x, p.y));
             this.x = 0; this.y = 0; this.rotation = 0;
             this._worldPoints = null;
             this._dirty = true;
@@ -302,7 +302,7 @@
         _update() {
             if (!this._dirty) return;
             const cos = Math.cos(this.rotation), sin = Math.sin(this.rotation);
-            this._worldPoints = this.points.map(p => new Vec2(
+            this._worldPoints = this.points.map(p => new Vektora2(
                 this.x + p.x * cos - p.y * sin,
                 this.y + p.x * sin + p.y * cos
             ));
@@ -312,18 +312,18 @@
         setRot(r) { this.rotation = r; this._dirty = true; }
         worldPoints() { this._update(); return this._worldPoints; }
         static rect(x, y, w, h) {
-            return new Polygon([
-                new Vec2(-w/2, -h/2), new Vec2(w/2, -h/2),
-                new Vec2(w/2, h/2), new Vec2(-w/2, h/2)
+            return new Lafomaro([
+                new Vektora2(-w/2, -h/2), new Vektora2(w/2, -h/2),
+                new Vektora2(w/2, h/2), new Vektora2(-w/2, h/2)
             ]);
         }
         static regular(sides, radius) {
             const pts = [];
             for (let i = 0; i < sides; i++) {
                 const a = (i / sides) * PI2;
-                pts.push(new Vec2(Math.cos(a) * radius, Math.sin(a) * radius));
+                pts.push(new Vektora2(Math.cos(a) * radius, Math.sin(a) * radius));
             }
-            return new Polygon(pts);
+            return new Lafomaro(pts);
         }
     }
 
@@ -390,9 +390,9 @@
     }
 
     // ============================================================
-    // 9. PRNG - Kisendrasendra voafehy (seeded random)
+    // 9. Kisendrasendra - Kisendrasendra voafehy (seeded random)
     // ============================================================
-    class PRNG {
+    class Kisendrasendra {
         constructor(seed = Date.now()) {
             this._seed = seed >>> 0;
             this._orig = this._seed;
@@ -515,9 +515,9 @@
     })();
 
     // ============================================================
-    // 12. ECS - Entity Component System (Struct of Arrays)
+    // 12. Vondrona - Entity Component System (Struct of Arrays)
     // ============================================================
-    class ECS {
+    class Vondrona {
         constructor(maxEntities = 100000) {
             this.max = maxEntities;
             this.count = 0;
@@ -605,7 +605,7 @@
         
         create() {
             if (this.count >= this.max) {
-                throw new Error('ECS: Maximum entities reached');
+                throw new Error('Vondrona: Maximum entities reached');
             }
             const id = this.count++;
             this.id[id] = this._nextId++;
@@ -672,7 +672,7 @@
     // ============================================================
     // 13. SPATIAL HASH GRID - Collision detection optimized
     // ============================================================
-    class HashSpatial {
+    class SakanToerana {
         constructor(cellSize = 64) {
             this.cellSize = cellSize;
             this.cells = new Map();
@@ -730,7 +730,7 @@
     // ============================================================
     // 14. QUADTREE - Alternative spatial partition
     // ============================================================
-    class Quadtree {
+    class HazoEfatra {
         constructor(bounds, maxObj = 8, maxDepth = 5, depth = 0) {
             this.bounds = bounds;
             this.maxObj = maxObj;
@@ -753,10 +753,10 @@
             const hw = w / 2, hh = h / 2;
             const d = this.depth + 1;
             this.nodes = [
-                new Quadtree(new Rect(x, y, hw, hh), this.maxObj, this.maxDepth, d),
-                new Quadtree(new Rect(x + hw, y, hw, hh), this.maxObj, this.maxDepth, d),
-                new Quadtree(new Rect(x, y + hh, hw, hh), this.maxObj, this.maxDepth, d),
-                new Quadtree(new Rect(x + hw, y + hh, hw, hh), this.maxObj, this.maxDepth, d)
+                new HazoEfatra(new Efajoro(x, y, hw, hh), this.maxObj, this.maxDepth, d),
+                new HazoEfatra(new Efajoro(x + hw, y, hw, hh), this.maxObj, this.maxDepth, d),
+                new HazoEfatra(new Efajoro(x, y + hh, hw, hh), this.maxObj, this.maxDepth, d),
+                new HazoEfatra(new Efajoro(x + hw, y + hh, hw, hh), this.maxObj, this.maxDepth, d)
             ];
         }
         
@@ -1421,7 +1421,7 @@
             this._shakeMag = 0;
             this._shakeX = 0;
             this._shakeY = 0;
-            this._matrix = new Mat2D();
+            this._matrix = new Lamina2D();
         }
         
         follow(target, lerp = 0.1) {
@@ -1537,7 +1537,7 @@
         getBounds() {
             const vw = this.viewW / this.zoom;
             const vh = this.viewH / this.zoom;
-            return new Rect(this.x, this.y, vw, vh);
+            return new Efajoro(this.x, this.y, vw, vh);
         }
     }
 
@@ -2102,7 +2102,7 @@
     }
 
     // ============================================================
-    // 25. PHYSICS SYSTEM - Rafitra Fizika (AABB + Circle + Polygon)
+    // 25. PHYSICS SYSTEM - Rafitra Fizika (AABB + Circle + Lafomaro)
     // ============================================================
     const Fizika = {
         // AABB vs AABB
@@ -2185,7 +2185,7 @@
             return { t, x: ox + dx * t, y: oy + dy * t };
         },
         
-        // SAT Polygon collision
+        // SAT Lafomaro collision
         polygonVsPolygon(polyA, polyB) {
             const axesA = this._getAxes(polyA.worldPoints());
             const axesB = this._getAxes(polyB.worldPoints());
@@ -2445,7 +2445,7 @@
     // ============================================================
     // 28. AI SYSTEM - Behavior Trees & State Machines
     // ============================================================
-    class FSM {
+    class Fivoarana {
         constructor() {
             this.states = new Map();
             this.current = null;
@@ -2474,7 +2474,7 @@
     }
     
     // Behavior Tree nodes
-    const BT = {
+    const Fitondrantena = {
         SUCCESS: 1,
         FAILURE: 2,
         RUNNING: 3,
@@ -2484,9 +2484,9 @@
             tick(ctx) {
                 for (const child of this.children) {
                     const s = child.tick(ctx);
-                    if (s !== BT.SUCCESS) return s;
+                    if (s !== Fitondrantena.SUCCESS) return s;
                 }
-                return BT.SUCCESS;
+                return Fitondrantena.SUCCESS;
             }
         },
         
@@ -2495,9 +2495,9 @@
             tick(ctx) {
                 for (const child of this.children) {
                     const s = child.tick(ctx);
-                    if (s !== BT.FAILURE) return s;
+                    if (s !== Fitondrantena.FAILURE) return s;
                 }
-                return BT.FAILURE;
+                return Fitondrantena.FAILURE;
             }
         },
         
@@ -2508,14 +2508,14 @@
         
         Condition: class {
             constructor(fn) { this.fn = fn; }
-            tick(ctx) { return this.fn(ctx) ? BT.SUCCESS : BT.FAILURE; }
+            tick(ctx) { return this.fn(ctx) ? Fitondrantena.SUCCESS : Fitondrantena.FAILURE; }
         }
     };
 
     // ============================================================
-    // 29. UI SYSTEM - Rafitra Interface
+    // 29. Fandraisana SYSTEM - Rafitra Interface
     // ============================================================
-    const UI = {
+    const Fandraisana = {
         Bokotra: class {
             constructor(x, y, w, h, label, callback) {
                 this.x = x; this.y = y; this.w = w; this.h = h;
@@ -2794,8 +2794,8 @@
         }
     }
     
-    // 35. Stats Monitor
-    class Stats {
+    // 35. Antontanisa Monitor
+    class Antontanisa {
         constructor() {
             this.fps = 0;
             this.frameTime = 0;
@@ -2821,8 +2821,8 @@
         }
     }
     
-    // 36. Timeline (sequence of events)
-    class Timeline {
+    // 36. TsipikaFotoana (sequence of events)
+    class TsipikaFotoana {
         constructor() {
             this.events = [];
             this.time = 0;
@@ -2853,8 +2853,8 @@
         }
     }
     
-    // 37. IK (Inverse Kinematics - FABRIK)
-    class IK {
+    // 37. Taolana (Inverse Kinematics - FABRIK)
+    class Taolana {
         constructor(baseX, baseY, lengths) {
             this.base = { x: baseX, y: baseY };
             this.lengths = lengths || [100, 80, 60];
@@ -2912,8 +2912,8 @@
         }
     }
     
-    // 38. Spline (Catmull-Rom)
-    class Spline {
+    // 38. Piolaka (Catmull-Rom)
+    class Piolaka {
         constructor(points, closed = false) {
             this.points = points || [];
             this.closed = closed;
@@ -3083,7 +3083,7 @@
     }
     
     // 42. Post-processing shaders (effects)
-    class EffectManager {
+    class MpitantanaEfitra {
         constructor(renderer) {
             this.renderer = renderer;
             this.effects = [];
@@ -3102,7 +3102,7 @@
     }
     
     // 43. CRT Effect
-    class CRTEffect {
+    class EfitraTaloha {
         constructor(intensity = 0.5) {
             this.intensity = intensity;
         }
@@ -3110,7 +3110,7 @@
     }
     
     // 44. Bloom Effect
-    class BloomEffect {
+    class Famirapiratana {
         constructor(threshold = 0.8, intensity = 1) {
             this.threshold = threshold;
             this.intensity = intensity;
@@ -3119,7 +3119,7 @@
     }
     
     // 45. Screen shake
-    class ScreenShake {
+    class Hozongozona {
         constructor() {
             this.intensity = 0;
             this.duration = 0;
@@ -3147,8 +3147,8 @@
         }
     }
     
-    // 46. Inventory system
-    class Inventory {
+    // 46. Entana system
+    class Entana {
         constructor(size = 20) {
             this.size = size;
             this.slots = new Array(size).fill(null);
@@ -3192,7 +3192,7 @@
     }
     
     // 47. Quest system
-    class QuestManager {
+    class MpitantanaIraka {
         constructor() {
             this.quests = [];
         }
@@ -3219,7 +3219,7 @@
     }
     
     // 48. Dialogue system
-    class DialogueManager {
+    class MpitantanaResaka {
         constructor() {
             this.nodes = new Map();
             this.current = null;
@@ -3283,7 +3283,7 @@
     }
     
     // 50. Plugin manager
-    class PluginManager {
+    class MpitantanaFanampiny {
         constructor() {
             this.plugins = new Map();
         }
@@ -3333,17 +3333,17 @@
             
             // Core systems
             this.renderer = new Mpampiseho(this.canvas, opts);
-            this.ecs = new ECS(opts.maxEntities || 50000);
+            this.ecs = new Vondrona(opts.maxEntities || 50000);
             this.camera = new Kamera(width, height);
             this.timer = new Famataranandro();
             this.loader = new Mpampiditra();
             this.scenes = new MpitantanaSehatra(this);
-            this.stats = new Stats();
+            this.stats = new Antontanisa();
             this.debug = new DebugDrafitra(this.renderer);
             this.particles = new Vovoka();
             this.weather = new Toetrandro(width, height);
             this.save = new Tehirizo(opts.gameKey);
-            this.plugins = new PluginManager();
+            this.plugins = new MpitantanaFanampiny();
             
             // Input
             Fanindry.init(this.canvas);
@@ -3409,7 +3409,7 @@
             this.weather.render(this.renderer);
             this.renderer.end();
             
-            // UI render (untransformed)
+            // Fandraisana render (untransformed)
             this.renderer.begin(null);
             this.scenes.renderUI(this.renderer);
             this.renderer.end();
@@ -3445,20 +3445,20 @@
     // ============================================================
     const RakitrakatraV4 = {
         // Version
-        VERSION: '4.0.0',
-        CODENAME: 'Ady Goavana',
+        KINOVANA: '4.0.0',
+        ANARANMIAFINA: 'Ady Goavana',
         
         // Core
         Lalao,
         Sehatra,
         
         // Math
-        Vec2, Vec3, Mat2D,
-        Rect, Cercle, Polygon,
+        Vektora2, Vektora3, Lamina2D,
+        Efajoro, Boribory, Lafomaro,
         Z,
         
-        // ECS
-        ECS,
+        // Vondrona
+        Vondrona,
         
         // Rendering
         Mpampiseho,
@@ -3469,8 +3469,8 @@
         Mpampiditra,
         Feo,
         Fanindry,
-        HashSpatial,
-        Quadtree,
+        SakanToerana,
+        HazoEfatra,
         
         // Animation & FX
         Sarimihetsika,
@@ -3478,40 +3478,40 @@
         Toetrandro,
         MpitantanaTween,
         Mpanamora,
-        Timeline,
+        TsipikaFotoana,
         
         // Gameplay
         Fizika,
         Drafitra,
         Lalana,
-        FSM, BT,
-        IK, Spline,
+        Fivoarana, Fitondrantena,
+        Taolana, Piolaka,
         Rano,
-        Inventory,
-        QuestManager,
-        DialogueManager,
+        Entana,
+        MpitantanaIraka,
+        MpitantanaResaka,
         
-        // UI
-        UI,
+        // Fandraisana
+        Fandraisana,
         Sarintany,
         Zavona,
         JoystickVirtoaly,
         
         // Utilities
         Dobo,
-        PRNG,
+        Kisendrasendra,
         Tabataba,
         Tehirizo,
         Teny,
-        Stats,
+        Antontanisa,
         DebugDrafitra,
-        PluginManager,
+        MpitantanaFanampiny,
         
         // Effects
-        EffectManager,
-        CRTEffect,
-        BloomEffect,
-        ScreenShake
+        MpitantanaEfitra,
+        EfitraTaloha,
+        Famirapiratana,
+        Hozongozona
     };
 
     // Export to global
@@ -3524,6 +3524,6 @@
     }
 
     console.log('%c⚡ RAKITRAKATRA V4 "ADY GOAVANA" ⚡', 'color: #ff1493; font-size: 16px; font-weight: bold');
-    console.log('%cWebGL 2 + ECS + 50 Systems - Vonona handresy Phaser 3.60!', 'color: #00ffff; font-size: 12px');
+    console.log('%cWebGL 2 + Vondrona + 50 Systems - Vonona handresy Phaser 3.60!', 'color: #00ffff; font-size: 12px');
 
 })(typeof window !== 'undefined' ? window : globalThis);
