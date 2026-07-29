@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="mg">
+<head>
+<meta charset="UTF-8">
+<title>Vorona Manidina — Demo Rakitrakatra V4</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        margin: 0; min-height: 100vh;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: radial-gradient(ellipse at top, #1b2338 0%, #05060c 70%);
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        color: #eef2ff; gap: 14px; padding: 24px 0;
+    }
+    h1 { margin: 0; font-size: 20px; color: #ffe082; letter-spacing: .5px; }
+    #stage {
+        position: relative; width: 420px; max-width: 92vw;
+        border-radius: 10px; overflow: hidden;
+        box-shadow: 0 0 0 2px #2b3557, 0 20px 60px rgba(0,0,0,.6);
+        cursor: pointer;
+    }
+    canvas { display: block; width: 100%; image-rendering: pixelated; background: #05060c; }
+    #hud { position: absolute; inset: 0; pointer-events: none; text-shadow: 0 2px 4px rgba(0,0,0,.85); }
+    #score { position: absolute; top: 14px; left: 0; right: 0; text-align: center; font-size: 42px; font-weight: 800; color: #fff; }
+    #best { position: absolute; top: 62px; left: 0; right: 0; text-align: center; font-size: 13px; color: #ffe082; }
+    #center-msg {
+        position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+        text-align: center; display: block;
+    }
+    #center-msg h2 { margin: 0 0 6px; font-size: 22px; color: #00e5ff; }
+    #center-msg p { margin: 0; font-size: 13px; color: #cdd4ee; }
+    #legend { font-size: 12px; opacity: .7; text-align: center; }
+    code { color: #9fd3ff; }
+</style>
+</head>
+<body>
+
+<h1>🐤 VORONA MANIDINA — Demo Flappy</h1>
+<div id="stage">
+    <canvas id="gameCanvas" width="420" height="620"></canvas>
+    <div id="hud">
+        <div id="score">0</div>
+        <div id="best">Vola tsara indrindra: 0</div>
+        <div id="center-msg">
+            <h2>Tsindrio na kitiho hanomboka</h2>
+            <p>SPACE / kitika / kitiho eto</p>
+        </div>
+    </div>
+</div>
+<div id="legend">Efajoro tsotra fotsiny no ampiasaina eto — tsy misy sary. Manaraka: <code>rakitrakatra_gasy.min.js</code></div>
+
+<script src="rakitrakatra.min.js"></script>
+<script>
+(function(){
+    const R = window.Rakitrakatra;
+    const W = 420, H = 620;
+
+    const canvasEl = document.getElementById('gameCanvas');
+    const game = new R.Lalao(W, H, { canvas: canvasEl, gameKey: 'flappy_demo' });
+
+    const GRAVITY = 1500;
+    const FLAP_V = -420;
+    const PIPE_W = 62;
+    const GAP_H = 168;
+    const PIPE_SPEED = 165;
+    const SPAWN_EVERY = 1.45;
+    const GROUND_H = 60;
+
+    class FlappyScene extends R.Sehatra {
+        create() {
+            this.save = this.game.save;
+            this.best = (this.save.load(0) || {}).best || 0;
+            this._reset();
+            updateHud(this);
+        }
+
+        _reset() {
+            this.bird = { x: 120, y: H / 2, vy: 0, size: 24 };
+            this.pipes = [];
+            this.timeToSpawn = 0.6;
+            this.score = 0;
+            this.state = 'idle'; // idle -> playing -> dead
+            this.groundOffset = 0;
+            hideMsg(); showMsg('Tsindrio na kitiho hanomboka', 'SPACE / kitika / kitiho eto');
+        }
+
+        flap() {
+            if (this.state === 'dead') { this._reset(); updateHud(this); return; }
+            this.state = 'playing';
+            this.bird.vy = FLAP_V;
+            hideMsg();
+            R.Feo.mamorona('jump');
+        }
+
+        _spawnPipe() {
+            const margin = 60;
+            const gapY = R.Z.rand ? R.Z.rand(margin + GAP_H / 2, H - GROUND_H - margin - GAP_H / 2) : (H / 2);
+            this.pipes.push({ x: W + PIPE_W, gapY, passed: false });
+        }
+
+        update(dt) {
+            this.groundOffset = (this.groundOffset + PIPE_SPEED * dt) % 24;
+
+            if (this.state !== 'playing') {
+                if (R.Fanindry.justPressed(' ')) this.flap();
+                return;
+            }
+
+            const b = this.bird;
+            b.vy += GRAVITY * dt;
+            b.y += b.vy * dt;
+
+            if (R.Fanindry.justPressed(' ')) this.flap();
+
+            // pipes
+            this.timeToSpawn -= dt;
+            if (this.timeToSpawn <= 0) { this._spawnPipe(); this.timeToSpawn = SPAWN_EVERY; }
+
+            for (const p of this.pipes) {
+                p.x -= PIPE_SPEED * dt;
+                if (!p.passed && p.x + PIPE_W < b.x) {
+                    p.passed = true;
+                    this.score++;
+                    R.Feo.mamorona('coin');
+                    updateHud(this);
+                }
+            }
+            this.pipes = this.pipes.filter(p => p.x > -PIPE_W);
+
+            // collisions
+            const bx = b.x - b.size / 2, by = b.y - b.size / 2;
+            let dead = false;
+            if (b.y - b.size / 2 < 0 || b.y + b.size / 2 > H - GROUND_H) dead = true;
+            for (const p of this.pipes) {
+                const topH = p.gapY - GAP_H / 2;
+                const botY = p.gapY + GAP_H / 2;
+                if (R.Fizika.rectVsRect(bx, by, b.size, b.size, p.x, 0, PIPE_W, topH)) dead = true;
+                if (R.Fizika.rectVsRect(bx, by, b.size, b.size, p.x, botY, PIPE_W, H - GROUND_H - botY)) dead = true;
+            }
+            if (dead) this._die();
+        }
+
+        _die() {
+            this.state = 'dead';
+            this.game.camera.shake(6, 200);
+            R.Feo.mamorona('hit');
+            this.game.particles.emit(this.bird.x, this.bird.y, {
+                count: 18, color: 0xFFD54FFF, speedMin: 60, speedMax: 220,
+                lifeMin: .3, lifeMax: .7, gravity: 500
+            });
+            if (this.score > this.best) {
+                this.best = this.score;
+                this.save.save(0, { best: this.best });
+            }
+            updateHud(this);
+            showMsg('NAHAZO IZY IO!', 'Kitiho / SPACE hanombohana indray');
+        }
+
+        render(renderer) {
+            // lanitra tsotra
+            renderer.drawRect(0, 0, W, H, 0x0a0f1eFF);
+
+            // tafo/vodin-pipes
+            for (const p of this.pipes) {
+                const topH = p.gapY - GAP_H / 2;
+                const botY = p.gapY + GAP_H / 2;
+                renderer.drawRect(p.x, 0, PIPE_W, topH, 0x3ddc84FF);
+                renderer.drawRect(p.x - 6, topH - 18, PIPE_W + 12, 18, 0x2fae66FF);
+                renderer.drawRect(p.x, botY, PIPE_W, H - GROUND_H - botY, 0x3ddc84FF);
+                renderer.drawRect(p.x - 6, botY, PIPE_W + 12, 18, 0x2fae66FF);
+            }
+
+            // tany
+            renderer.drawRect(0, H - GROUND_H, W, GROUND_H, 0x8d6e3fFF);
+            for (let x = -this.groundOffset; x < W; x += 24) {
+                renderer.drawRect(x, H - GROUND_H, 12, 8, 0x6b5330FF);
+            }
+
+            // vorona (efajoro tsotra)
+            const b = this.bird;
+            const tilt = R.Z.clamp(b.vy / 600, -0.6, 0.9);
+            renderer.drawRect(b.x - b.size / 2, b.y - b.size / 2 + tilt * 6, b.size, b.size, 0xFFD54FFF);
+            renderer.drawRect(b.x + b.size / 2 - 6, b.y - b.size / 2 + tilt * 6, 6, 6, 0x222222FF); // maso
+            renderer.drawRect(b.x - b.size / 2 - 8, b.y + tilt * 6, 8, 6, 0xff6f3fFF); // vava
+        }
+    }
+
+    game.addScene('flappy', FlappyScene);
+
+    const scoreEl = document.getElementById('score');
+    const bestEl = document.getElementById('best');
+    const msgEl = document.getElementById('center-msg');
+    const msgH2 = msgEl.querySelector('h2');
+    const msgP = msgEl.querySelector('p');
+
+    function updateHud(scene) {
+        scoreEl.textContent = scene.score;
+        bestEl.textContent = 'Vola tsara indrindra: ' + scene.best;
+    }
+    function showMsg(title, sub) { msgH2.textContent = title; msgP.textContent = sub; msgEl.style.display = 'block'; }
+    function hideMsg() { msgEl.style.display = 'none'; }
+
+    game.start('flappy');
+
+    // Kitika/tsindry eran'ny sehatra manontolo = flap
+    document.getElementById('stage').addEventListener('pointerdown', () => {
+        R.Feo.resume();
+        game.scenes.active.flap();
+    });
+    window.addEventListener('keydown', () => R.Feo.resume(), { once: true });
+})();
+</script>
+</body>
+</html>
