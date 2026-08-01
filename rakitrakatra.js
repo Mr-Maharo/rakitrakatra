@@ -11,30 +11,6 @@
  * - Entity Component System (SoA), sparse-set + free-list ID
  * - Spatial Hash Grid
  * - 50+ Systems & Plugins
- *
- * CHANGELOG v4.0.1 (audit fixes):
- *  - Vondrona/Vondrona: nesorina ny compact() nandoto ny index ivelany;
- *    free-list + generation handle (ABA-safe) solon'ny izany.
- *  - Vondrona/Vondrona: create() namerina daholo ny sata ho 0/default
- *    (teo aloha tsy naverina ny w,h,vx,vy amin'ny slot recycled).
- *  - Vondrona/Vondrona: nesorina ny fillDefaults() aman-droa (constructor+create).
- *  - Vondrona/Vondrona: nampiana query(tag, fn) mampiasa cache voatahiry.
- *  - Mpampiseho: flush() manalahatra ny quad araka ny texture mba
- *    tsy hi-break batch isaky ny fiovan-texture amin'ny filaharan'ny
- *    fiantsoana drawSprite/drawRect.
- *  - Dobo: used ho WeakSet (tsy misakana GC raha adino avereno()).
- *  - Fanindry: mouse/touch listeners afindra ho @ canvas fa tsy window;
- *    blur mamoaka justUp marina alohan'ny mamono ny keys.
- *  - Lalao._loop: voafetra ny isan'ny fixed-step "catch up" isaky ny
- *    frame (MAX_STEPS) mba tsy hisian'ny spiral of death; misy alpha
- *    interpolation azo ampiasain'ny Sehatra.render(renderer,camera,alpha).
- *  - Mpampiditra: ny 'feo' load dia mandika (decodeAudioData) sy
- *    mampiditra any @ Feo._buffers mivantana; nampiana unload*().
- *  - Mpampiseho: nampiana deleteTexture(key) hamotsorana VRAM.
- *  - Z.shuffle: clone alohan'ny fanovana (tsy manova ny array tany am-boalohany).
- *  - Lalao: azo ampiana { responsive: true } hisian'ny fanaraha-maso
- *    ny fiovan'ny habaka (ResizeObserver / orientationchange).
- * ═══════════════════════════════════════════════════════════
  */
 (function(global) {
     'use strict';
