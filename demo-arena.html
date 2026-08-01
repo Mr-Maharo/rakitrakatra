@@ -1,398 +1,581 @@
 <!DOCTYPE html>
-<html>
+<html lang="mg">
 <head>
-  <meta charset="UTF-8">
-  <title>Arena Survival</title>
-  <style>
-    * { margin: 0; padding: 0; }
-    body { background: #0a0a1a; display: flex; justify-content: center; align-items: center; height: 100vh; }
-    canvas { border: 3px solid #2a2a4a; border-radius: 12px; background: #1a1a2e; cursor: crosshair; }
-  </style>
+<meta charset="UTF-8">
+<title>Ady An-tanàna — Demo Rakitrakatra V4.0.1</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        margin: 0; min-height: 100vh;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: radial-gradient(ellipse at top, #1b2338 0%, #05060c 70%);
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        color: #eef2ff; gap: 12px; padding: 20px 0;
+    }
+    h1 { margin: 0; font-size: 20px; color: #ff5252; letter-spacing: .5px; }
+    #stage {
+        position: relative; width: 800px; max-width: 96vw;
+        border-radius: 10px; overflow: hidden;
+        box-shadow: 0 0 0 2px #2b3557, 0 20px 60px rgba(0,0,0,.6);
+        cursor: crosshair;
+    }
+    canvas { display: block; width: 100%; image-rendering: pixelated; background: #05060c; }
+    #hud { position: absolute; inset: 0; pointer-events: none; text-shadow: 0 2px 4px rgba(0,0,0,.85); font-size: 13.5px; }
+
+    #topbar {
+        position: absolute; top: 10px; left: 12px; right: 12px;
+        display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .panel {
+        background: rgba(8,10,20,.55); border: 1px solid rgba(255,255,255,.08);
+        border-radius: 8px; padding: 8px 12px;
+    }
+    #hpWrap { width: 190px; }
+    #hpLabel { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 11.5px; opacity: .85; }
+    #hpBarBg { background: #241826; border-radius: 5px; height: 12px; overflow: hidden; border: 1px solid #3a2530; }
+    #hpBarFill { background: linear-gradient(90deg,#ff5252,#ffb300); height: 100%; width: 100%; transition: width .15s ease; }
+
+    #rightInfo { text-align: right; }
+    #rightInfo b { color: #ffd54f; }
+
+    #waveWrap { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); text-align: center; }
+
+    #centerMsg {
+        position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+        text-align: center; pointer-events: all; min-width: 320px;
+    }
+    #centerMsg h2 { margin: 0 0 8px; font-size: 26px; color: #ff5252; letter-spacing: .5px; }
+    #centerMsg p { margin: 0 0 14px; font-size: 13.5px; color: #cdd4ee; line-height: 1.6; }
+    #centerMsg button {
+        pointer-events: all; font-size: 14px; font-weight: 700; padding: 10px 22px;
+        border-radius: 7px; border: none; background: #ff5252; color: #1a0808; cursor: pointer;
+    }
+    #centerMsg button:hover { background: #ff7676; }
+
+    #legend {
+        position: absolute; bottom: 8px; left: 0; right: 0; text-align: center;
+        font-size: 11px; opacity: .65;
+    }
+    code { color: #9fd3ff; }
+
+    #mobileBtns { display: flex; justify-content: space-between; width: 800px; max-width: 96vw; }
+    #dpad { display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); gap: 4px; }
+    #dpad button, #btnFire {
+        pointer-events: all; font-size: 15px; border-radius: 8px;
+        border: 1px solid #3a4674; background: #1e2745; color: #eef2ff;
+    }
+    #btnFire { width: 64px; height: 64px; border-radius: 50%; font-size: 20px; align-self: center; }
+</style>
 </head>
 <body>
-<canvas id="game" width="900" height="600"></canvas>
 
+<h1>🔫 ADY AN-TANÀNA — Demo Shooter</h1>
+<div id="stage">
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="hud">
+        <div id="topbar">
+            <div class="panel" id="hpWrap">
+                <div id="hpLabel"><span>AINA</span><span id="hpText">100/100</span></div>
+                <div id="hpBarBg"><div id="hpBarFill"></div></div>
+            </div>
+            <div class="panel" id="rightInfo">
+                Isa: <b id="scoreEl">0</b><br>
+                Tsara indrindra: <b id="bestEl">0</b>
+            </div>
+        </div>
+        <div id="waveWrap" class="panel">
+            AMBARATONGA <b id="levelEl">1</b>/<span id="levelMaxEl">5</span>
+            &nbsp;·&nbsp; Vahiny sisa: <b id="enemiesEl">0</b>
+            &nbsp;·&nbsp; Fitaovana: <b id="weaponEl">Basy 1</b>
+        </div>
+        <div id="centerMsg">
+            <h2 id="msgTitle">ADY AN-TANÀNA</h2>
+            <p id="msgSub">Mihetsika: WASD / totohondry &nbsp;·&nbsp; Mitifitra: kitiho na tazomy ny totohondry<br>Mialà @ trano vaventy (batiman) — manakana bala izy ireny!</p>
+            <button id="btnStart">▶ MANOMBOKA</button>
+        </div>
+        <div id="legend">Efajoro tsotra fotsiny — tsy misy sary. Rakitrakatra.min.js v4.0.1</div>
+    </div>
+</div>
+<div id="mobileBtns">
+    <div id="dpad">
+        <div></div><button id="bUp">▲</button><div></div>
+        <button id="bLeft">◀</button><div></div><button id="bRight">▶</button>
+        <div></div><button id="bDown">▼</button><div></div>
+    </div>
+    <button id="btnFire">🔫</button>
+</div>
+
+<script src="rakitrakatra.min.js"></script>
 <script>
-// ============================================================
-// 1. FANANGANANA
-// ============================================================
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const W = 900, H = 600;
+(function(){
+    const R = window.Rakitrakatra;
+    const W = 800, H = 600;
+    const MAX_LEVEL = 5;
 
-// ============================================================
-// 2. ECS TSOTRA
-// ============================================================
-class ECS {
-  constructor(max) {
-    this.max = max;
-    this.active = new Uint8Array(max);
-    this.x = new Float32Array(max);
-    this.y = new Float32Array(max);
-    this.w = new Float32Array(max);
-    this.h = new Float32Array(max);
-    this.vx = new Float32Array(max);
-    this.vy = new Float32Array(max);
-    this.color = new Array(max);
-    this.hp = new Float32Array(max);
-    this.maxHp = new Float32Array(max);
-    this.team = new Int8Array(max);
-    this.speed = new Float32Array(max);
-    this.friction = new Float32Array(max);
-    this.damage = new Float32Array(max);
-    this.lifetime = new Float32Array(max);
-    this.age = new Float32Array(max);
-    this.isBullet = new Uint8Array(max);
-  }
-  create() {
-    for (let i = 0; i < this.max; i++) {
-      if (!this.active[i]) {
-        this.active[i] = 1;
-        this.x[i] = 0; this.y[i] = 0; this.w[i] = 20; this.h[i] = 20;
-        this.vx[i] = 0; this.vy[i] = 0; this.color[i] = '#FFFFFF';
-        this.hp[i] = 100; this.maxHp[i] = 100; this.team[i] = 0;
-        this.speed[i] = 100; this.friction[i] = 0.9; this.damage[i] = 0;
-        this.lifetime[i] = 0; this.age[i] = 0; this.isBullet[i] = 0;
-        return i;
-      }
-    }
-    return -1;
-  }
-  forEach(callback) {
-    for (let i = 0; i < this.max; i++) {
-      if (this.active[i]) callback(i);
-    }
-  }
-  destroy(id) {
-    if (id >= 0 && id < this.max) this.active[id] = 0;
-  }
-}
+    const canvasEl = document.getElementById('gameCanvas');
+    const game = new R.Lalao(W, H, { canvas: canvasEl, gameKey: 'citybattle_demo' });
 
-const ecs = new ECS(5000);
+    const PLAYER_SPEED = 220;
+    const PLAYER_SIZE = 24;
+    const PLAYER_MAX_HP = 100;
+    const BULLET_SPEED = 560;
+    const BULLET_SIZE = 6;
+    const ENEMY_BULLET_SPEED = 300;
 
-// ============================================================
-// 3. CONSTANTES
-// ============================================================
-const TEAM_PLAYER = 1;
-const TEAM_ENEMY = 2;
+    const WEAPON_LEVELS = [
+        { name: 'Basy 1', cooldown: 0.30, damage: 18, spread: 0 },
+        { name: 'Basy 2', cooldown: 0.20, damage: 18, spread: 0.05 },
+        { name: 'Basy 3 (Spread)', cooldown: 0.22, damage: 16, spread: 0.16 },
+        { name: 'Basy 4 (Rafitra)', cooldown: 0.12, damage: 16, spread: 0.10 },
+    ];
 
-let playerId = -1;
-let score = 0;
-let gameOver = false;
-let enemySpawnTimer = 1.5;
-let shootCooldown = 0;
-const SHOOT_DELAY = 0.12;
-
-// ============================================================
-// 4. INPUT
-// ============================================================
-const keys = {};
-let mouseX = 450, mouseY = 300;
-let mouseDown = false;
-
-document.addEventListener('keydown', (e) => {
-  const k = e.key.toLowerCase();
-  keys[k] = true;
-  if (k === 'r' && gameOver) resetGame();
-  if (e.key === ' ' || e.key === 'Space') {
-    e.preventDefault();
-    if (!gameOver) mouseDown = true;
-  }
-});
-document.addEventListener('keyup', (e) => {
-  const k = e.key.toLowerCase();
-  keys[k] = false;
-  if (e.key === ' ' || e.key === 'Space') mouseDown = false;
-});
-
-canvas.addEventListener('mousemove', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
-  mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
-});
-
-canvas.addEventListener('mousedown', (e) => {
-  e.preventDefault();
-  if (!gameOver) mouseDown = true;
-});
-canvas.addEventListener('mouseup', () => mouseDown = false);
-canvas.addEventListener('mouseleave', () => mouseDown = false);
-
-// ============================================================
-// 5. FAMORONANA ZAVATRA
-// ============================================================
-function createPlayer() {
-  const id = ecs.create();
-  ecs.x[id] = 450;
-  ecs.y[id] = 300;
-  ecs.w[id] = 34;
-  ecs.h[id] = 34;
-  ecs.color[id] = '#44DDFF';
-  ecs.hp[id] = 100;
-  ecs.maxHp[id] = 100;
-  ecs.team[id] = TEAM_PLAYER;
-  ecs.speed[id] = 200;
-  ecs.friction[id] = 0.88;
-  return id;
-}
-
-function createEnemy(x, y) {
-  const id = ecs.create();
-  ecs.x[id] = x;
-  ecs.y[id] = y;
-  ecs.w[id] = 28;
-  ecs.h[id] = 28;
-  ecs.color[id] = '#FF4455';
-  ecs.hp[id] = 30;
-  ecs.maxHp[id] = 30;
-  ecs.team[id] = TEAM_ENEMY;
-  ecs.damage[id] = 10;
-  ecs.speed[id] = 50 + Math.random() * 70;
-  ecs.friction[id] = 0.95;
-  return id;
-}
-
-function createBullet(x, y, tx, ty) {
-  const id = ecs.create();
-  ecs.x[id] = x - 5;
-  ecs.y[id] = y - 5;
-  ecs.w[id] = 10;
-  ecs.h[id] = 10;
-  ecs.color[id] = '#FFDD44';
-  ecs.team[id] = TEAM_PLAYER;
-  ecs.damage[id] = 25;
-  ecs.lifetime[id] = 2.0;
-  ecs.age[id] = 0;
-  ecs.isBullet[id] = 1;
-
-  const angle = Math.atan2(ty - y, tx - x);
-  const speed = 520;
-  ecs.vx[id] = Math.cos(angle) * speed;
-  ecs.vy[id] = Math.sin(angle) * speed;
-  return id;
-}
-
-// ============================================================
-// 6. RAFITRA (SYSTEMS)
-// ============================================================
-function isColliding(a, b) {
-  return ecs.x[a] < ecs.x[b] + ecs.w[b] &&
-         ecs.x[a] + ecs.w[a] > ecs.x[b] &&
-         ecs.y[a] < ecs.y[b] + ecs.h[b] &&
-         ecs.y[a] + ecs.h[a] > ecs.y[b];
-}
-
-function playerSystem(dt) {
-  if (gameOver || playerId === -1) return;
-  const p = playerId;
-  if (!ecs.active[p]) return;
-
-  let dx = 0, dy = 0;
-  if (keys['w'] || keys['arrowup']) dy = -1;
-  if (keys['s'] || keys['arrowdown']) dy = 1;
-  if (keys['a'] || keys['arrowleft']) dx = -1;
-  if (keys['d'] || keys['arrowright']) dx = 1;
-  if (dx && dy) { dx *= 0.707; dy *= 0.707; }
-
-  const spd = ecs.speed[p];
-  ecs.vx[p] = dx * spd;
-  ecs.vy[p] = dy * spd;
-
-  if (shootCooldown > 0) shootCooldown -= dt;
-  if (mouseDown && shootCooldown <= 0) {
-    const cx = ecs.x[p] + ecs.w[p]/2;
-    const cy = ecs.y[p] + ecs.h[p]/2;
-    createBullet(cx, cy, mouseX, mouseY);
-    shootCooldown = SHOOT_DELAY;
-  }
-}
-
-function aiSystem(dt) {
-  if (gameOver || playerId === -1) return;
-  const p = playerId;
-  if (!ecs.active[p]) return;
-
-  ecs.forEach(id => {
-    if (!ecs.active[id] || ecs.team[id] !== TEAM_ENEMY) return;
-    const dx = ecs.x[p] - ecs.x[id];
-    const dy = ecs.y[p] - ecs.y[id];
-    const dist = Math.hypot(dx, dy);
-    if (dist > 5) {
-      const spd = ecs.speed[id] || 60;
-      ecs.vx[id] = (dx / dist) * spd;
-      ecs.vy[id] = (dy / dist) * spd;
-    }
-  });
-}
-
-function physicsSystem(dt) {
-  ecs.forEach(id => {
-    if (!ecs.active[id]) return;
-    if (ecs.friction[id]) {
-      ecs.vx[id] *= Math.pow(ecs.friction[id], dt * 60);
-      ecs.vy[id] *= Math.pow(ecs.friction[id], dt * 60);
-    }
-    ecs.x[id] += ecs.vx[id] * dt;
-    ecs.y[id] += ecs.vy[id] * dt;
-
-    if (ecs.team[id] === TEAM_PLAYER) {
-      ecs.x[id] = Math.max(0, Math.min(W - ecs.w[id], ecs.x[id]));
-      ecs.y[id] = Math.max(0, Math.min(H - ecs.h[id], ecs.y[id]));
-    }
-  });
-}
-
-function lifetimeSystem(dt) {
-  ecs.forEach(id => {
-    if (!ecs.active[id] || !ecs.lifetime[id]) return;
-    ecs.age[id] += dt;
-    if (ecs.age[id] >= ecs.lifetime[id]) ecs.active[id] = 0;
-  });
-}
-
-function combatSystem() {
-  if (gameOver) return;
-  const ids = ecs.getIds ? ecs.getIds() : (() => { const r=[]; ecs.forEach(id=>r.push(id)); return r; })();
-
-  for (let i = 0; i < ids.length; i++) {
-    const a = ids[i];
-    if (!ecs.active[a]) continue;
-    for (let j = i+1; j < ids.length; j++) {
-      const b = ids[j];
-      if (!ecs.active[b] || ecs.team[a] === ecs.team[b]) continue;
-      if (!isColliding(a, b)) continue;
-
-      if (ecs.damage[a] > 0) {
-        ecs.hp[b] -= ecs.damage[a];
-        if (ecs.hp[b] <= 0) {
-          ecs.active[b] = 0;
-          if (ecs.team[b] === TEAM_ENEMY) score += 10;
+    class CityScene extends R.Sehatra {
+        create() {
+            this.save = this.game.save;
+            this.best = (this.save.load(0) || {}).best || 0;
+            this.state = 'menu'; // menu -> playing -> levelComplete/gameOver/victory -> playing
+            this.level = 1;
+            this.score = 0;
+            this.weaponLvl = 0;
+            this.mobileDir = { x: 0, y: 0 };
+            this.mobileFire = false;
+            this._usedMobile = false;
+            this._resetPlayer();
         }
-        if (ecs.isBullet[a]) ecs.active[a] = 0;
-      }
-      if (ecs.damage[b] > 0) {
-        ecs.hp[a] -= ecs.damage[b];
-        if (ecs.hp[a] <= 0) {
-          ecs.active[a] = 0;
-          if (ecs.team[a] === TEAM_ENEMY) score += 10;
+
+        _resetPlayer() {
+            this.player = {
+                x: W / 2, y: H / 2, hp: PLAYER_MAX_HP, facing: 0,
+                fireCd: 0, rapidUntil: 0
+            };
         }
-        if (ecs.isBullet[b]) ecs.active[b] = 0;
-      }
+
+        _rng() { return this._prng || (this._prng = new R.Kisendrasendra(1000 + this.level)); }
+
+        _buildLevel() {
+            const rng = new R.Kisendrasendra(1000 + this.level);
+            this.buildings = [];
+            const cols = 4, rows = 3;
+            const cellW = W / cols, cellH = (H - 120) / rows;
+            const safeR = 110; // faritra madio manodidina ny mpilalao @ afovoany
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (rng.next() < 0.32) continue; // arabe (street) — tsy misy trano
+                    const bw = cellW * (0.55 + rng.next() * 0.3);
+                    const bh = cellH * (0.55 + rng.next() * 0.3);
+                    const bx = c * cellW + (cellW - bw) / 2 + (rng.next() - 0.5) * 18;
+                    const by = 90 + r * cellH + (cellH - bh) / 2 + (rng.next() - 0.5) * 18;
+                    const cx = bx + bw / 2, cy = by + bh / 2;
+                    const dist = Math.hypot(cx - W / 2, cy - H / 2);
+                    if (dist < safeR) continue;
+                    this.buildings.push({ x: bx, y: by, w: bw, h: bh });
+                }
+            }
+
+            // waves
+            const totalEnemies = 6 + this.level * 3;
+            this.waveTotal = totalEnemies;
+            this.waveKilled = 0;
+            this.waveSpawned = 0;
+            this.spawnTimer = 0.6;
+            this.enemies = [];
+            this.bullets = [];
+            this.enemyBullets = [];
+            this.pickups = [];
+            this.maxConcurrent = 3 + this.level;
+        }
+
+        _startLevel(lvl) {
+            this.level = lvl;
+            this._buildLevel();
+            this._resetPlayer();
+            this.state = 'playing';
+            hideMsg();
+            updateHud(this);
+        }
+
+        _startGame() {
+            this.score = 0;
+            this.weaponLvl = 0;
+            this._startLevel(1);
+        }
+
+        _spawnEnemy() {
+            const rng = this._rng();
+            const side = Math.floor(rng.next() * 4);
+            let x, y;
+            if (side === 0) { x = rng.next() * W; y = -20; }
+            else if (side === 1) { x = W + 20; y = rng.next() * H; }
+            else if (side === 2) { x = rng.next() * W; y = H + 20; }
+            else { x = -20; y = rng.next() * H; }
+
+            const isRanged = rng.next() < Math.min(0.55, 0.2 + this.level * 0.08);
+            this.enemies.push({
+                x, y, size: 22,
+                hp: 34 + this.level * 9, maxHp: 34 + this.level * 9,
+                speed: 70 + this.level * 6 + (isRanged ? -10 : 15),
+                ranged: isRanged,
+                fireCd: R.Z.rand(0.4, 1.4),
+                color: isRanged ? 0xffb300FF : 0xff1493FF,
+                hitFlash: 0
+            });
+            this.waveSpawned++;
+        }
+
+        // fanakanana tsotra amin'ny batiman: manova X aloha, avy eo Y
+        // (fomba "slide" mahazatra amin'ny collision AABB top-down)
+        _moveWithCollision(ent, dx, dy) {
+            ent.x += dx;
+            for (const b of this.buildings) {
+                if (R.Fizika.rectVsRect(ent.x - ent.size / 2, ent.y - ent.size / 2, ent.size, ent.size, b.x, b.y, b.w, b.h)) {
+                    ent.x -= dx;
+                    break;
+                }
+            }
+            ent.y += dy;
+            for (const b of this.buildings) {
+                if (R.Fizika.rectVsRect(ent.x - ent.size / 2, ent.y - ent.size / 2, ent.size, ent.size, b.x, b.y, b.w, b.h)) {
+                    ent.y -= dy;
+                    break;
+                }
+            }
+        }
+
+        _hitBuilding(x, y, size) {
+            for (const b of this.buildings) {
+                if (R.Fizika.rectVsRect(x - size / 2, y - size / 2, size, size, b.x, b.y, b.w, b.h)) return true;
+            }
+            return false;
+        }
+
+        _fire(x, y, angle, damage, spread) {
+            const a = angle + (Math.random() - 0.5) * spread;
+            this.bullets.push({
+                x, y, vx: Math.cos(a) * BULLET_SPEED, vy: Math.sin(a) * BULLET_SPEED,
+                damage, life: 1.2
+            });
+        }
+
+        update(dt) {
+            if (this.state === 'menu' || this.state === 'gameOver' || this.state === 'victory') return;
+            if (this.state === 'levelComplete') return;
+
+            const p = this.player;
+
+            // ---- fikirakirana ----
+            const axis = R.Fanindry.axis();
+            let mx = axis.x, my = axis.y;
+            if (this._usedMobile) { mx = this.mobileDir.x; my = this.mobileDir.y; }
+            const mag = Math.hypot(mx, my) || 1;
+            const dx = (mx / mag) * PLAYER_SPEED * dt * (mx !== 0 || my !== 0 ? 1 : 0);
+            const dy = (my / mag) * PLAYER_SPEED * dt * (mx !== 0 || my !== 0 ? 1 : 0);
+            if (dx !== 0 || dy !== 0) {
+                p.facing = Math.atan2(my, mx);
+                this._moveWithCollision(p, dx, dy);
+                p.x = R.Z.clamp(p.x, PLAYER_SIZE / 2, W - PLAYER_SIZE / 2);
+                p.y = R.Z.clamp(p.y, PLAYER_SIZE / 2, H - PLAYER_SIZE / 2);
+            }
+
+            // ---- kendrena ----
+            let aimAngle = p.facing;
+            let wantsFire = false;
+            if (this._usedMobile) {
+                let nearest = null, nd = Infinity;
+                for (const e of this.enemies) {
+                    const d = Math.hypot(e.x - p.x, e.y - p.y);
+                    if (d < nd) { nd = d; nearest = e; }
+                }
+                if (nearest) aimAngle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
+                wantsFire = this.mobileFire;
+            } else {
+                const mxp = R.Fanindry.mouse.x * (W / canvasEl.clientWidth);
+                const myp = R.Fanindry.mouse.y * (H / canvasEl.clientHeight);
+                aimAngle = Math.atan2(myp - p.y, mxp - p.x);
+                wantsFire = R.Fanindry.mouse.down[0] || R.Fanindry.isDown(' ');
+            }
+            p.aim = aimAngle;
+
+            p.fireCd -= dt;
+            const weapon = WEAPON_LEVELS[this.weaponLvl];
+            const cd = performance.now() < p.rapidUntil ? weapon.cooldown * 0.5 : weapon.cooldown;
+            if (wantsFire && p.fireCd <= 0) {
+                p.fireCd = cd;
+                const muzzleX = p.x + Math.cos(aimAngle) * (PLAYER_SIZE / 2 + 6);
+                const muzzleY = p.y + Math.sin(aimAngle) * (PLAYER_SIZE / 2 + 6);
+                if (this.weaponLvl >= 2) {
+                    this._fire(muzzleX, muzzleY, aimAngle - 0.18, weapon.damage, weapon.spread);
+                    this._fire(muzzleX, muzzleY, aimAngle, weapon.damage, weapon.spread);
+                    this._fire(muzzleX, muzzleY, aimAngle + 0.18, weapon.damage, weapon.spread);
+                } else {
+                    this._fire(muzzleX, muzzleY, aimAngle, weapon.damage, weapon.spread);
+                }
+                R.Feo.mamorona('jump');
+            }
+
+            // ---- famoronana vahiny (wave) ----
+            if (this.waveSpawned < this.waveTotal && this.enemies.length < this.maxConcurrent) {
+                this.spawnTimer -= dt;
+                if (this.spawnTimer <= 0) {
+                    this._spawnEnemy();
+                    this.spawnTimer = R.Z.rand(0.5, 1.1);
+                }
+            }
+
+            // ---- vahiny ----
+            for (const e of this.enemies) {
+                if (e.hitFlash > 0) e.hitFlash -= dt;
+                const d = Math.hypot(p.x - e.x, p.y - e.y);
+                const desiredDist = e.ranged ? 190 : 4;
+                if (d > desiredDist + 4) {
+                    const a = Math.atan2(p.y - e.y, p.x - e.x);
+                    this._moveWithCollision(e, Math.cos(a) * e.speed * dt, Math.sin(a) * e.speed * dt);
+                } else if (e.ranged && d < desiredDist - 20) {
+                    const a = Math.atan2(e.y - p.y, e.x - p.x);
+                    this._moveWithCollision(e, Math.cos(a) * e.speed * dt, Math.sin(a) * e.speed * dt);
+                }
+
+                if (e.ranged) {
+                    e.fireCd -= dt;
+                    if (e.fireCd <= 0 && d < 320) {
+                        e.fireCd = R.Z.rand(1.0, 1.8) - Math.min(0.5, this.level * 0.05);
+                        const a = Math.atan2(p.y - e.y, p.x - e.x);
+                        this.enemyBullets.push({
+                            x: e.x, y: e.y,
+                            vx: Math.cos(a) * ENEMY_BULLET_SPEED, vy: Math.sin(a) * ENEMY_BULLET_SPEED,
+                            life: 1.6
+                        });
+                    }
+                } else if (d < 22) {
+                    this._damagePlayer(14 * dt * 4); // kontakina hatrany raha akaiky be
+                }
+            }
+
+            // ---- baolin'ny mpilalao ----
+            for (const b of this.bullets) {
+                b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
+                if (this._hitBuilding(b.x, b.y, BULLET_SIZE)) b.life = -1;
+                for (const e of this.enemies) {
+                    if (e.hp <= 0) continue;
+                    const rr = (e.size / 2 + BULLET_SIZE / 2);
+                    if (Math.hypot(b.x - e.x, b.y - e.y) < rr) {
+                        e.hp -= b.damage;
+                        e.hitFlash = 0.1;
+                        b.life = -1;
+                        this.game.particles.emit(b.x, b.y, {
+                            count: 6, color: 0xffe066FF, speedMin: 40, speedMax: 120,
+                            lifeMin: .15, lifeMax: .3, gravity: 100
+                        });
+                        break;
+                    }
+                }
+            }
+            this.bullets = this.bullets.filter(b => b.life > 0 && b.x > -20 && b.x < W + 20 && b.y > -20 && b.y < H + 20);
+
+            // ---- baolin'ny vahiny ----
+            for (const b of this.enemyBullets) {
+                b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
+                if (this._hitBuilding(b.x, b.y, 4)) b.life = -1;
+                if (Math.hypot(b.x - p.x, b.y - p.y) < (PLAYER_SIZE / 2 + 4)) {
+                    this._damagePlayer(9);
+                    b.life = -1;
+                }
+            }
+            this.enemyBullets = this.enemyBullets.filter(b => b.life > 0);
+
+            // ---- fahafatesan'ny vahiny ----
+            const dead = this.enemies.filter(e => e.hp <= 0);
+            if (dead.length) {
+                for (const e of dead) {
+                    this.score += e.ranged ? 25 : 15;
+                    this.waveKilled++;
+                    this.game.camera.shake(4, 100);
+                    R.Feo.mamorona('hit');
+                    this.game.particles.emit(e.x, e.y, {
+                        count: 16, color: e.color, speedMin: 60, speedMax: 200,
+                        lifeMin: .3, lifeMax: .6, gravity: 250
+                    });
+                    if (Math.random() < 0.22) {
+                        this.pickups.push({
+                            x: e.x, y: e.y,
+                            type: Math.random() < 0.6 ? 'hp' : 'weapon',
+                            life: 8
+                        });
+                    }
+                }
+                this.enemies = this.enemies.filter(e => e.hp > 0);
+                updateHud(this);
+            }
+
+            // ---- pickups ----
+            for (const pk of this.pickups) {
+                pk.life -= dt;
+                if (Math.hypot(pk.x - p.x, pk.y - p.y) < 20) {
+                    if (pk.type === 'hp') {
+                        p.hp = Math.min(PLAYER_MAX_HP, p.hp + 30);
+                        R.Feo.mamorona('coin');
+                    } else {
+                        this.weaponLvl = Math.min(WEAPON_LEVELS.length - 1, this.weaponLvl + 1);
+                        R.Feo.mamorona('coin');
+                    }
+                    pk.life = -1;
+                    updateHud(this);
+                }
+            }
+            this.pickups = this.pickups.filter(pk => pk.life > 0);
+
+            // ---- famaranana ny ambaratonga ----
+            if (this.waveKilled >= this.waveTotal && this.enemies.length === 0) {
+                if (this.score > this.best) { this.best = this.score; this.save.save(0, { best: this.best }); }
+                if (this.level >= MAX_LEVEL) {
+                    this.state = 'victory';
+                    showMsg('RESAKA VITA! 🏆', 'Voaresinao daholo ny ambaratonga 5! Isa farany: ' + this.score, 'MILALAO INDRAY');
+                } else {
+                    this.state = 'levelComplete';
+                    showMsg('AMBARATONGA VITA!', 'Isa: ' + this.score + ' — Vonona ho @ ambaratonga ' + (this.level + 1) + '?', 'MANOHY ➜');
+                }
+                updateHud(this);
+            }
+
+            updateHudLive(this);
+        }
+
+        _damagePlayer(amount) {
+            this.player.hp -= amount;
+            if (this.player.hp <= 0 && this.state === 'playing') {
+                this.player.hp = 0;
+                this.state = 'gameOver';
+                if (this.score > this.best) { this.best = this.score; this.save.save(0, { best: this.best }); }
+                this.game.camera.shake(10, 300);
+                showMsg('RESY IANAO 💀', 'Ambaratonga ' + this.level + ' — Isa: ' + this.score, 'ANDRAMO INDRAY');
+                updateHud(this);
+            } else {
+                this.game.camera.shake(3, 80);
+            }
+        }
+
+        render(renderer) {
+            renderer.drawRect(0, 0, W, H, 0x11141fFF);
+
+            // arabe (grid faritra)
+            for (let x = 0; x < W; x += 80) renderer.drawRect(x, 0, 2, H, 0x1c2033FF);
+            for (let y = 90; y < H; y += 80) renderer.drawRect(0, y, W, 2, 0x1c2033FF);
+
+            // batiman
+            for (const b of (this.buildings || [])) {
+                renderer.drawRect(b.x, b.y, b.w, b.h, 0x2a3350FF);
+                renderer.drawRect(b.x, b.y, b.w, 6, 0x3a4670FF);
+                renderer.drawRect(b.x, b.y, 6, b.h, 0x3a4670FF);
+            }
+
+            if (this.state === 'menu') return;
+
+            // pickups
+            for (const pk of (this.pickups || [])) {
+                const c = pk.type === 'hp' ? 0x3ddc84FF : 0x00e5ffFF;
+                renderer.drawRect(pk.x - 8, pk.y - 8, 16, 16, c);
+            }
+
+            // baolina
+            for (const b of (this.bullets || [])) renderer.drawRect(b.x - BULLET_SIZE / 2, b.y - BULLET_SIZE / 2, BULLET_SIZE, BULLET_SIZE, 0xffe066FF);
+            for (const b of (this.enemyBullets || [])) renderer.drawRect(b.x - 4, b.y - 4, 8, 8, 0xff5252FF);
+
+            // vahiny
+            for (const e of (this.enemies || [])) {
+                const c = e.hitFlash > 0 ? 0xffffffFF : e.color;
+                renderer.drawRect(e.x - e.size / 2, e.y - e.size / 2, e.size, e.size, c);
+                // bara aina kely
+                const hpw = e.size;
+                renderer.drawRect(e.x - hpw / 2, e.y - e.size / 2 - 8, hpw, 3, 0x000000AA);
+                renderer.drawRect(e.x - hpw / 2, e.y - e.size / 2 - 8, hpw * Math.max(0, e.hp / e.maxHp), 3, 0xff5252FF);
+            }
+
+            // mpilalao
+            const p = this.player;
+            const blinking = this.player.hp <= 0;
+            if (!blinking) {
+                renderer.drawRect(p.x - PLAYER_SIZE / 2, p.y - PLAYER_SIZE / 2, PLAYER_SIZE, PLAYER_SIZE, 0x00e5ffFF);
+                // basy manondro
+                const gx = p.x + Math.cos(p.aim || 0) * (PLAYER_SIZE / 2 + 10);
+                const gy = p.y + Math.sin(p.aim || 0) * (PLAYER_SIZE / 2 + 10);
+                renderer.drawRect(gx - 3, gy - 3, 6, 6, 0xffffffFF);
+            }
+        }
     }
-  }
 
-  if (playerId !== -1 && !ecs.active[playerId]) gameOver = true;
-}
+    game.addScene('city', CityScene);
 
-function spawnSystem(dt) {
-  if (gameOver) return;
-  enemySpawnTimer -= dt;
-  if (enemySpawnTimer <= 0) {
-    const count = 1 + Math.floor(score / 100);
-    for (let i = 0; i < Math.min(count, 5); i++) {
-      const side = Math.floor(Math.random() * 4);
-      let x, y;
-      if (side === 0) { x = Math.random() * W; y = -30; }
-      else if (side === 1) { x = W + 30; y = Math.random() * H; }
-      else if (side === 2) { x = Math.random() * W; y = H + 30; }
-      else { x = -30; y = Math.random() * H; }
-      createEnemy(x, y);
+    // ---------------- HUD ----------------
+    const scoreEl = document.getElementById('scoreEl');
+    const bestEl = document.getElementById('bestEl');
+    const levelEl = document.getElementById('levelEl');
+    const enemiesEl = document.getElementById('enemiesEl');
+    const weaponEl = document.getElementById('weaponEl');
+    const hpText = document.getElementById('hpText');
+    const hpFill = document.getElementById('hpBarFill');
+    const msgEl = document.getElementById('centerMsg');
+    const msgTitle = document.getElementById('msgTitle');
+    const msgSub = document.getElementById('msgSub');
+    const btnStart = document.getElementById('btnStart');
+
+    function updateHud(scene) {
+        scoreEl.textContent = scene.score;
+        bestEl.textContent = scene.best;
+        levelEl.textContent = scene.level;
+        weaponEl.textContent = WEAPON_LEVELS[scene.weaponLvl].name;
     }
-    enemySpawnTimer = Math.max(0.3, 1.8 - score / 300);
-  }
-}
+    function updateHudLive(scene) {
+        const p = scene.player;
+        hpText.textContent = Math.max(0, Math.round(p.hp)) + '/' + PLAYER_MAX_HP;
+        hpFill.style.width = Math.max(0, p.hp / PLAYER_MAX_HP * 100) + '%';
+        enemiesEl.textContent = Math.max(0, scene.waveTotal - scene.waveKilled);
+    }
+    function showMsg(title, sub, btnLabel) {
+        msgTitle.textContent = title;
+        msgSub.textContent = sub;
+        btnStart.textContent = btnLabel;
+        msgEl.style.display = 'block';
+    }
+    function hideMsg() { msgEl.style.display = 'none'; }
 
-// ============================================================
-// 7. FANAOVANA SARY
-// ============================================================
-function drawEntity(id) {
-  const x = ecs.x[id], y = ecs.y[id];
-  const w = ecs.w[id] || 20, h = ecs.h[id] || 20;
-  const color = ecs.color[id] || '#FFFFFF';
+    btnStart.addEventListener('click', () => {
+        R.Feo.resume();
+        const s = game.scenes.active;
+        if (s.state === 'menu' || s.state === 'gameOver' || s.state === 'victory') s._startGame();
+        else if (s.state === 'levelComplete') s._startLevel(s.level + 1);
+    });
+    window.addEventListener('keydown', e => {
+        R.Feo.resume();
+        if (e.key === ' ') {
+            const s = game.scenes.active;
+            if (s.state !== 'playing') btnStart.click();
+        }
+    });
 
-  ctx.fillStyle = color;
-  ctx.shadowColor = color + '66';
-  ctx.shadowBlur = 12;
-  ctx.fillRect(x, y, w, h);
-  ctx.shadowBlur = 0;
+    game.start('city');
 
-  if (ecs.team[id] === TEAM_PLAYER) {
-    ctx.strokeStyle = '#FFFFFF44';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x-2, y-2, w+4, h+4);
-  }
-
-  if (ecs.team[id] === TEAM_ENEMY && ecs.maxHp[id]) {
-    const hpRatio = ecs.hp[id] / ecs.maxHp[id];
-    ctx.fillStyle = '#333';
-    ctx.fillRect(x, y-8, w, 4);
-    ctx.fillStyle = hpRatio > 0.5 ? '#44DD66' : '#FF6644';
-    ctx.fillRect(x, y-8, w * hpRatio, 4);
-  }
-}
-
-function render() {
-  ctx.clearRect(0, 0, W, H);
-  const ids = [];
-  ecs.forEach(id => { if (ecs.active[id]) ids.push(id); });
-  for (const id of ids) drawEntity(id);
-}
-
-// ============================================================
-// 8. RESET
-// ============================================================
-function resetGame() {
-  ecs.forEach(id => ecs.active[id] = 0);
-  playerId = -1;
-  score = 0;
-  gameOver = false;
-  enemySpawnTimer = 1.5;
-  shootCooldown = 0;
-  mouseDown = false;
-  
-  playerId = createPlayer();
-  for (let i = 0; i < 3; i++) {
-    const x = 100 + Math.random() * 700;
-    const y = 100 + Math.random() * 400;
-    createEnemy(x, y);
-  }
-}
-
-// ============================================================
-// 9. GAME LOOP
-// ============================================================
-let lastTime = 0;
-
-function gameLoop(timestamp) {
-  const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
-  lastTime = timestamp;
-
-  if (!gameOver) {
-    playerSystem(dt);
-    aiSystem(dt);
-    physicsSystem(dt);
-    lifetimeSystem(dt);
-    spawnSystem(dt);
-    combatSystem();
-  }
-
-  render();
-  requestAnimationFrame(gameLoop);
-}
-
-// ============================================================
-// 10. FANOMBOHANA
-// ============================================================
-playerId = createPlayer();
-for (let i = 0; i < 3; i++) {
-  const x = 100 + Math.random() * 700;
-  const y = 100 + Math.random() * 400;
-  createEnemy(x, y);
-}
-
-requestAnimationFrame(gameLoop);
-console.log('✅ Lalao nanomboka! Misy mpilalao sy fahavalo 3.');
-console.log('🕹️  WASD = mihetsika | SPACE = mitifitra | R = Reset');
+    // ---------------- fitaovana finday ----------------
+    let usedMobile = false;
+    function markMobile() {
+        usedMobile = true;
+        game.scenes.active._usedMobile = true;
+    }
+    const setDir = (dx, dy, on) => {
+        markMobile();
+        const d = game.scenes.active.mobileDir;
+        if (dx !== 0) d.x = on ? dx : 0;
+        if (dy !== 0) d.y = on ? dy : 0;
+    };
+    const bind = (id, dx, dy) => {
+        const el = document.getElementById(id);
+        el.addEventListener('pointerdown', () => setDir(dx, dy, true));
+        el.addEventListener('pointerup', () => setDir(dx, dy, false));
+        el.addEventListener('pointerleave', () => setDir(dx, dy, false));
+    };
+    bind('bUp', 0, -1); bind('bDown', 0, 1); bind('bLeft', -1, 0); bind('bRight', 1, 0);
+    const btnFire = document.getElementById('btnFire');
+    btnFire.addEventListener('pointerdown', () => { markMobile(); game.scenes.active.mobileFire = true; });
+    btnFire.addEventListener('pointerup', () => { game.scenes.active.mobileFire = false; });
+})();
 </script>
 </body>
 </html>
