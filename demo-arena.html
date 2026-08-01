@@ -1,89 +1,28 @@
 <!DOCTYPE html>
-<html lang="mg">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Arena Survival - RakitraKatra ECS</title>
+  <meta charset="UTF-8">
+  <title>Arena Survival</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: #0a0a1a;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    #gameContainer {
-      position: relative;
-      border: 3px solid #2a2a4a;
-      border-radius: 12px;
-      box-shadow: 0 0 50px rgba(0, 100, 255, 0.15);
-    }
-    canvas {
-      display: block;
-      border-radius: 10px;
-      background: #1a1a2e;
-      cursor: crosshair;
-    }
-    #ui {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      border-radius: 10px;
-    }
-    #info {
-      position: absolute;
-      bottom: 16px;
-      left: 0;
-      width: 100%;
-      text-align: center;
-      color: #8899bb;
-      font-size: 13px;
-      font-weight: 500;
-      pointer-events: none;
-      text-shadow: 0 0 15px rgba(0,0,0,0.9);
-      letter-spacing: 0.5px;
-    }
-    #info kbd {
-      background: #2a2a4a;
-      padding: 3px 12px;
-      border-radius: 5px;
-      color: #aaccff;
-      border: 1px solid #445577;
-      font-size: 12px;
-    }
+    * { margin: 0; padding: 0; }
+    body { background: #0a0a1a; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    canvas { border: 3px solid #2a2a4a; border-radius: 12px; background: #1a1a2e; cursor: crosshair; }
   </style>
 </head>
 <body>
-
-<div id="gameContainer">
-  <canvas id="game" width="900" height="600"></canvas>
-  <canvas id="ui" width="900" height="600"></canvas>
-  <div id="info">
-    <kbd>W A S D</kbd> mihetsika &nbsp;|&nbsp; <kbd>SPACE</kbd> na <kbd>CLICK</kbd> mitifitra &nbsp;|&nbsp; <kbd>R</kbd> reset
-  </div>
-</div>
-
-<!-- RakitraKatra (ECS sy fanampiny) -->
-<script src="rakitrakatra.js"></script>
+<canvas id="game" width="900" height="600"></canvas>
 
 <script>
-  // ============================================================
-  // 1. FANANGANANA
-  // ============================================================
-  const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
-  const uiCanvas = document.getElementById('ui');
-  const uiCtx = uiCanvas.getContext('2d');
+// ============================================================
+// 1. FANANGANANA
+// ============================================================
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = 900, H = 600;
 
-  const W = 900, H = 600;
-
-  // ECS - Vondrona miaraka amin'ny 5000 zavatra
-  // ECS tsotra vita tanana (mifanentana amin'ny RakitraKatra)
+// ============================================================
+// 2. ECS TSOTRA
+// ============================================================
 class ECS {
   constructor(max) {
     this.max = max;
@@ -104,18 +43,16 @@ class ECS {
     this.lifetime = new Float32Array(max);
     this.age = new Float32Array(max);
     this.isBullet = new Uint8Array(max);
-    this.z = new Float32Array(max);
-    this.nextId = 0;
   }
   create() {
     for (let i = 0; i < this.max; i++) {
       if (!this.active[i]) {
         this.active[i] = 1;
-        this.x[i] = 0; this.y[i] = 0; this.w[i] = 0; this.h[i] = 0;
+        this.x[i] = 0; this.y[i] = 0; this.w[i] = 20; this.h[i] = 20;
         this.vx[i] = 0; this.vy[i] = 0; this.color[i] = '#FFFFFF';
-        this.hp[i] = 0; this.maxHp[i] = 0; this.team[i] = 0;
-        this.speed[i] = 0; this.friction[i] = 0; this.damage[i] = 0;
-        this.lifetime[i] = 0; this.age[i] = 0; this.isBullet[i] = 0; this.z[i] = 0;
+        this.hp[i] = 100; this.maxHp[i] = 100; this.team[i] = 0;
+        this.speed[i] = 100; this.friction[i] = 0.9; this.damage[i] = 0;
+        this.lifetime[i] = 0; this.age[i] = 0; this.isBullet[i] = 0;
         return i;
       }
     }
@@ -126,485 +63,336 @@ class ECS {
       if (this.active[i]) callback(i);
     }
   }
-  getIds() {
-    const result = [];
-    for (let i = 0; i < this.max; i++) {
-      if (this.active[i]) result.push(i);
-    }
-    return result;
+  destroy(id) {
+    if (id >= 0 && id < this.max) this.active[id] = 0;
   }
-  destroy(id) { if (id >= 0 && id < this.max) this.active[id] = 0; }
 }
 
 const ecs = new ECS(5000);
 
-  // ============================================================
-  // 2. CONSTANTES
-  // ============================================================
-  const TEAM_PLAYER = 1;
-  const TEAM_ENEMY = 2;
+// ============================================================
+// 3. CONSTANTES
+// ============================================================
+const TEAM_PLAYER = 1;
+const TEAM_ENEMY = 2;
 
-  let playerId = -1;
-  let score = 0;
-  let gameOver = false;
-  let enemySpawnTimer = 1.5;
-  let enemySpawnInterval = 1.8;
-  let shootCooldown = 0;
-  const SHOOT_DELAY = 0.12;
+let playerId = -1;
+let score = 0;
+let gameOver = false;
+let enemySpawnTimer = 1.5;
+let shootCooldown = 0;
+const SHOOT_DELAY = 0.12;
 
-  // ============================================================
-  // 3. INPUT
-  // ============================================================
-  const keys = {};
-  let mouseX = 450, mouseY = 300;
-  let mouseDown = false;
+// ============================================================
+// 4. INPUT
+// ============================================================
+const keys = {};
+let mouseX = 450, mouseY = 300;
+let mouseDown = false;
 
-  document.addEventListener('keydown', (e) => {
-    const k = e.key.toLowerCase();
-    keys[k] = true;
-    if (k === 'r' && gameOver) resetGame();
-    if (e.key === ' ' || e.key === 'Space') {
-      e.preventDefault();
-      if (!gameOver) mouseDown = true;
-    }
-  });
-  document.addEventListener('keyup', (e) => {
-    const k = e.key.toLowerCase();
-    keys[k] = false;
-    if (e.key === ' ' || e.key === 'Space') mouseDown = false;
-  });
-
-  canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const sx = canvas.width / rect.width;
-    const sy = canvas.height / rect.height;
-    mouseX = (e.clientX - rect.left) * sx;
-    mouseY = (e.clientY - rect.top) * sy;
-  });
-
-  canvas.addEventListener('mousedown', (e) => {
+document.addEventListener('keydown', (e) => {
+  const k = e.key.toLowerCase();
+  keys[k] = true;
+  if (k === 'r' && gameOver) resetGame();
+  if (e.key === ' ' || e.key === 'Space') {
     e.preventDefault();
     if (!gameOver) mouseDown = true;
+  }
+});
+document.addEventListener('keyup', (e) => {
+  const k = e.key.toLowerCase();
+  keys[k] = false;
+  if (e.key === ' ' || e.key === 'Space') mouseDown = false;
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+  mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+});
+
+canvas.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  if (!gameOver) mouseDown = true;
+});
+canvas.addEventListener('mouseup', () => mouseDown = false);
+canvas.addEventListener('mouseleave', () => mouseDown = false);
+
+// ============================================================
+// 5. FAMORONANA ZAVATRA
+// ============================================================
+function createPlayer() {
+  const id = ecs.create();
+  ecs.x[id] = 450;
+  ecs.y[id] = 300;
+  ecs.w[id] = 34;
+  ecs.h[id] = 34;
+  ecs.color[id] = '#44DDFF';
+  ecs.hp[id] = 100;
+  ecs.maxHp[id] = 100;
+  ecs.team[id] = TEAM_PLAYER;
+  ecs.speed[id] = 200;
+  ecs.friction[id] = 0.88;
+  return id;
+}
+
+function createEnemy(x, y) {
+  const id = ecs.create();
+  ecs.x[id] = x;
+  ecs.y[id] = y;
+  ecs.w[id] = 28;
+  ecs.h[id] = 28;
+  ecs.color[id] = '#FF4455';
+  ecs.hp[id] = 30;
+  ecs.maxHp[id] = 30;
+  ecs.team[id] = TEAM_ENEMY;
+  ecs.damage[id] = 10;
+  ecs.speed[id] = 50 + Math.random() * 70;
+  ecs.friction[id] = 0.95;
+  return id;
+}
+
+function createBullet(x, y, tx, ty) {
+  const id = ecs.create();
+  ecs.x[id] = x - 5;
+  ecs.y[id] = y - 5;
+  ecs.w[id] = 10;
+  ecs.h[id] = 10;
+  ecs.color[id] = '#FFDD44';
+  ecs.team[id] = TEAM_PLAYER;
+  ecs.damage[id] = 25;
+  ecs.lifetime[id] = 2.0;
+  ecs.age[id] = 0;
+  ecs.isBullet[id] = 1;
+
+  const angle = Math.atan2(ty - y, tx - x);
+  const speed = 520;
+  ecs.vx[id] = Math.cos(angle) * speed;
+  ecs.vy[id] = Math.sin(angle) * speed;
+  return id;
+}
+
+// ============================================================
+// 6. RAFITRA (SYSTEMS)
+// ============================================================
+function isColliding(a, b) {
+  return ecs.x[a] < ecs.x[b] + ecs.w[b] &&
+         ecs.x[a] + ecs.w[a] > ecs.x[b] &&
+         ecs.y[a] < ecs.y[b] + ecs.h[b] &&
+         ecs.y[a] + ecs.h[a] > ecs.y[b];
+}
+
+function playerSystem(dt) {
+  if (gameOver || playerId === -1) return;
+  const p = playerId;
+  if (!ecs.active[p]) return;
+
+  let dx = 0, dy = 0;
+  if (keys['w'] || keys['arrowup']) dy = -1;
+  if (keys['s'] || keys['arrowdown']) dy = 1;
+  if (keys['a'] || keys['arrowleft']) dx = -1;
+  if (keys['d'] || keys['arrowright']) dx = 1;
+  if (dx && dy) { dx *= 0.707; dy *= 0.707; }
+
+  const spd = ecs.speed[p];
+  ecs.vx[p] = dx * spd;
+  ecs.vy[p] = dy * spd;
+
+  if (shootCooldown > 0) shootCooldown -= dt;
+  if (mouseDown && shootCooldown <= 0) {
+    const cx = ecs.x[p] + ecs.w[p]/2;
+    const cy = ecs.y[p] + ecs.h[p]/2;
+    createBullet(cx, cy, mouseX, mouseY);
+    shootCooldown = SHOOT_DELAY;
+  }
+}
+
+function aiSystem(dt) {
+  if (gameOver || playerId === -1) return;
+  const p = playerId;
+  if (!ecs.active[p]) return;
+
+  ecs.forEach(id => {
+    if (!ecs.active[id] || ecs.team[id] !== TEAM_ENEMY) return;
+    const dx = ecs.x[p] - ecs.x[id];
+    const dy = ecs.y[p] - ecs.y[id];
+    const dist = Math.hypot(dx, dy);
+    if (dist > 5) {
+      const spd = ecs.speed[id] || 60;
+      ecs.vx[id] = (dx / dist) * spd;
+      ecs.vy[id] = (dy / dist) * spd;
+    }
   });
-  canvas.addEventListener('mouseup', () => { mouseDown = false; });
-  canvas.addEventListener('mouseleave', () => { mouseDown = false; });
+}
 
-  // ============================================================
-  // 4. FAMORONANA ZAVATRA (Entities)
-  // ============================================================
-  function createPlayer() {
-    const id = ecs.create();
-    ecs.x[id] = 450;
-    ecs.y[id] = 300;
-    ecs.w[id] = 34;
-    ecs.h[id] = 34;
-    ecs.color[id] = '#44DDFF';
-    ecs.hp[id] = 100;
-    ecs.maxHp[id] = 100;
-    ecs.team[id] = TEAM_PLAYER;
-    ecs.speed[id] = 200;
-    ecs.vx[id] = 0;
-    ecs.vy[id] = 0;
-    ecs.friction[id] = 0.88;
-    ecs.active[id] = 1;
-    return id;
-  }
-
-  function createEnemy(x, y) {
-    const id = ecs.create();
-    ecs.x[id] = x;
-    ecs.y[id] = y;
-    ecs.w[id] = 28;
-    ecs.h[id] = 28;
-    ecs.color[id] = '#FF4455';
-    ecs.hp[id] = 30 + Math.floor(score / 50) * 5;
-    ecs.maxHp[id] = ecs.hp[id];
-    ecs.team[id] = TEAM_ENEMY;
-    ecs.damage[id] = 10 + Math.floor(score / 100) * 2;
-    ecs.speed[id] = 50 + Math.random() * 80 + Math.floor(score / 80) * 5;
-    ecs.vx[id] = 0;
-    ecs.vy[id] = 0;
-    ecs.friction[id] = 0.95;
-    ecs.active[id] = 1;
-    return id;
-  }
-
-  function createBullet(x, y, tx, ty) {
-    const id = ecs.create();
-    ecs.x[id] = x - 5;
-    ecs.y[id] = y - 5;
-    ecs.w[id] = 10;
-    ecs.h[id] = 10;
-    ecs.color[id] = '#FFDD44';
-    ecs.team[id] = TEAM_PLAYER;
-    ecs.damage[id] = 25 + Math.floor(score / 80) * 2;
-    ecs.lifetime[id] = 2.0;
-    ecs.age[id] = 0;
-    ecs.active[id] = 1;
-    ecs.isBullet[id] = 1;
-
-    const angle = Math.atan2(ty - y, tx - x);
-    const speed = 520;
-    ecs.vx[id] = Math.cos(angle) * speed;
-    ecs.vy[id] = Math.sin(angle) * speed;
-    return id;
-  }
-
-  // ============================================================
-  // 5. RAFITRA (SYSTEMS)
-  // ============================================================
-  function isColliding(a, b) {
-    return ecs.x[a] < ecs.x[b] + ecs.w[b] &&
-           ecs.x[a] + ecs.w[a] > ecs.x[b] &&
-           ecs.y[a] < ecs.y[b] + ecs.h[b] &&
-           ecs.y[a] + ecs.h[a] > ecs.y[b];
-  }
-
-  // a. Mpilalao
-  function playerSystem(dt) {
-    if (gameOver || playerId === -1) return;
-    const p = playerId;
-    if (!ecs.active[p]) return;
-
-    let dx = 0, dy = 0;
-    if (keys['w'] || keys['arrowup']) dy = -1;
-    if (keys['s'] || keys['arrowdown']) dy = 1;
-    if (keys['a'] || keys['arrowleft']) dx = -1;
-    if (keys['d'] || keys['arrowright']) dx = 1;
-
-    if (dx && dy) { dx *= 0.707; dy *= 0.707; }
-
-    const spd = ecs.speed[p];
-    ecs.vx[p] = dx * spd;
-    ecs.vy[p] = dy * spd;
-
-    // Fitifirana
-    if (shootCooldown > 0) shootCooldown -= dt;
-    if (mouseDown && shootCooldown <= 0) {
-      const cx = ecs.x[p] + ecs.w[p]/2;
-      const cy = ecs.y[p] + ecs.h[p]/2;
-      createBullet(cx, cy, mouseX, mouseY);
-      shootCooldown = SHOOT_DELAY;
+function physicsSystem(dt) {
+  ecs.forEach(id => {
+    if (!ecs.active[id]) return;
+    if (ecs.friction[id]) {
+      ecs.vx[id] *= Math.pow(ecs.friction[id], dt * 60);
+      ecs.vy[id] *= Math.pow(ecs.friction[id], dt * 60);
     }
-  }
+    ecs.x[id] += ecs.vx[id] * dt;
+    ecs.y[id] += ecs.vy[id] * dt;
 
-  // b. AI fahavalo
-  function aiSystem(dt) {
-    if (gameOver || playerId === -1) return;
-    const p = playerId;
-    if (!ecs.active[p]) return;
-
-    ecs.forEach(id => {
-      if (!ecs.active[id]) return;
-      if (ecs.team[id] !== TEAM_ENEMY) return;
-
-      const dx = ecs.x[p] - ecs.x[id];
-      const dy = ecs.y[p] - ecs.y[id];
-      const dist = Math.hypot(dx, dy);
-      if (dist > 5) {
-        const spd = ecs.speed[id] || 60;
-        ecs.vx[id] = (dx / dist) * spd;
-        ecs.vy[id] = (dy / dist) * spd;
-      }
-    });
-  }
-
-  // c. Fizika
-  function physicsSystem(dt) {
-    ecs.forEach(id => {
-      if (!ecs.active[id]) return;
-      if (!ecs.vx[id] && !ecs.vy[id]) return;
-
-      // Friction
-      if (ecs.friction[id]) {
-        ecs.vx[id] *= Math.pow(ecs.friction[id], dt * 60);
-        ecs.vy[id] *= Math.pow(ecs.friction[id], dt * 60);
-      }
-
-      ecs.x[id] += ecs.vx[id] * dt;
-      ecs.y[id] += ecs.vy[id] * dt;
-
-      // Famerana sehatra
-      if (ecs.team[id] === TEAM_PLAYER) {
-        ecs.x[id] = Math.max(0, Math.min(W - ecs.w[id], ecs.x[id]));
-        ecs.y[id] = Math.max(0, Math.min(H - ecs.h[id], ecs.y[id]));
-      }
-    });
-  }
-
-  // d. Androm-piainana (bala)
-  function lifetimeSystem(dt) {
-    ecs.forEach(id => {
-      if (!ecs.active[id]) return;
-      if (!ecs.lifetime[id]) return;
-      ecs.age[id] = (ecs.age[id] || 0) + dt;
-      if (ecs.age[id] >= ecs.lifetime[id]) {
-        ecs.active[id] = 0;
-      }
-    });
-  }
-
-  // e. Fifandonana sy ady
-  function combatSystem() {
-    if (gameOver) return;
-
-    const ids = [];
-    ecs.forEach(id => {
-      if (ecs.active[id]) ids.push(id);
-    });
-
-    for (let i = 0; i < ids.length; i++) {
-      const a = ids[i];
-      if (!ecs.active[a]) continue;
-      for (let j = i+1; j < ids.length; j++) {
-        const b = ids[j];
-        if (!ecs.active[b]) continue;
-        if (ecs.team[a] === ecs.team[b]) continue;
-        if (!isColliding(a, b)) continue;
-
-        const dmgA = ecs.damage[a] || 0;
-        const dmgB = ecs.damage[b] || 0;
-
-        if (dmgA > 0) {
-          ecs.hp[b] -= dmgA;
-          if (ecs.hp[b] <= 0) {
-            ecs.active[b] = 0;
-            if (ecs.team[b] === TEAM_ENEMY) score += 10;
-          }
-          if (ecs.isBullet[a]) ecs.active[a] = 0;
-        }
-
-        if (dmgB > 0) {
-          ecs.hp[a] -= dmgB;
-          if (ecs.hp[a] <= 0) {
-            ecs.active[a] = 0;
-            if (ecs.team[a] === TEAM_ENEMY) score += 10;
-          }
-          if (ecs.isBullet[b]) ecs.active[b] = 0;
-        }
-      }
-    }
-
-    if (playerId !== -1 && !ecs.active[playerId]) {
-      gameOver = true;
-    }
-  }
-
-  // f. Famoahana fahavalo
-  function spawnSystem(dt) {
-    if (gameOver) return;
-    enemySpawnTimer -= dt;
-    if (enemySpawnTimer <= 0) {
-      const difficulty = 1 + Math.floor(score / 60);
-      const count = Math.min(1 + Math.floor(difficulty / 2), 6);
-      for (let i = 0; i < count; i++) {
-        const side = Math.floor(Math.random() * 4);
-        let x, y;
-        if (side === 0) { x = 30 + Math.random() * (W-60); y = -30; }
-        else if (side === 1) { x = W+30; y = 30 + Math.random() * (H-60); }
-        else if (side === 2) { x = 30 + Math.random() * (W-60); y = H+30; }
-        else { x = -30; y = 30 + Math.random() * (H-60); }
-        createEnemy(x, y);
-      }
-      enemySpawnInterval = Math.max(0.3, 1.8 - score / 350);
-      enemySpawnTimer = enemySpawnInterval + Math.random() * 0.3;
-    }
-  }
-
-  // ============================================================
-  // 6. FANAOVANA SARY (Rendering)
-  // ============================================================
-  function drawEntity(id) {
-    const x = ecs.x[id], y = ecs.y[id];
-    const w = ecs.w[id] || 20, h = ecs.h[id] || 20;
-    const color = ecs.color[id] || '#FFFFFF';
-
-    // Famaritana ny endrika (square)
-    ctx.fillStyle = color;
-    ctx.shadowColor = color + '66';
-    ctx.shadowBlur = 12;
-    ctx.fillRect(x, y, w, h);
-    ctx.shadowBlur = 0;
-
-    // Zavatra kely ao anatiny (ho an'ny mpilalao)
     if (ecs.team[id] === TEAM_PLAYER) {
-      ctx.strokeStyle = '#FFFFFF44';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x-2, y-2, w+4, h+4);
+      ecs.x[id] = Math.max(0, Math.min(W - ecs.w[id], ecs.x[id]));
+      ecs.y[id] = Math.max(0, Math.min(H - ecs.h[id], ecs.y[id]));
     }
+  });
+}
 
-    // Barre de vie ho an'ny fahavalo
-    if (ecs.team[id] === TEAM_ENEMY && ecs.maxHp[id]) {
-      const hpRatio = ecs.hp[id] / ecs.maxHp[id];
-      const barW = w;
-      const barH = 4;
-      ctx.fillStyle = '#333';
-      ctx.fillRect(x, y - 8, barW, barH);
-      ctx.fillStyle = hpRatio > 0.5 ? '#44DD66' : '#FF6644';
-      ctx.fillRect(x, y - 8, barW * hpRatio, barH);
-    }
-  }
+function lifetimeSystem(dt) {
+  ecs.forEach(id => {
+    if (!ecs.active[id] || !ecs.lifetime[id]) return;
+    ecs.age[id] += dt;
+    if (ecs.age[id] >= ecs.lifetime[id]) ecs.active[id] = 0;
+  });
+}
 
-  function render() {
-    // Hadiovana ny sehatra
-    ctx.clearRect(0, 0, W, H);
+function combatSystem() {
+  if (gameOver) return;
+  const ids = ecs.getIds ? ecs.getIds() : (() => { const r=[]; ecs.forEach(id=>r.push(id)); return r; })();
 
-    // Fandaminana araka ny z-index (ecs.z)
-    const ids = [];
-    ecs.forEach(id => {
-      if (ecs.active[id]) ids.push(id);
-    });
-    ids.sort((a, b) => (ecs.z[a] || 0) - (ecs.z[b] || 0));
+  for (let i = 0; i < ids.length; i++) {
+    const a = ids[i];
+    if (!ecs.active[a]) continue;
+    for (let j = i+1; j < ids.length; j++) {
+      const b = ids[j];
+      if (!ecs.active[b] || ecs.team[a] === ecs.team[b]) continue;
+      if (!isColliding(a, b)) continue;
 
-    for (const id of ids) {
-      drawEntity(id);
-    }
-  }
-
-  // ============================================================
-  // 7. UI (Canvas 2D ambony)
-  // ============================================================
-  function renderUI() {
-    uiCtx.clearRect(0, 0, W, H);
-
-    // Fahasalamana
-    if (playerId !== -1 && ecs.active[playerId]) {
-      const p = playerId;
-      const hp = ecs.hp[p];
-      const maxHp = ecs.maxHp[p] || 100;
-      const ratio = Math.max(0, hp / maxHp);
-
-      // Sary mbola
-      uiCtx.fillStyle = 'rgba(0,0,0,0.6)';
-      uiCtx.roundRect(14, 14, 200, 22, 8);
-      uiCtx.fill();
-
-      // Sary feno
-      const hue = ratio * 120;
-      uiCtx.fillStyle = `hsl(${hue}, 85%, 50%)`;
-      uiCtx.roundRect(16, 16, Math.max(0, ratio * 196), 18, 6);
-      uiCtx.fill();
-
-      // Votoatiny
-      uiCtx.fillStyle = '#FFFFFF';
-      uiCtx.font = 'bold 13px "Segoe UI", sans-serif';
-      uiCtx.fillText(`❤️ ${Math.round(hp)} / ${Math.round(maxHp)}`, 22, 32);
-
-      // Score
-      uiCtx.textAlign = 'right';
-      uiCtx.fillStyle = '#FFDD77';
-      uiCtx.font = 'bold 24px "Segoe UI", sans-serif';
-      uiCtx.shadowColor = 'rgba(0,0,0,0.8)';
-      uiCtx.shadowBlur = 12;
-      uiCtx.fillText(`🏆 ${score}`, W - 18, 36);
-      uiCtx.shadowBlur = 0;
-      uiCtx.textAlign = 'left';
-    }
-
-    // Game Over
-    if (gameOver) {
-      uiCtx.fillStyle = 'rgba(0,0,0,0.65)';
-      uiCtx.fillRect(0, 0, W, H);
-      uiCtx.textAlign = 'center';
-      uiCtx.shadowColor = '#FF000066';
-      uiCtx.shadowBlur = 40;
-
-      uiCtx.fillStyle = '#FF5566';
-      uiCtx.font = 'bold 64px "Segoe UI", sans-serif';
-      uiCtx.fillText('💀 GAME OVER', W/2, 250);
-
-      uiCtx.shadowBlur = 0;
-      uiCtx.fillStyle = '#AACCFF';
-      uiCtx.font = '26px "Segoe UI", sans-serif';
-      uiCtx.fillText(`Score: ${score}`, W/2, 320);
-
-      uiCtx.fillStyle = '#8899BB';
-      uiCtx.font = '18px "Segoe UI", sans-serif';
-      uiCtx.fillText('Tsindrio ny R hanomboka indray', W/2, 380);
-      uiCtx.textAlign = 'left';
-    }
-  }
-
-  // polyfill roundRect
-  if (!CanvasRenderingContext2D.prototype.roundRect) {
-    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
-      if (r > w/2) r = w/2;
-      if (r > h/2) r = h/2;
-      this.beginPath();
-      this.moveTo(x + r, y);
-      this.arcTo(x + w, y, x + w, y + h, r);
-      this.arcTo(x + w, y + h, x, y + h, r);
-      this.arcTo(x, y + h, x, y, r);
-      this.arcTo(x, y, x + w, y, r);
-      this.closePath();
-      return this;
-    };
-  }
-
-  // ============================================================
-  // 8. RESET
-  // ============================================================
-  function resetGame() {
-    ecs.forEach(id => { ecs.active[id] = 0; });
-    playerId = -1;
-    score = 0;
-    gameOver = false;
-    enemySpawnTimer = 1.5;
-    enemySpawnInterval = 1.8;
-    shootCooldown = 0;
-    mouseDown = false;
-    playerId = createPlayer();
-    // Mamorona fahavalo vitsivitsy
-    for (let i = 0; i < 3; i++) {
-      setTimeout(() => {
-        if (!gameOver && playerId !== -1) {
-          const x = 80 + Math.random() * (W-160);
-          const y = 80 + Math.random() * (H-160);
-          createEnemy(x, y);
+      if (ecs.damage[a] > 0) {
+        ecs.hp[b] -= ecs.damage[a];
+        if (ecs.hp[b] <= 0) {
+          ecs.active[b] = 0;
+          if (ecs.team[b] === TEAM_ENEMY) score += 10;
         }
-      }, i * 400 + 200);
+        if (ecs.isBullet[a]) ecs.active[a] = 0;
+      }
+      if (ecs.damage[b] > 0) {
+        ecs.hp[a] -= ecs.damage[b];
+        if (ecs.hp[a] <= 0) {
+          ecs.active[a] = 0;
+          if (ecs.team[a] === TEAM_ENEMY) score += 10;
+        }
+        if (ecs.isBullet[b]) ecs.active[b] = 0;
+      }
     }
   }
 
-  // ============================================================
-  // 9. GAME LOOP
-  // ============================================================
-  let lastTime = 0;
+  if (playerId !== -1 && !ecs.active[playerId]) gameOver = true;
+}
 
-  function gameLoop(timestamp) {
-    const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
-    lastTime = timestamp;
-
-    if (!gameOver) {
-      playerSystem(dt);
-      aiSystem(dt);
-      physicsSystem(dt);
-      lifetimeSystem(dt);
-      spawnSystem(dt);
-      combatSystem();
+function spawnSystem(dt) {
+  if (gameOver) return;
+  enemySpawnTimer -= dt;
+  if (enemySpawnTimer <= 0) {
+    const count = 1 + Math.floor(score / 100);
+    for (let i = 0; i < Math.min(count, 5); i++) {
+      const side = Math.floor(Math.random() * 4);
+      let x, y;
+      if (side === 0) { x = Math.random() * W; y = -30; }
+      else if (side === 1) { x = W + 30; y = Math.random() * H; }
+      else if (side === 2) { x = Math.random() * W; y = H + 30; }
+      else { x = -30; y = Math.random() * H; }
+      createEnemy(x, y);
     }
+    enemySpawnTimer = Math.max(0.3, 1.8 - score / 300);
+  }
+}
 
-    render();
-    renderUI();
-    requestAnimationFrame(gameLoop);
+// ============================================================
+// 7. FANAOVANA SARY
+// ============================================================
+function drawEntity(id) {
+  const x = ecs.x[id], y = ecs.y[id];
+  const w = ecs.w[id] || 20, h = ecs.h[id] || 20;
+  const color = ecs.color[id] || '#FFFFFF';
+
+  ctx.fillStyle = color;
+  ctx.shadowColor = color + '66';
+  ctx.shadowBlur = 12;
+  ctx.fillRect(x, y, w, h);
+  ctx.shadowBlur = 0;
+
+  if (ecs.team[id] === TEAM_PLAYER) {
+    ctx.strokeStyle = '#FFFFFF44';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x-2, y-2, w+4, h+4);
   }
 
-  // ============================================================
-  // 10. FANOMBOHANA
-  // ============================================================
+  if (ecs.team[id] === TEAM_ENEMY && ecs.maxHp[id]) {
+    const hpRatio = ecs.hp[id] / ecs.maxHp[id];
+    ctx.fillStyle = '#333';
+    ctx.fillRect(x, y-8, w, 4);
+    ctx.fillStyle = hpRatio > 0.5 ? '#44DD66' : '#FF6644';
+    ctx.fillRect(x, y-8, w * hpRatio, 4);
+  }
+}
+
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  const ids = [];
+  ecs.forEach(id => { if (ecs.active[id]) ids.push(id); });
+  for (const id of ids) drawEntity(id);
+}
+
+// ============================================================
+// 8. RESET
+// ============================================================
+function resetGame() {
+  ecs.forEach(id => ecs.active[id] = 0);
+  playerId = -1;
+  score = 0;
+  gameOver = false;
+  enemySpawnTimer = 1.5;
+  shootCooldown = 0;
+  mouseDown = false;
+  
   playerId = createPlayer();
   for (let i = 0; i < 3; i++) {
-    setTimeout(() => {
-      if (!gameOver && playerId !== -1) {
-        const x = 80 + Math.random() * (W-160);
-        const y = 80 + Math.random() * (H-160);
-        createEnemy(x, y);
-      }
-    }, i * 400 + 300);
+    const x = 100 + Math.random() * 700;
+    const y = 100 + Math.random() * 400;
+    createEnemy(x, y);
   }
-  requestAnimationFrame(gameLoop);
+}
 
- 
+// ============================================================
+// 9. GAME LOOP
+// ============================================================
+let lastTime = 0;
+
+function gameLoop(timestamp) {
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+  lastTime = timestamp;
+
+  if (!gameOver) {
+    playerSystem(dt);
+    aiSystem(dt);
+    physicsSystem(dt);
+    lifetimeSystem(dt);
+    spawnSystem(dt);
+    combatSystem();
+  }
+
+  render();
+  requestAnimationFrame(gameLoop);
+}
+
+// ============================================================
+// 10. FANOMBOHANA
+// ============================================================
+playerId = createPlayer();
+for (let i = 0; i < 3; i++) {
+  const x = 100 + Math.random() * 700;
+  const y = 100 + Math.random() * 400;
+  createEnemy(x, y);
+}
+
+requestAnimationFrame(gameLoop);
+console.log('✅ Lalao nanomboka! Misy mpilalao sy fahavalo 3.');
+console.log('🕹️  WASD = mihetsika | SPACE = mitifitra | R = Reset');
 </script>
 </body>
 </html>
