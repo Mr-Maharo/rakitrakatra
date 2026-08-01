@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="mg">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arena Survival - RakitraKatra</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden;
+    }
+    #gameWrapper {
+      position: relative;
+      border: 3px solid #2a2a4a;
+      border-radius: 12px;
+      box-shadow: 0 0 40px rgba(0, 100, 255, 0.2);
+    }
+    #gameCanvas {
+      display: block;
+      width: 900px;
+      height: 600px;
+      background: #1a1a2e;
+      border-radius: 10px;
+      cursor: crosshair;
+    }
+    #uiCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 900px;
+      height: 600px;
+      pointer-events: none; /* Avelao hikasika ny gameCanvas ny totozy */
+      border-radius: 10px;
+    }
+    #info {
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      color: #8899bb;
+      font-size: 14px;
+      font-weight: 500;
+      pointer-events: none;
+      text-shadow: 0 0 10px #000000aa;
+      letter-spacing: 1px;
+    }
+    #info kbd {
+      background: #2a2a4a;
+      padding: 4px 10px;
+      border-radius: 6px;
+      color: #aaccff;
+      border: 1px solid #445577;
+    }
+  </style>
+</head>
+<body>
+
+<div id="gameWrapper">
+  <canvas id="gameCanvas" width="900" height="600"></canvas>
+  <canvas id="uiCanvas" width="900" height="600"></canvas>
+  <div id="info">
+    <kbd>W A S D</kbd> handeha &nbsp;|&nbsp; <kbd>SPACE</kbd> na <kbd>CLICK</kbd> hitifitra &nbsp;|&nbsp; <kbd>R</kbd> hamerenana
+  </div>
+</div>
+
+<!-- Ento ao ny rafitra RakitraKatra (ataovy ao amin'ny folder mitovy) -->
+<script src="rakitrakatra.js"></script>
+
+<script>
+  // ------------------------------------------------------------
+  // 1. FANANGANANA NY RENDERING SY ECS
+  // ------------------------------------------------------------
+  const canvas = document.getElementById('gameCanvas');
+  const uiCanvas = document.getElementById('uiCanvas');
+  const uiCtx = uiCanvas.getContext('2d');
+
+  // Renderer WebGL2
+  const renderer = new RakitraRenderer({
+    canvas: canvas,
+    width: 900,
+    height: 600,
+  });
+
+  // ECS (Vondrona) miaraka amin'ny 10000 zavatra ambony indrindra
+  const ecs = new Vondrona(10000);
+
+  // Spatial Hash ho an'ny fifandonana (grid 64px)
+  const grid = new SakanToerana(64);
+
+  // Mamorona texture fotsy 1x1 mba hanaovana sary miloko (base shapes)
+  function createDummyTexture() {
+    const c = document.createElement('canvas');
+    c.width = 1;
+    c.height = 1;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, 1, 1);
+    return renderer.loadTexture(c);
+  }
+  const dummyTex = createDummyTexture();
+
+  // ------------------------------------------------------------
+  // 2. VARY MIVADY (constantes)
+  // ------------------------------------------------------------
+  const TEAM_PLAYER = 1;
+  const TEAM_ENEMY = 2;
+
+  let playerId = -1;
+  let score = 0;
+  let gameOver = false;
+  let enemySpawnTimer = 0;
+  let enemySpawnInterval = 1.8; // misy fahavalo vaovao isaky ny 1.8s
+  let shootCooldown = 0;
+  const SHOOT_DELAY = 0.15; // 150ms eo ho eo
+
+  // ------------------------------------------------------------
+  // 3. FAMORONANA ZAVATRA (Entities)
+  // ------------------------------------------------------------
+  function createPlayer() {
+    const id = ecs.create();
+    ecs.x[id] = 450;
+    ecs.y[id] = 300;
+    ecs.w[id] = 36;
+    ecs.h[id] = 36;
+    ecs.color[id] = 0x44DDFF; // manga mamirapiratra
+    ecs.hp[id] = 100;
+    ecs.maxHp[id] = 100;
+    ecs.team[id] = TEAM_PLAYER;
+    ecs.speed[id] = 220; // hafainganam-pandeha
+    ecs.isSolid[id] = 1;
+    ecs.isStatic[id] = 0;
+    ecs.vx[id] = 0;
+    ecs.vy[id] = 0;
+    ecs.friction[id] = 0.85;
+    ecs.textureId[id] = dummyTex;
+    ecs.flipX[id] = 0;
+    ecs.flipY[id] = 0;
+    ecs.active[id] = 1;
+    return id;
+  }
+
+  function createEnemy(x, y) {
+    const id = ecs.create();
+    ecs.x[id] = x;
+    ecs.y[id] = y;
+    ecs.w[id] = 30;
+    ecs.h[id] = 30;
+    ecs.color[id] = 0xFF4455; // mena
+    ecs.hp[id] = 30;
+    ecs.maxHp[id] = 30;
+    ecs.team[id] = TEAM_ENEMY;
+    ecs.damage[id] = 12;
+    ecs.speed[id] = 50 + Math.random() * 70;
+    ecs.isSolid[id] = 1;
+    ecs.isStatic[id] = 0;
+    ecs.vx[id] = 0;
+    ecs.vy[id] = 0;
+    ecs.friction[id] = 0.95;
+    ecs.textureId[id] = dummyTex;
+    ecs.active[id] = 1;
+    // AI: 0 = manenjika
+    ecs.aiState[id] = 0;
+    return id;
+  }
+
+  function createBullet(x, y, targetX, targetY) {
+    const id = ecs.create();
+    ecs.x[id] = x;
+    ecs.y[id] = y;
+    ecs.w[id] = 10;
+    ecs.h[id] = 10;
+    ecs.color[id] = 0xFFDD44; // mavo
+    ecs.team[id] = TEAM_PLAYER;
+    ecs.damage[id] = 25;
+    ecs.isSolid[id] = 0;
+    ecs.isStatic[id] = 1; // tsy miantraika amin'ny fizika
+    ecs.lifetime[id] = 1.8; // very aorian'ny 1.8s
+    ecs.age[id] = 0;
+    ecs.textureId[id] = dummyTex;
+    ecs.active[id] = 1;
+
+    const angle = Math.atan2(targetY - y, targetX - x);
+    const speed = 500;
+    ecs.vx[id] = Math.cos(angle) * speed;
+    ecs.vy[id] = Math.sin(angle) * speed;
+    return id;
+  }
+
+  // ------------------------------------------------------------
+  // 4. INPUT SY TOTOZY
+  // ------------------------------------------------------------
+  const keys = {};
+  let mouseX = 450,
+    mouseY = 300;
+  let mouseDown = false;
+
+  document.addEventListener('keydown', (e) => {
+    keys[e.key.toLowerCase()] = true;
+    if (e.key === 'r' || e.key === 'R') {
+      if (gameOver) resetGame();
+    }
+    if (e.key === ' ' || e.key === 'Space') {
+      e.preventDefault();
+      if (!gameOver && playerId !== -1) mouseDown = true;
+    }
+  });
+  document.addEventListener('keyup', (e) => {
+    keys[e.key.toLowerCase()] = false;
+    if (e.key === ' ' || e.key === 'Space') mouseDown = false;
+  });
+
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    mouseX = (e.clientX - rect.left) * scaleX;
+    mouseY = (e.clientY - rect.top) * scaleY;
+  });
+
+  canvas.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    if (!gameOver && playerId !== -1) mouseDown = true;
+  });
+  canvas.addEventListener('mouseup', () => { mouseDown = false; });
+  canvas.addEventListener('mouseleave', () => { mouseDown = false; });
+
+  // ------------------------------------------------------------
+  // 5. RAFITRA (SYSTEMS)
+  // ------------------------------------------------------------
+  function isColliding(a, b) {
+    return ecs.x[a] < ecs.x[b] + ecs.w[b] &&
+      ecs.x[a] + ecs.w[a] > ecs.x[b] &&
+      ecs.y[a] < ecs.y[b] + ecs.h[b] &&
+      ecs.y[a] + ecs.h[a] > ecs.y[b];
+  }
+
+  // a. Rafitra mpilalao (hetsika sy fitifirana)
+  function playerSystem(dt) {
+    if (gameOver || playerId === -1) return;
+    const p = playerId;
+    if (!ecs.active[p]) return;
+
+    // Hetsika
+    let dx = 0,
+      dy = 0;
+    if (keys['w'] || keys['arrowup']) dy = -1;
+    if (keys['s'] || keys['arrowdown']) dy = 1;
+    if (keys['a'] || keys['arrowleft']) dx = -1;
+    if (keys['d'] || keys['arrowright']) dx = 1;
+
+    if (dx !== 0 && dy !== 0) {
+      dx *= 0.707;
+      dy *= 0.707;
+    }
+
+    const speed = ecs.speed[p];
+    ecs.vx[p] = dx * speed;
+    ecs.vy[p] = dy * speed;
+
+    // Fifehezana ny fitifirana
+    if (shootCooldown > 0) shootCooldown -= dt;
+    if (mouseDown && shootCooldown <= 0) {
+      const cx = ecs.x[p] + ecs.w[p] / 2;
+      const cy = ecs.y[p] + ecs.h[p] / 2;
+      createBullet(cx, cy, mouseX, mouseY);
+      shootCooldown = SHOOT_DELAY;
+    }
+  }
+
+  // b. Rafitra AI (fahavalo manenjika)
+  function aiSystem(dt) {
+    if (gameOver || playerId === -1) return;
+    const p = playerId;
+    if (!ecs.active[p]) return;
+
+    ecs.forEach((id) => {
+      if (!ecs.active[id]) return;
+      if (ecs.team[id] !== TEAM_ENEMY) return;
+
+      const dx = ecs.x[p] - ecs.x[id];
+      const dy = ecs.y[p] - ecs.y[id];
+      const dist = Math.hypot(dx, dy);
+      if (dist > 0) {
+        const spd = ecs.speed[id] || 60;
+        const normX = dx / dist;
+        const normY = dy / dist;
+        ecs.vx[id] = normX * spd;
+        ecs.vy[id] = normY * spd;
+      }
+    });
+  }
+
+  // c. Rafitra fifandonana (Combat)
+  function combatSystem() {
+    if (gameOver) return;
+    // Mampiasa ny spatial hash hahitana haingana
+    const entities = [];
+    ecs.forEach((id) => {
+      if (!ecs.active[id]) return;
+      if (ecs.hp[id] <= 0) {
+        ecs.active[id] = 0;
+        return;
+      }
+      entities.push(id);
+    });
+
+    for (let i = 0; i < entities.length; i++) {
+      const a = entities[i];
+      if (!ecs.active[a]) continue;
+      for (let j = i + 1; j < entities.length; j++) {
+        const b = entities[j];
+        if (!ecs.active[b]) continue;
+        if (ecs.team[a] === ecs.team[b]) continue;
+        if (!isColliding(a, b)) continue;
+
+        // Zavatra mifandona: a sy b
+        // Mamaritra izay manao damage
+        const damageA = ecs.damage[a] || 0;
+        const damageB = ecs.damage[b] || 0;
+
+        if (damageA > 0 && ecs.team[a] !== ecs.team[b]) {
+          ecs.hp[b] -= damageA;
+          if (ecs.hp[b] <= 0) {
+            ecs.active[b] = 0;
+            if (ecs.team[b] === TEAM_ENEMY) score += 10;
+          }
+          // Ravo ny bala rehefa mamely
+          if (ecs.lifetime[a] !== undefined) ecs.active[a] = 0;
+        }
+
+        if (damageB > 0 && ecs.team[b] !== ecs.team[a]) {
+          ecs.hp[a] -= damageB;
+          if (ecs.hp[a] <= 0) {
+            ecs.active[a] = 0;
+            if (ecs.team[a] === TEAM_ENEMY) score += 10;
+          }
+          if (ecs.lifetime[b] !== undefined) ecs.active[b] = 0;
+        }
+      }
+    }
+
+    // Jereo raha maty ny mpilalao
+    if (playerId !== -1 && ecs.active[playerId] === 0) {
+      gameOver = true;
+    }
+  }
+
+  // d. Rafitra androm-piainana (ho an'ny bala)
+  function lifetimeSystem(dt) {
+    ecs.forEach((id) => {
+      if (!ecs.active[id]) return;
+      if (ecs.lifetime[id] === undefined) return;
+      ecs.age[id] = (ecs.age[id] || 0) + dt;
+      if (ecs.age[id] >= ecs.lifetime[id]) {
+        ecs.active[id] = 0;
+      }
+    });
+  }
+
+  // e. Rafitra fizika (mihetsika araka ny vx/vy)
+  function physicsSystem(dt) {
+    ecs.forEach((id) => {
+      if (!ecs.active[id]) return;
+      if (ecs.isStatic[id]) return;
+
+      // Fampiharana ny friction
+      if (ecs.friction[id] !== undefined) {
+        ecs.vx[id] *= Math.pow(ecs.friction[id], dt * 60);
+        ecs.vy[id] *= Math.pow(ecs.friction[id], dt * 60);
+      }
+
+      // Fanavaozana ny toerana
+      ecs.x[id] += ecs.vx[id] * dt;
+      ecs.y[id] += ecs.vy[id] * dt;
+
+      // Famerana ao anaty sehatra (mba tsy hivoaka)
+      if (ecs.team[id] === TEAM_PLAYER) {
+        ecs.x[id] = Math.max(0, Math.min(900 - ecs.w[id], ecs.x[id]));
+        ecs.y[id] = Math.max(0, Math.min(600 - ecs.h[id], ecs.y[id]));
+      }
+    });
+  }
+
+  // f. Rafitra famoahana fahavalo
+  function spawnSystem(dt) {
+    if (gameOver) return;
+    enemySpawnTimer -= dt;
+    if (enemySpawnTimer <= 0) {
+      // Mihamafy ny fahavalo rehefa mandeha ny fotoana (mihamaro)
+      const difficulty = 1 + Math.floor(score / 100);
+      const count = Math.min(1 + Math.floor(difficulty / 2), 5);
+      for (let i = 0; i < count; i++) {
+        const side = Math.floor(Math.random() * 4);
+        let x, y;
+        if (side === 0) { x = Math.random() * 900; y = -30; } else if (side === 1) { x = 930; y = Math.random() * 600; } else if (side === 2) { x = Math.random() * 900; y = 630; } else { x = -30; y = Math.random() * 600; }
+        createEnemy(x, y);
+      }
+      // Mihena ny fotoana fiandrasana (hatramin'ny 0.3s farafahakeliny)
+      enemySpawnInterval = Math.max(0.3, 1.8 - score / 300);
+      enemySpawnTimer = enemySpawnInterval;
+    }
+  }
+
+  // g. Rafitra famerenana (Reset)
+  function resetGame() {
+    // Esory ny zavatra rehetra (mivantana)
+    ecs.forEach((id) => { ecs.active[id] = 0; });
+    // Atsimbadika ny tondro
+    playerId = -1;
+    score = 0;
+    gameOver = false;
+    enemySpawnTimer = 0;
+    enemySpawnInterval = 1.8;
+    shootCooldown = 0;
+    mouseDown = false;
+    // Mamorona mpilalao vaovao
+    playerId = createPlayer();
+  }
+
+  // ------------------------------------------------------------
+  // 6. FANAOVANA SARY (Rendering)
+  // ------------------------------------------------------------
+  function renderSystem() {
+    renderer.clear(0x1a1a2e);
+
+    ecs.forEach((id) => {
+      if (!ecs.active[id]) return;
+      // Atao fotsiny ny zavatra misy endrika (w sy h)
+      if (!ecs.w[id] || !ecs.h[id]) return;
+
+      renderer.drawSprite(
+        ecs.x[id], ecs.y[id],
+        ecs.w[id], ecs.h[id],
+        ecs.textureId[id] || dummyTex,
+        0, 0, 1, 1, // frame
+        ecs.color[id] || 0xFFFFFF,
+        1.0, // alpha
+        0, // rotation
+        ecs.flipX[id] || 0,
+        ecs.flipY[id] || 0
+      );
+    });
+
+    renderer.flush();
+  }
+
+  // ------------------------------------------------------------
+  // 7. UI (atao amin'ny canvas 2D)
+  // ------------------------------------------------------------
+  function renderUI() {
+    const ctx = uiCtx;
+    ctx.clearRect(0, 0, 900, 600);
+
+    // Sary miandalana (gauge) ho an'ny fahasalamana
+    if (playerId !== -1 && ecs.active[playerId]) {
+      const p = playerId;
+      const hp = ecs.hp[p];
+      const maxHp = ecs.maxHp[p] || 100;
+      const ratio = Math.max(0, hp / maxHp);
+
+      // Sary mbola
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.roundRect(15, 15, 204, 24, 6);
+      ctx.fill();
+
+      // Sary feno (loko maitso -> mena)
+      const color = `hsl(${ratio * 120}, 80%, 50%)`;
+      ctx.fillStyle = color;
+      ctx.roundRect(18, 18, Math.max(0, ratio * 198), 18, 4);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 13px "Segoe UI", sans-serif';
+      ctx.fillText(`❤️ ${Math.round(hp)} / ${maxHp}`, 25, 34);
+
+      // Score
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#ffdd77';
+      ctx.font = 'bold 22px "Segoe UI", sans-serif';
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 10;
+      ctx.fillText(`🏆 ${score}`, 880, 40);
+      ctx.shadowBlur = 0;
+      ctx.textAlign = 'left';
+    }
+
+    // Game Over
+    if (gameOver) {
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillRect(0, 0, 900, 600);
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ff5566';
+      ctx.font = 'bold 60px "Segoe UI", sans-serif';
+      ctx.shadowColor = '#ff000066';
+      ctx.shadowBlur = 30;
+      ctx.fillText('💀 GAME OVER', 450, 260);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#aaccff';
+      ctx.font = '24px "Segoe UI", sans-serif';
+      ctx.fillText(`Score farany: ${score}`, 450, 330);
+      ctx.fillStyle = '#8899bb';
+      ctx.font = '18px "Segoe UI", sans-serif';
+      ctx.fillText('Tsindrio ny R mba hanomboka indray', 450, 390);
+      ctx.textAlign = 'left';
+    }
+
+    // Fampitandremana raha tsy hita ny mpilalao
+    if (playerId === -1 && !gameOver) {
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffaa44';
+      ctx.font = '20px "Segoe UI", sans-serif';
+      ctx.fillText('⏳ Fanomanana ny mpilalao...', 450, 300);
+      ctx.textAlign = 'left';
+    }
+  }
+
+  // polyfill ho an'ny roundRect raha tsy misy
+  if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+      if (r > w / 2) r = w / 2;
+      if (r > h / 2) r = h / 2;
+      this.beginPath();
+      this.moveTo(x + r, y);
+      this.arcTo(x + w, y, x + w, y + h, r);
+      this.arcTo(x + w, y + h, x, y + h, r);
+      this.arcTo(x, y + h, x, y, r);
+      this.arcTo(x, y, x + w, y, r);
+      this.closePath();
+      return this;
+    };
+  }
+
+  // ------------------------------------------------------------
+  // 8. GAME LOOP
+  // ------------------------------------------------------------
+  let lastTime = 0;
+
+  function gameLoop(timestamp) {
+    const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+    lastTime = timestamp;
+
+    if (!gameOver) {
+      // Fanavaozana ny rafitra rehetra
+      playerSystem(dt);
+      aiSystem(dt);
+      physicsSystem(dt);
+      lifetimeSystem(dt);
+      spawnSystem(dt);
+      combatSystem();
+
+      // Raha very ny mpilalao noho ny combat, dia ataovy gameOver
+      if (playerId !== -1 && !ecs.active[playerId]) {
+        gameOver = true;
+      }
+    }
+
+    // Fanaovana sary
+    renderSystem();
+    renderUI();
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  // ------------------------------------------------------------
+  // 9. FANOMBOHANA
+  // ------------------------------------------------------------
+  function init() {
+    playerId = createPlayer();
+    enemySpawnTimer = 1.0;
+    // Mamorona fahavalo vitsivitsy eo am-piandohana
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => {
+        if (!gameOver) {
+          const x = 100 + Math.random() * 700;
+          const y = 100 + Math.random() * 400;
+          createEnemy(x, y);
+        }
+      }, i * 300);
+    }
+    requestAnimationFrame(gameLoop);
+  }
+
+  // Manomboka ny lalao
+  init();
+
+
+</script>
+</body>
+</html>
