@@ -1,15 +1,39 @@
 /**
  * ═══════════════════════════════════════════════════════════
- * RAKITRAKATRA V4 "ADY GOAVANA" 
+ * RAKITRAKATRA V4.0.1 
  * Moteur lalao 2D matihanina - WebGL 2 + Vondrona
  * © 2026 MIT Licence
- * 
+ *
  * Architecture:
- * - WebGL2 Renderer + Instanced Rendering
- * - Entity Component System (SoA)
+ * - WebGL2 Renderer — batched quad rendering, voalahatra araka
+ *   ny texture @ flush() mba hampihenana ny draw call (TSY GPU
+ *   hardware instancing marina — jereo CHANGELOG v4.0.1)
+ * - Entity Component System (SoA), sparse-set + free-list ID
  * - Spatial Hash Grid
  * - 50+ Systems & Plugins
- * 
+ *
+ * CHANGELOG v4.0.1 (audit fixes):
+ *  - Vondrona/Vondrona: nesorina ny compact() nandoto ny index ivelany;
+ *    free-list + generation handle (ABA-safe) solon'ny izany.
+ *  - Vondrona/Vondrona: create() namerina daholo ny sata ho 0/default
+ *    (teo aloha tsy naverina ny w,h,vx,vy amin'ny slot recycled).
+ *  - Vondrona/Vondrona: nesorina ny fillDefaults() aman-droa (constructor+create).
+ *  - Vondrona/Vondrona: nampiana query(tag, fn) mampiasa cache voatahiry.
+ *  - Mpampiseho: flush() manalahatra ny quad araka ny texture mba
+ *    tsy hi-break batch isaky ny fiovan-texture amin'ny filaharan'ny
+ *    fiantsoana drawSprite/drawRect.
+ *  - Dobo: used ho WeakSet (tsy misakana GC raha adino avereno()).
+ *  - Fanindry: mouse/touch listeners afindra ho @ canvas fa tsy window;
+ *    blur mamoaka justUp marina alohan'ny mamono ny keys.
+ *  - Lalao._loop: voafetra ny isan'ny fixed-step "catch up" isaky ny
+ *    frame (MAX_STEPS) mba tsy hisian'ny spiral of death; misy alpha
+ *    interpolation azo ampiasain'ny Sehatra.render(renderer,camera,alpha).
+ *  - Mpampiditra: ny 'feo' load dia mandika (decodeAudioData) sy
+ *    mampiditra any @ Feo._buffers mivantana; nampiana unload*().
+ *  - Mpampiseho: nampiana deleteTexture(key) hamotsorana VRAM.
+ *  - Z.shuffle: clone alohan'ny fanovana (tsy manova ny array tany am-boalohany).
+ *  - Lalao: azo ampiana { responsive: true } hisian'ny fanaraha-maso
+ *    ny fiovan'ny habaka (ResizeObserver / orientationchange).
  * ═══════════════════════════════════════════════════════════
  */
 (function(global) {
@@ -52,11 +76,12 @@
         randInt: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min,
         choice: (arr) => arr[Math.floor(Math.random() * arr.length)],
         shuffle: (arr) => {
-            for (let i = arr.length - 1; i > 0; i--) {
+            const out = arr.slice();
+            for (let i = out.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                [arr[i], arr[j]] = [arr[j], arr[i]];
+                [out[i], out[j]] = [out[j], out[i]];
             }
-            return arr;
+            return out;
         },
         uuid: () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
             const r = Math.random() * 16 | 0;
@@ -370,7 +395,11 @@
             this.factory = factory;
             this.reset = reset;
             this.free = [];
-            this.used = new Set();
+            // WeakSet fa tsy Set: raha adino ny antso avereno() ka very ny reference
+            // hafa rehetra amin'ilay object, dia mbola azo esorin'ny garbage collector
+            // ihany izy — tsy misakana ny GC intsony toy ny tamin'ny Set matevina.
+            this.used = new WeakSet();
+            this._usedCount = 0; // antontanisa manakaiky (tsy azo isaina marina amin'ny WeakSet)
             for (let i = 0; i < initialSize; i++) this.free.push(factory());
         }
         alaina(...args) {
@@ -380,13 +409,18 @@
             const obj = this.free.pop();
             if (this.reset) this.reset(obj, ...args);
             this.used.add(obj);
+            this._usedCount++;
             return obj;
         }
         avereno(obj) {
-            if (this.used.delete(obj)) this.free.push(obj);
+            if (this.used.has(obj)) {
+                this.used.delete(obj);
+                this._usedCount = Math.max(0, this._usedCount - 1);
+                this.free.push(obj);
+            }
         }
-        clear() { this.free = []; this.used.clear(); }
-        stats() { return { free: this.free.length, used: this.used.size }; }
+        clear() { this.free = []; this.used = new WeakSet(); this._usedCount = 0; }
+        stats() { return { free: this.free.length, used: this._usedCount }; }
     }
 
     // ============================================================
@@ -520,9 +554,12 @@
     class Vondrona {
         constructor(maxEntities = 100000) {
             this.max = maxEntities;
-            this.count = 0;
+            this.count = 0;       // "high-water mark" — isan'ny slot efa nampiasaina, misy hole azo antenaina
             this._nextId = 0;
-            
+            this._freeList = [];  // slot maty azo averina ampiasaina (LIFO) — TSY misy fanovana index amin'ny slot velona
+            // generation: isaina isaky ny destroy() — ilaina hamantarana handle very (ABA-safe)
+            this.generation = new Uint32Array(maxEntities);
+
             // Core components (SoA - Struct of Arrays)
             this.id = new Uint32Array(maxEntities);
             this.alive = new Uint8Array(maxEntities);
@@ -585,11 +622,16 @@
             // Lifecycle
             this.lifetime = new Float32Array(maxEntities);
             this.age = new Float32Array(maxEntities);
-            
-            this.fillDefaults();
+
+            // fanadihadiana amin'ny tag (query cache) — averina amboarina raha "dirty"
+            this._tagIndex = new Map();
+            this._tagDirty = true;
+
+            // fill() indray mandeha ihany, eto @ constructor (fix: teo aloha nataina 2 mandeha)
+            this._initDefaults();
         }
-        
-        fillDefaults() {
+
+        _initDefaults() {
             this.scaleX.fill(1);
             this.scaleY.fill(1);
             this.alpha.fill(1);
@@ -602,69 +644,125 @@
             this.textureId.fill(-1);
             this.targetId.fill(-1);
         }
-        
+
+        // navelana ho an'ny backward-compat (ny sasany mety miantso azy manokana)
+        fillDefaults() { this._initDefaults(); }
+
         create() {
-            if (this.count >= this.max) {
-                throw new Error('Vondrona: Maximum entities reached');
+            let id;
+            if (this._freeList.length > 0) {
+                id = this._freeList.pop();
+            } else {
+                if (this.count >= this.max) {
+                    throw new Error('Vondrona: feno ny entity (max efa tratra)');
+                }
+                id = this.count++;
             }
-            const id = this.count++;
+
             this.id[id] = this._nextId++;
             this.alive[id] = 1;
             this.active[id] = 1;
-            this.scaleX[id] = 1;
-            this.scaleY[id] = 1;
-            this.alpha[id] = 1;
-            this.color[id] = 0xFFFFFFFF;
-            this.mass[id] = 1;
-            this.friction[id] = 0.9;
-            this.hp[id] = 1;
-            this.maxHp[id] = 1;
-            this.animSpeed[id] = 1;
+
+            // famerenana feno ny sata rehetra ho 0/default — fix: teo aloha tsy
+            // naverina ho 0 ny w,h,vx,vy (sy ny sisa) rehefa nampiasaina indray ny slot
+            this.x[id] = 0; this.y[id] = 0; this.z[id] = 0;
+            this.scaleX[id] = 1; this.scaleY[id] = 1; this.rotation[id] = 0;
+            this.w[id] = 0; this.h[id] = 0;
+            this.vx[id] = 0; this.vy[id] = 0; this.ax[id] = 0; this.ay[id] = 0;
             this.textureId[id] = -1;
-            this.targetId[id] = -1;
-            this.age[id] = 0;
+            this.frameX[id] = 0; this.frameY[id] = 0; this.frameW[id] = 0; this.frameH[id] = 0;
+            this.color[id] = 0xFFFFFFFF;
+            this.alpha[id] = 1;
+            this.flipX[id] = 0; this.flipY[id] = 0;
+            this.mass[id] = 1; this.bounce[id] = 0; this.friction[id] = 0.9;
+            this.isStatic[id] = 0; this.isSolid[id] = 0;
+            this.hp[id] = 1; this.maxHp[id] = 1; this.damage[id] = 0;
+            this.team[id] = 0; this.tag[id] = 0;
+            this.aiState[id] = 0; this.aiTimer[id] = 0; this.targetId[id] = -1;
+            this.animId[id] = -1; this.animFrame[id] = 0; this.animTime[id] = 0; this.animSpeed[id] = 1;
+            this.lifetime[id] = 0; this.age[id] = 0;
+
+            this._tagDirty = true;
             return id;
         }
         
         destroy(id) {
-            if (id >= 0 && id < this.count) {
+            if (id >= 0 && id < this.count && this.alive[id]) {
                 this.alive[id] = 0;
+                this.active[id] = 0;
+                this.generation[id] = (this.generation[id] + 1) >>> 0;
+                this._freeList.push(id);
+                this._tagDirty = true;
             }
         }
         
-        isAlive(id) { return id >= 0 && id < this.count && this.alive[id]; }
+        isAlive(id) { return id >= 0 && id < this.count && this.alive[id] === 1; }
+
+        // Handle ABA-safe: mifamatotra amin'ny generation, ilaina raha te-hitazona
+        // reference amin'ny entity mandritra ny frame maro (fantatra raha efa
+        // naverina nampiasaina tamin'ny entity hafa ilay slot).
+        handle(id) {
+            return (id & 0xFFFFF) | ((this.generation[id] & 0xFFF) << 20);
+        }
+        isValidHandle(h) {
+            const id = h & 0xFFFFF;
+            const gen = (h >>> 20) & 0xFFF;
+            return id < this.count && this.alive[id] === 1 && (this.generation[id] & 0xFFF) === gen;
+        }
         
+        // compact(): navaozana — TSY MAMINDRA DATA/INDEX intsony (izay no lesoka
+        // teo aloha, nanimba ny ID ivelany). Manapaka fotsiny ny "high-water mark"
+        // rehefa maty daholo ny slot farany amin'ny lisitra, azo antoka 100%.
         compact() {
-            // Remove dead entities by shifting alive ones
-            let writeIdx = 0;
-            for (let i = 0; i < this.count; i++) {
-                if (this.alive[i]) {
-                    if (writeIdx !== i) this._move(i, writeIdx);
-                    writeIdx++;
-                }
+            while (this.count > 0 && !this.alive[this.count - 1]) {
+                const idx = this._freeList.indexOf(this.count - 1);
+                if (idx !== -1) this._freeList.splice(idx, 1);
+                this.count--;
             }
-            this.count = writeIdx;
-        }
-        
-        _move(from, to) {
-            const arrays = [
-                this.id, this.alive, this.active,
-                this.x, this.y, this.z, this.scaleX, this.scaleY, this.rotation,
-                this.w, this.h, this.vx, this.vy, this.ax, this.ay,
-                this.textureId, this.frameX, this.frameY, this.frameW, this.frameH,
-                this.color, this.alpha, this.flipX, this.flipY,
-                this.mass, this.bounce, this.friction, this.isStatic, this.isSolid,
-                this.hp, this.maxHp, this.damage, this.team, this.tag,
-                this.aiState, this.aiTimer, this.targetId,
-                this.animId, this.animFrame, this.animTime, this.animSpeed,
-                this.lifetime, this.age
-            ];
-            for (const arr of arrays) arr[to] = arr[from];
         }
         
         forEach(fn) {
             for (let i = 0; i < this.count; i++) {
                 if (this.alive[i]) fn(i);
+            }
+        }
+
+        // ---- QUERY (SoA) ----
+        // Mampiasa cache voatahiry araka ny tag, averina amboarina iray manontolo
+        // (O(count) indray mandeha ihany isaky ny "dirty") fa tsy mi-scan
+        // manomboka @ 0 isaky ny query() antsoina — fanatsarana ny fandehany
+        // rehefa maro antso query isaky ny frame.
+        _rebuildTagIndex() {
+            this._tagIndex.clear();
+            for (let i = 0; i < this.count; i++) {
+                if (!this.alive[i]) continue;
+                const t = this.tag[i];
+                let set = this._tagIndex.get(t);
+                if (!set) { set = new Set(); this._tagIndex.set(t, set); }
+                set.add(i);
+            }
+            this._tagDirty = false;
+        }
+
+        // Raha ovaina mivantana ny ecs.tag[id] = X (fa tsy amin'ny setTag), antsoy
+        // ity mba hampandehanana indray ny cache query amin'ny antso manaraka.
+        markTagDirty() { this._tagDirty = true; }
+
+        setTag(id, tag) {
+            this.tag[id] = tag;
+            this._tagDirty = true;
+        }
+
+        query(tag, fn) {
+            if (this._tagDirty) this._rebuildTagIndex();
+            const set = this._tagIndex.get(tag);
+            if (!set) return;
+            for (const id of set) if (this.alive[id]) fn(id);
+        }
+
+        queryMask(predicate, fn) {
+            for (let i = 0; i < this.count; i++) {
+                if (this.alive[i] && predicate(i)) fn(i);
             }
         }
     }
@@ -1054,12 +1152,45 @@
                         .then(j => { this._assets.json[item.key] = j; done(); })
                         .catch(() => { console.error('Failed to load JSON:', item.url); done(); });
                 } else if (item.type === 'audio') {
+                    // fix: teo aloha, ArrayBuffer tsy voadika no natahiry fotsiny,
+                    // ka tsy afaka nampiasain'ny Feo.play() velively ny feo
+                    // nampidirina tamin'ny loader. Ankehitriny: decodeAudioData
+                    // sy ampidirina ao @ Feo._buffers mivantana.
                     fetch(item.url)
                         .then(r => r.arrayBuffer())
-                        .then(buf => { this._assets.audio[item.key] = buf; done(); })
-                        .catch(() => { console.error('Failed to load audio:', item.url); done(); });
+                        .then(buf => {
+                            Feo.init();
+                            return Feo.decode(buf);
+                        })
+                        .then(decodedBuffer => {
+                            Feo.addBuffer(item.key, decodedBuffer);
+                            this._assets.audio[item.key] = decodedBuffer;
+                            done();
+                        })
+                        .catch(() => { console.error('Failed to load/decode audio:', item.url); done(); });
                 }
             });
+        }
+
+        // ---- UNLOAD: famotsorana VRAM/RAM (fix: teo aloha tsy nisy fomba
+        // hamafana asset raha tsy ilaina intsony) ----
+        unloadImage(key, renderer) {
+            delete this._assets.images[key];
+            if (renderer) renderer.deleteTexture(key);
+        }
+        unloadJson(key) {
+            delete this._assets.json[key];
+        }
+        unloadAudio(key) {
+            delete this._assets.audio[key];
+            Feo._buffers.delete(key);
+        }
+        unloadAll(renderer) {
+            if (renderer) {
+                for (const key in this._assets.images) renderer.deleteTexture(key);
+            }
+            for (const key in this._assets.audio) Feo._buffers.delete(key);
+            this._assets = { images: {}, json: {}, audio: {}, fonts: {} };
         }
     }
 
@@ -1214,7 +1345,15 @@
         _init: false,
         
         init(canvas) {
-            if (this._init) return;
+            if (this._init) {
+                // fantatra ho fetezana: Fanindry dia singleton iray ihany
+                // manerana ny pejy — raha misy canvas Lalao faharoa mampiasa
+                // azy, dia mbola io canvas voalohany io ihany no "eo".
+                if (this._canvas !== canvas) {
+                    console.warn('Fanindry: efa nampiasaina tamin\'ny canvas hafa izy ity — mbola singleton iray ihany manerana ny pejy ny input, ka mety tsy marina ny fikajiana koordinato raha lalao roa miaraka.');
+                }
+                return;
+            }
             this._canvas = canvas;
             this._init = true;
             
@@ -1226,7 +1365,10 @@
                 };
             };
             
-            // Keyboard
+            // Keyboard — mijanona @ window satria matetika tsy manana "focus"
+            // ny canvas raha tsy misy tabindex voatokana; ny mouse/touch kosa
+            // afindra @ canvas eto ambany (fix: teo aloha window daholo,
+            // mifanipaka raha misy Fandraisana/canvas hafa iray manontolo @ pejy).
             window.addEventListener('keydown', e => {
                 const k = e.key.toLowerCase();
                 if (!this.keys.has(k)) this._justDownKeys.add(k);
@@ -1240,9 +1382,27 @@
                 this.keys.delete(k);
                 this._justUpKeys.add(k);
             });
-            window.addEventListener('blur', () => this.keys.clear());
+            // fix: teo aloha, keys.clear() fotsiny no natao @ blur, ka tsy
+            // nisy justUp namoaka ho an'ireo kitendry mbola voatsindry — mety
+            // nanimba ny lojika miankina @ justReleased() (ohatra: charge
+            // attack alefa @ famotsorana ny kitendry).
+            window.addEventListener('blur', () => {
+                for (const k of this.keys) this._justUpKeys.add(k);
+                this.keys.clear();
+            });
             
-            // Mouse
+            // Mouse — fix: afindra ho @ canvas (fa tsy window) ny fanombohana
+            // (mousedown) mba tsy hangalatra kitika avy amin'ny tsindry
+            // natao @ HTML Fandraisana ivelan'ny canvas; mousemove/mouseup mijanona
+            // @ window mba mbola hahazo antoka raha mivoaka ny canvas ny
+            // "drag" iray mandritra ny fitsindriana.
+            canvas.addEventListener('mousedown', e => {
+                const p = getPos(e);
+                this.mouse.x = p.x;
+                this.mouse.y = p.y;
+                this.mouse.down[e.button] = true;
+                this.mouse.justDown[e.button] = true;
+            });
             window.addEventListener('mousemove', e => {
                 const p = getPos(e);
                 this.mouse.dx = p.x - this.mouse.x;
@@ -1250,24 +1410,19 @@
                 this.mouse.x = p.x;
                 this.mouse.y = p.y;
             });
-            window.addEventListener('mousedown', e => {
-                const p = getPos(e);
-                this.mouse.x = p.x;
-                this.mouse.y = p.y;
-                this.mouse.down[e.button] = true;
-                this.mouse.justDown[e.button] = true;
-            });
             window.addEventListener('mouseup', e => {
                 this.mouse.down[e.button] = false;
                 this.mouse.justUp[e.button] = true;
             });
-            window.addEventListener('wheel', e => {
+            canvas.addEventListener('wheel', e => {
                 this.mouse.wheel = Math.sign(e.deltaY);
             }, { passive: true });
             canvas.addEventListener('contextmenu', e => e.preventDefault());
             
-            // Touch
-            window.addEventListener('touchstart', e => {
+            // Touch — fix: fanombohana (touchstart) afindra @ canvas; ny
+            // fanohizana (move/end) mijanona @ window mba mbola azo tazomina
+            // na dia mivoaka ny canvas aza ny rantsantanana.
+            canvas.addEventListener('touchstart', e => {
                 for (const t of e.changedTouches) {
                     const p = getPos(t);
                     this.touches.push({ id: t.identifier, x: p.x, y: p.y, startX: p.x, startY: p.y });
@@ -1566,6 +1721,8 @@
             // Batch state
             this._batchCount = 0;
             this._currentTexture = null;
+            this._quadTex = new Array(this.MAX_BATCH); // texture nikasihina isaky ny quad @ batch iray
+            this._order = new Array(this.MAX_BATCH);    // scratch array ho an'ny fanalahatra @ flush()
             
             this._initShaders();
             this._initBuffers();
@@ -1763,6 +1920,17 @@
         getTexture(key) {
             return this._textures.get(key);
         }
+
+        // fix: nampiana mba hisy fomba hamotsorana VRAM rehefa tsy ilaina
+        // intsony ny texture iray (ohatra: raha manova sehatra/lalao).
+        deleteTexture(key) {
+            if (key === 'white') return false; // texture fototra, tsy azo esorina
+            const tex = this._textures.get(key);
+            if (!tex) return false;
+            this.gl.deleteTexture(tex.gl);
+            this._textures.delete(key);
+            return true;
+        }
         
         clear(r = 0, g = 0, b = 0, a = 1) {
             const gl = this.gl;
@@ -1792,13 +1960,9 @@
         drawQuad(x, y, w, h, u0, v0, u1, v1, color, textureKey = 'white') {
             const tex = this._textures.get(textureKey);
             if (!tex) return;
-            
-            if (tex !== this._currentTexture || this._batchCount >= this.MAX_BATCH) {
-                this.flush();
-                this._currentTexture = tex;
-                this.gl.bindTexture(this.gl.TEXTURE_2D, tex.gl);
-            }
-            
+
+            if (this._batchCount >= this.MAX_BATCH) this.flush();
+
             const VERTEX_SIZE = 8;
             const idx = this._batchCount * 4 * VERTEX_SIZE;
             const v = this.vertexData;
@@ -1827,7 +1991,11 @@
             v[idx + 24] = x; v[idx + 25] = y + h;
             v[idx + 26] = u0; v[idx + 27] = v1;
             v[idx + 28] = r; v[idx + 29] = g; v[idx + 30] = b; v[idx + 31] = a;
-            
+
+            // fix: firaka amin'ity quad ity ny texture nampiasaina, mba ho azo
+            // alahatra @ flush() fa tsy hi-break batch isaky ny fiovan-texture
+            // araka ny filaharan'ny fiantsoana drawSprite/drawRect.
+            this._quadTex[this._batchCount] = tex;
             this._batchCount++;
         }
         
@@ -1853,12 +2021,47 @@
         flush() {
             if (this._batchCount === 0) return;
             const gl = this.gl;
-            
+            const n = this._batchCount;
+            const VERTEX_SIZE = 8;
+            const QUAD_FLOATS = VERTEX_SIZE * 4;
+
+            // fix: "texture switch isaky ny draw" — alahatra araka ny texture
+            // ny quad rehetra ao anaty batch iray, mba hampihenana marina ny
+            // draw call any @ GPU (fa tsy araka ny filaharan'ny fiantsoana
+            // drawSprite/drawRect fotsiny, izay mety hifamadika texture
+            // isaky ny quad ka manapotika ny batch).
+            const texOf = this._quadTex;
+            if (this._order.length < n) this._order.length = n;
+            const order = this._order;
+            for (let i = 0; i < n; i++) order[i] = i;
+            const sub = order.slice(0, n);
+            sub.sort((a, b) => texOf[a].id - texOf[b].id);
+
+            if (!this._sortedVertexData || this._sortedVertexData.length < this.vertexData.length) {
+                this._sortedVertexData = new Float32Array(this.vertexData.length);
+            }
+            const src = this.vertexData, dst = this._sortedVertexData;
+            for (let i = 0; i < n; i++) {
+                const from = sub[i] * QUAD_FLOATS;
+                const to = i * QUAD_FLOATS;
+                dst.set(src.subarray(from, from + QUAD_FLOATS), to);
+            }
+
             gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
-            gl.bufferSubData(gl.ARRAY_BUFFER, 0, 
-                            this.vertexData.subarray(0, this._batchCount * 4 * 8));
-            gl.drawElements(gl.TRIANGLES, this._batchCount * 6, gl.UNSIGNED_SHORT, 0);
-            
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, dst.subarray(0, n * QUAD_FLOATS));
+
+            // draw call iray isaky ny vondron-texture mitovy misesy (fa tsy
+            // iray isaky ny quad/fiovan-texture toy ny teo aloha)
+            let i = 0;
+            while (i < n) {
+                const tex = texOf[sub[i]];
+                let j = i;
+                while (j < n && texOf[sub[j]] === tex) j++;
+                gl.bindTexture(gl.TEXTURE_2D, tex.gl);
+                gl.drawElements(gl.TRIANGLES, (j - i) * 6, gl.UNSIGNED_SHORT, i * 6 * 2);
+                i = j;
+            }
+
             this._batchCount = 0;
         }
         
@@ -1890,7 +2093,7 @@
         init(data) {}
         create() {}
         update(dt, dtMs) {}
-        render(renderer, camera) {}
+        render(renderer, camera, alpha = 1) {}
         renderUI(renderer) {}
         shutdown() {}
         destroy() {}
@@ -1933,9 +2136,9 @@
             }
         }
         
-        render(renderer, camera) {
+        render(renderer, camera, alpha = 1) {
             if (this._active && this._active.visible) {
-                this._active.render(renderer, camera);
+                this._active.render(renderer, camera, alpha);
             }
         }
         
@@ -3358,6 +3561,40 @@
             
             // Bind the loop
             this._loop = this._loop.bind(this);
+
+            // fix: tsy nisy fanaraha-maso ny fiovan'ny habaka teo aloha (mobile
+            // mihodina, sns.) — safidy ("opt-in" mba tsy hanova ny fitondran'ny
+            // lalao efa misy): { responsive: true } dia mampandeha ResizeObserver
+            // (na window resize/orientationchange raha tsy misy izany) mba
+            // hamerenana ny habaky ny canvas CSS araka ny "container" azy,
+            // mitazona ny "design resolution" internal (tsy manova ny drawing
+            // buffer, ny fisokafan'ny aspect ratio ihany no tandremana).
+            this._designAspect = width / height;
+            if (opts.responsive) this._attachResizeObserver();
+        }
+
+        _attachResizeObserver() {
+            const handleResize = () => {
+                const parent = this.canvas.parentElement || document.body;
+                const rect = parent.getBoundingClientRect();
+                if (rect.width <= 0 || rect.height <= 0) return;
+                let newW = rect.width;
+                let newH = newW / this._designAspect;
+                if (newH > rect.height) {
+                    newH = rect.height;
+                    newW = newH * this._designAspect;
+                }
+                this.canvas.style.width = Math.round(newW) + 'px';
+                this.canvas.style.height = Math.round(newH) + 'px';
+            };
+            if (typeof ResizeObserver !== 'undefined') {
+                this._resizeObserver = new ResizeObserver(handleResize);
+                this._resizeObserver.observe(this.canvas.parentElement || document.body);
+            } else {
+                window.addEventListener('resize', handleResize);
+                window.addEventListener('orientationchange', handleResize);
+            }
+            handleResize();
         }
         
         addScene(key, SceneClass) {
@@ -3385,26 +3622,43 @@
             this.stats.update(dtMs);
             
             if (!this._paused) {
-                // Fixed timestep physics
+                // Fixed timestep physics — fix: voafetra ny isan'ny "catch-up"
+                // step azo atao isaky ny frame iray (MAX_STEPS) mba tsy hisian'ny
+                // "spiral of death": raha mihalava ny update() ka lasa ela
+                // noho ny fotoana azo raisina, dia nesorina fotsiny ilay
+                // backlog sisa tavela (accepté "slow motion" tsotra) fa tsy
+                // atao "catch up" hatrany izay vao mainka manidina ny frame
+                // manaraka rehetra.
                 this._accumulator += dt;
-                while (this._accumulator >= this._fixedDt) {
+                const MAX_STEPS = 5;
+                let steps = 0;
+                while (this._accumulator >= this._fixedDt && steps < MAX_STEPS) {
                     this.timer.update(this._fixedDt * 1000);
                     this.particles.update(this._fixedDt);
                     this.weather.update(this._fixedDt);
                     this.scenes.update(this._fixedDt, this._fixedDt * 1000);
                     this.camera.update(this._fixedDt * 1000);
                     this._accumulator -= this._fixedDt;
+                    steps++;
                 }
+                if (this._accumulator > this._fixedDt) this._accumulator = this._fixedDt;
                 
                 MpitantanaTween.update(dtMs);
             }
             
             Fanindry.updateWorld(this.camera);
+
+            // alpha: fizarana eo anelanelan'ny roa fixed-step farany (0..1),
+            // azon'ny Sehatra.render(renderer, camera, alpha) ampiasaina raha
+            // te-hanao interpolation malefaka eo amin'ny render (fix: teo
+            // aloha tsy nisy an'ity mihitsy, ka nety hi-saccade ny hetsika
+            // rehefa tsy mifanaraka amin'ny 60fps ny fixed step).
+            const alpha = this._accumulator / this._fixedDt;
             
             // Render
             this.renderer.clear(0.1, 0.1, 0.15, 1);
             this.renderer.begin(this.camera);
-            this.scenes.render(this.renderer, this.camera);
+            this.scenes.render(this.renderer, this.camera, alpha);
             this.particles.render(this.renderer);
             this.weather.render(this.renderer);
             this.renderer.end();
@@ -3445,7 +3699,7 @@
     // ============================================================
     const RakitrakatraV4 = {
         // Version
-        KINOVANA: '4.0.0',
+        KINOVANA: '4.0.1',
         ANARANMIAFINA: 'Ady Goavana',
         
         // Core
@@ -3523,7 +3777,6 @@
         global.Rakitrakatra = RakitrakatraV4;
     }
 
-    console.log('%c⚡ RAKITRAKATRA V4 "ADY GOAVANA" ⚡', 'color: #ff1493; font-size: 16px; font-weight: bold');
-    console.log('%cWebGL 2 + Vondrona + 50 Systems!', 'color: #00ffff; font-size: 12px');
-
+    console.log('miazakazaka ny rakitrakatra');
+   
 })(typeof window !== 'undefined' ? window : globalThis);
