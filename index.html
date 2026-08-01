@@ -1,1 +1,564 @@
 
+<!DOCTYPE html>
+<html lang="mg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAKITRAKATRA V4.0.1 — 100% Teny Gasy</title>
+<meta name="description" content="Rakitrakatra V4: engine lalao WebGL2 nosoratana tamin'ny teny gasy manontolo — 50+ rafitra, 0 fiankinana, iray fichier ihany.">
+<style>
+    :root{
+        --bg:#080a12;
+        --bg-panel:#0f1424;
+        --bg-panel2:#141a30;
+        --line:#232c4a;
+        --ink:#e9edf9;
+        --ink-dim:#8b93b8;
+        --cyan:#00e5ff;
+        --magenta:#ff1493;
+        --gold:#ffb300;
+        --red:#ff4d4d;
+        --green:#3ddc84;
+        --font-display: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+        --font-body: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    *{box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{
+        margin:0;
+        background:var(--bg);
+        color:var(--ink);
+        font-family:var(--font-body);
+        line-height:1.55;
+        position:relative;
+    }
+    /* rakitra scanline malefaka manerana ny pejy - manamarika ny lohateny CRT */
+    body::before{
+        content:"";
+        position:fixed; inset:0;
+        pointer-events:none;
+        z-index:50;
+        background:repeating-linear-gradient(
+            to bottom,
+            rgba(255,255,255,0.018) 0px,
+            rgba(255,255,255,0.018) 1px,
+            transparent 1px,
+            transparent 3px
+        );
+        mix-blend-mode:overlay;
+    }
+    a{color:var(--cyan);}
+    code, .mono{font-family:var(--font-display);}
+
+    .wrap{max-width:1080px; margin:0 auto; padding:0 24px;}
+
+    /* ---------- HERO ---------- */
+    .hero{
+        position:relative;
+        padding:70px 0 56px;
+        border-bottom:1px solid var(--line);
+        overflow:hidden;
+        background:
+            radial-gradient(ellipse 900px 500px at 15% -10%, rgba(0,229,255,.10), transparent 60%),
+            radial-gradient(ellipse 700px 500px at 100% 0%, rgba(255,20,147,.08), transparent 55%);
+    }
+    .boot{
+        font-family:var(--font-display);
+        font-size:12.5px;
+        color:var(--green);
+        background:var(--bg-panel);
+        border:1px solid var(--line);
+        border-radius:8px;
+        padding:14px 16px;
+        max-width:560px;
+        min-height:168px;
+        white-space:pre-wrap;
+        box-shadow:0 0 0 1px rgba(61,220,132,.07), 0 20px 50px rgba(0,0,0,.5);
+    }
+    .boot .prompt{color:var(--ink-dim);}
+    .boot .ok{color:var(--green);}
+    .boot .cursor{display:inline-block; width:7px; height:13px; background:var(--green); vertical-align:-2px; animation:blink 1s step-end infinite;}
+    @keyframes blink{50%{opacity:0;}}
+
+    .eyebrow{
+        font-family:var(--font-display);
+        font-size:12px;
+        letter-spacing:.14em;
+        color:var(--magenta);
+        text-transform:uppercase;
+        margin:28px 0 10px;
+    }
+    h1.title{
+        font-family:var(--font-display);
+        font-weight:700;
+        font-size:clamp(40px, 7vw, 76px);
+        line-height:0.98;
+        margin:0 0 6px;
+        letter-spacing:-0.01em;
+        background:linear-gradient(90deg, var(--cyan), var(--ink) 40%, var(--magenta));
+        -webkit-background-clip:text;
+        background-clip:text;
+        color:transparent;
+    }
+    .tagline{
+        font-size:19px;
+        color:var(--ink-dim);
+        max-width:640px;
+        margin:0 0 30px;
+    }
+    .tagline b{color:var(--ink); font-weight:600;}
+
+    .cta-row{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:44px;}
+    .btn{
+        font-family:var(--font-body);
+        font-weight:600;
+        font-size:14.5px;
+        padding:12px 20px;
+        border-radius:7px;
+        text-decoration:none;
+        display:inline-flex; align-items:center; gap:8px;
+        border:1px solid transparent;
+        transition:transform .12s ease, box-shadow .12s ease;
+    }
+    .btn:hover{transform:translateY(-1px);}
+    .btn-primary{background:var(--cyan); color:#04141a; box-shadow:0 6px 20px rgba(0,229,255,.25);}
+    .btn-ghost{background:transparent; color:var(--ink); border-color:var(--line);}
+    .btn-ghost:hover{border-color:var(--cyan); color:var(--cyan);}
+
+    .stat-strip{
+        display:grid;
+        grid-template-columns:repeat(auto-fit, minmax(120px,1fr));
+        gap:1px;
+        background:var(--line);
+        border:1px solid var(--line);
+        border-radius:8px;
+        overflow:hidden;
+    }
+    .stat{background:var(--bg-panel); padding:16px 14px;}
+    .stat .n{font-family:var(--font-display); font-size:22px; color:var(--gold); font-weight:700;}
+    .stat .l{font-size:11.5px; color:var(--ink-dim); margin-top:3px;}
+
+    /* ---------- SECTION GENERIC ---------- */
+    section{padding:64px 0; border-bottom:1px solid var(--line);}
+    .kicker{font-family:var(--font-display); font-size:12px; letter-spacing:.14em; color:var(--cyan); text-transform:uppercase; margin-bottom:8px;}
+    h2{font-size:clamp(26px,4vw,36px); margin:0 0 14px; letter-spacing:-0.01em;}
+    .lede{color:var(--ink-dim); max-width:640px; margin-bottom:36px; font-size:15.5px;}
+
+    /* ---------- QUICKSTART ---------- */
+    .code-tabs{display:flex; gap:6px; margin-bottom:0;}
+    .code-tab{
+        font-family:var(--font-display); font-size:12.5px; color:var(--ink-dim);
+        background:var(--bg-panel); border:1px solid var(--line); border-bottom:none;
+        padding:9px 14px; border-radius:8px 8px 0 0; cursor:pointer;
+    }
+    .code-tab.active{color:var(--ink); background:var(--bg-panel2); border-color:var(--line);}
+    pre.code{
+        margin:0; padding:20px 22px;
+        background:var(--bg-panel2);
+        border:1px solid var(--line);
+        border-radius:0 8px 8px 8px;
+        overflow-x:auto;
+        font-family:var(--font-display);
+        font-size:13px;
+        line-height:1.7;
+        display:none;
+    }
+    pre.code.active{display:block;}
+    pre.code .c1{color:var(--ink-dim);}
+    pre.code .c2{color:var(--cyan);}
+    pre.code .c3{color:var(--gold);}
+    pre.code .c4{color:var(--magenta);}
+    pre.code .c5{color:var(--green);}
+
+    /* ---------- API GRID ---------- */
+    .cat-nav{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:28px;}
+    .cat-pill{
+        font-family:var(--font-display); font-size:12px;
+        border:1px solid var(--line); background:var(--bg-panel);
+        color:var(--ink-dim); padding:7px 13px; border-radius:999px; cursor:pointer;
+        transition:all .12s ease;
+    }
+    .cat-pill:hover{color:var(--ink); border-color:var(--cyan);}
+    .cat-pill.active{color:var(--bg); background:var(--cyan); border-color:var(--cyan);}
+
+    .cat-block{margin-bottom:36px;}
+    .cat-title{
+        font-family:var(--font-display); font-size:14px; color:var(--gold);
+        text-transform:uppercase; letter-spacing:.08em; margin-bottom:12px;
+        display:flex; align-items:center; gap:10px;
+    }
+    .cat-title::after{content:""; flex:1; height:1px; background:var(--line);}
+    .card-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(250px,1fr)); gap:10px;}
+    .card{
+        background:var(--bg-panel);
+        border:1px solid var(--line);
+        border-radius:8px;
+        padding:14px 15px;
+    }
+    .card .num{font-family:var(--font-display); font-size:11px; color:var(--ink-dim);}
+    .card .name{font-family:var(--font-display); font-size:14.5px; color:var(--cyan); margin:3px 0 6px; font-weight:600;}
+    .card .desc{font-size:12.8px; color:var(--ink-dim); line-height:1.5;}
+
+    /* ---------- PRO SECTION ---------- */
+    .pro-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px;}
+    .pro-card{background:var(--bg-panel); border:1px solid var(--line); border-radius:10px; padding:20px;}
+    .pro-card .ic{font-size:22px; margin-bottom:10px;}
+    .pro-card h3{font-size:15.5px; margin:0 0 8px;}
+    .pro-card p{font-size:13.2px; color:var(--ink-dim); margin:0;}
+
+    /* ---------- FOOTER ---------- */
+    footer{padding:40px 0; text-align:center;}
+    footer .links{display:flex; gap:20px; justify-content:center; margin-bottom:14px; flex-wrap:wrap;}
+    footer .links a{font-family:var(--font-display); font-size:13px; color:var(--ink-dim); text-decoration:none;}
+    footer .links a:hover{color:var(--cyan);}
+    footer .fine{font-size:12px; color:var(--ink-dim); opacity:.7;}
+
+    @media (prefers-reduced-motion: reduce){
+        html{scroll-behavior:auto;}
+        .boot .cursor{animation:none;}
+    }
+</style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="wrap">
+        <div class="boot" id="boot" aria-hidden="true"></div>
+
+        <p class="eyebrow">Engine lalao WebGL2 · Teny gasy 100%</p>
+        <h1 class="title">RAKITRAKATRA</h1>
+        <p class="tagline">
+            V4 <b>"Ady Goavana"</b> — engine lalao 2D nosoratana avy amin'ny fototra tamin'ny JavaScript madio,
+            fichier iray ihany, 0 fiankinana ivelany, ary <b>anaram-baiko teny gasy manontolo</b> hatramin'ny
+            farany, mba hahafahan'ny mpamorona lalao malagasy mahazo ny API tsy misy fisakanan-tsoratra.
+        </p>
+        <div class="cta-row">
+            <a class="btn btn-primary" href="demo-fllapy.html">▶ Jereo ny demo flappy mivantana</a>
+            <a class="btn btn-primary2" href="demo-fllapy.html">▶ Jereo ny demo br-simple mivantana</a>
+            
+            <a class="btn btn-ghost" href="#quickstart">Ahoana ny fampidirana azy</a>
+            <a class="btn btn-ghost" href="#api">Ny API 50+</a>
+        </div>
+
+        <div class="stat-strip">
+            <div class="stat"><div class="n" id="statModules">—</div><div class="l">rafitra (systems)</div></div>
+            <div class="stat"><div class="n">0</div><div class="l">fiankinana (deps)</div></div>
+            <div class="stat"><div class="n">~57KB</div><div class="l">minified</div></div>
+            <div class="stat"><div class="n">1</div><div class="l">fichier</div></div>
+            <div class="stat"><div class="n">100%</div><div class="l">teny gasy</div></div>
+            <div class="stat"><div class="n">WebGL2</div><div class="l">renderer</div></div>
+        </div>
+    </div>
+</header>
+
+<!-- ============================================================ -->
+<!-- QUICKSTART                                                    -->
+<!-- ============================================================ -->
+<section id="quickstart">
+    <div class="wrap">
+        <p class="kicker">Fampidirana</p>
+        <h2>Fichier iray, andalana vitsivitsy</h2>
+        <p class="lede">Tsy misy <code>npm install</code>, tsy misy bundler ilaina. Ampidiro ao anaty pejinao ny script, ary vonona ianao.</p>
+
+        <div class="code-tabs">
+            <div class="code-tab active" data-tab="html">index.html</div>
+            <div class="code-tab" data-tab="scene">Sehatra voalohany</div>
+        </div>
+        <pre class="code active" id="tab-html"><span class="c1">&lt;!-- 1. Ampidiro ny engine --&gt;</span>
+<span class="c4">&lt;script</span> <span class="c2">src</span>=<span class="c5">"rakitrakatra.min.js"</span><span class="c4">&gt;&lt;/script&gt;</span>
+
+<span class="c1">&lt;!-- 2. Boribory hihazona ny lalao --&gt;</span>
+<span class="c4">&lt;canvas</span> <span class="c2">id</span>=<span class="c5">"gameCanvas"</span> <span class="c2">width</span>=<span class="c5">"960"</span> <span class="c2">height</span>=<span class="c5">"540"</span><span class="c4">&gt;&lt;/canvas&gt;</span>
+
+<span class="c1">&lt;script&gt;</span>
+  <span class="c1">// 3. Manomboka ny lalao — Vondrona (ECS), Kamera, Fanindry, Feo... vonona daholo</span>
+  <span class="c3">const</span> R = window.Rakitrakatra;
+  <span class="c3">const</span> game = <span class="c3">new</span> R.<span class="c2">Lalao</span>(960, 540, {
+    canvas: document.getElementById(<span class="c5">'gameCanvas'</span>)
+  });
+<span class="c1">&lt;/script&gt;</span></pre>
+
+        <pre class="code" id="tab-scene"><span class="c3">class</span> <span class="c2">SehatroKo</span> <span class="c3">extends</span> R.<span class="c2">Sehatra</span> {
+  <span class="c2">create</span>() {
+    <span class="c1">// entity ao amin'ny Vondrona (ECS)</span>
+    <span class="c3">this</span>.id = <span class="c3">this</span>.game.ecs.create();
+    <span class="c3">this</span>.game.ecs.x[<span class="c3">this</span>.id] = 100;
+    <span class="c3">this</span>.game.ecs.y[<span class="c3">this</span>.id] = 100;
+
+    <span class="c1">// kamera manaraka</span>
+    <span class="c3">this</span>.game.camera.follow({ x: 100, y: 100, w: 32, h: 32 });
+  }
+
+  <span class="c2">update</span>(dt) {
+    <span class="c3">const</span> axis = R.<span class="c2">Fanindry</span>.axis();
+    <span class="c3">this</span>.game.ecs.x[<span class="c3">this</span>.id] += axis.x * 200 * dt;
+  }
+
+  <span class="c2">render</span>(renderer) {
+    renderer.<span class="c2">drawRect</span>(
+      <span class="c3">this</span>.game.ecs.x[<span class="c3">this</span>.id],
+      <span class="c3">this</span>.game.ecs.y[<span class="c3">this</span>.id],
+      32, 32, <span class="c3">0xFF1493FF</span>
+    );
+  }
+}
+
+game.<span class="c2">addScene</span>(<span class="c5">'lalao'</span>, SehatroKo);
+game.<span class="c2">start</span>(<span class="c5">'lalao'</span>);</pre>
+    </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- API 50+                                                       -->
+<!-- ============================================================ -->
+<section id="api">
+    <div class="wrap">
+        <p class="kicker">Rejisitra API</p>
+        <h2>Rafitra <span id="apiCount">50+</span> vonona hampiasaina</h2>
+        <p class="lede">Voasokajy araka ny asany avy — ny anarana rehetra dia teny gasy manontolo, ary mifandray amin'ny kilasy tsirairay ao amin'ny <code>rakitrakatra.js</code>.</p>
+
+        <div class="cat-nav" id="catNav"></div>
+        <div id="apiGrid"></div>
+    </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- MAHA-PROFESIONALY                                             -->
+<!-- ============================================================ -->
+<section id="pro">
+    <div class="wrap">
+        <p class="kicker">Maha-matotra azy</p>
+        <h2>Tsy asa "hobby" fotsiny</h2>
+        <p class="lede">Ireto ny safidy ara-teknika nataon'ny mpanoratra mba hahatonga an'i Rakitrakatra ho fitaovana azo antenaina, fa tsy demo mandeha indray mandeha.</p>
+
+        <div class="pro-grid">
+            <div class="pro-card">
+                <div class="ic">⚙️</div>
+                <h3>Vondrona (ECS) SoA</h3>
+                <p>Struct-of-Arrays fa tsy Array-of-Objects — mihazakazaka kokoa amin'ny lalao be entity satria mifanaraka amin'ny CPU cache.</p>
+            </div>
+            <div class="pro-card">
+                <div class="ic">🎲</div>
+                <h3>Kisendrasendra voafehy</h3>
+                <p>Seeded PRNG — mitovy hatrany ny valiny raha mitovy ny "seed", ilaina amin'ny fitsapana (testing) sy ny replay/level generation.</p>
+            </div>
+            <div class="pro-card">
+                <div class="ic">🖥️</div>
+                <h3>WebGL2 mivantana</h3>
+                <p>Tsy misy Canvas2D fallback miafina — sprite batching marina amin'ny GPU, vonona amin'ny particle be dia be.</p>
+            </div>
+            <div class="pro-card">
+                <div class="ic">📦</div>
+                <h3>0 fiankinana, 1 fichier</h3>
+                <p>Azo alaina, jerena, ovaina tanteraka — tsy misy "node_modules" na build step ilaina alohan'ny fampiasana.</p>
+            </div>
+            <div class="pro-card">
+                <div class="ic">🧠</div>
+                <h3>AI vonona: FSM + Behavior Tree</h3>
+                <p>Fivoarana (state machine) sy Fitondrantena (behavior tree) samy voarafitra ho an'ny fihetsiky ny NPC.</p>
+            </div>
+            <div class="pro-card">
+                <div class="ic">🌍</div>
+                <h3>Teny (i18n) sy Tehirizo</h3>
+                <p>Rafitra fiteny maro sy save-system amin'ny slot maro miaraka amin'ny lalao rehetra vokarina.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="wrap">
+        <div class="links">
+            <a href="https://github.com/mr-maharo">GitHub — @mr-maharo</a>
+            <a href="https://www.facebook.com/profile.php?id=61567602236583">Facebook — Malagasikara studio </a>
+            <a href="demo-arena.html">Demo Arena Survival</a>
+            <a href="demo-flappy.html">Demo flappy</a>
+            
+            <a href="rakitrakatra.min.js">rakitrakatra.min.js</a>
+            <a href="rakitrakatra.js">Kaody feno (tsy voa-minify)</a>
+        </div>
+        <p class="fine">Rakitrakatra natao tamin'ny fitiavana ny teny gasy sy ny lalao 2D.</p>
+    </div>
+</footer>
+
+<script>
+// ============================================================
+// API DATA — mifanaraka amin'ny fizarana 50 ao amin'ny rakitrakatra.js
+// (apetraka voalohany mba tsy hisy fiantraikany aminy na dia misy
+//  hadisoana any amin'ny boot animation aza)
+// ============================================================
+const API_DATA = [
+    { cat: 'Fototra', items: [
+        ['Lalao', 'Ny fototry ny lalao rehetra: game loop, fixed timestep, fitantanana sehatra.'],
+        ['Sehatra', 'Sehatra iray (Scene) manana create / update / render / renderUI.'],
+        ['Hetsika', 'EventEmitter haingana ho an\'ny fifandraisan\'ny singa rehetra.'],
+        ['Vondrona', 'ECS amin\'ny endrika Struct-of-Arrays — haingam-pandeha kokoa.'],
+        ['MpitantanaSehatra', 'Fitantanana ny fifandimbiasan\'ny sehatra maro (scene stack).'],
+        ['MpitantanaFanampiny', 'Rafitra plugin azo ampiana hanitarana ny fahaiza-manao.'],
+        ['SakanToerana', 'Spatial Hash Grid ho an\'ny fikarohana collision haingana.'],
+        ['HazoEfatra', 'Quadtree — safidy hafa amin\'ny fizarana habaka.'],
+    ]},
+    { cat: 'Matematika', items: [
+        ['Vektora2', 'Vector 2D voahasoa: add, dot, normalize, sns.'],
+        ['Vektora3', 'Vector 3D ho an\'ny kajy shader sy 3D kely.'],
+        ['Lamina2D', 'Matrisy 2D 3×2 haingana ho an\'ny fihodinana/fanakisana.'],
+        ['Efajoro', 'Rectangle (AABB) miaraka amin\'ny fikajiana fifandrafesana.'],
+        ['Boribory', 'Boribory (Circle) ho an\'ny collision sy zone.'],
+        ['Lafomaro', 'Polygon vonona amin\'ny SAT collision (Separating Axis Theorem).'],
+        ['Piolaka', 'Spline Catmull-Rom ho an\'ny lalana malefaka.'],
+    ]},
+    { cat: 'Mpampiseho', items: [
+        ['Mpampiseho', 'Renderer WebGL2 tanteraka, sprite batching haingana.'],
+        ['Mpampiditra', 'Asset loader (sary, feo, JSON) miaraka amin\'ny progress.'],
+        ['Sarimihetsika', 'Rafitra sarimihetsika (sprite animation) frame-by-frame.'],
+    ]},
+    { cat: 'Kinetika & FX', items: [
+        ['Mpanamora', 'Easing function maherin\'ny 30 (bounce, elastic, sns.).'],
+        ['MpitantanaTween', 'Tween system feno ho an\'ny fihetsehana malefaka.'],
+        ['Vovoka', 'Particle system vonona GPU (dust / spark / explosion).'],
+        ['Toetrandro', 'Rafitra toetrandro (orana, lanezy) manome fihetsika.'],
+        ['TsipikaFotoana', 'Timeline/sequencer hanoritana hetsika miorina fotoana.'],
+        ['Rano', 'Simulation rano tsotra (wave / ripple).'],
+        ['EfitraTaloha', 'Efitra CRT — endrika televiziona taloha.'],
+        ['Famirapiratana', 'Bloom effect ho an\'ny hazavana mamirapiratra.'],
+        ['Hozongozona', 'Fihozongozonan\'ny kamera (screen shake).'],
+    ]},
+    { cat: 'Lalao (Gameplay)', items: [
+        ['Fizika', 'AABB + Circle + Polygon, collision detection sy resolution.'],
+        ['Drafitra', 'Tilemap manaraka ny endrika Tiled JSON.'],
+        ['Lalana', 'Pathfinding A* ho an\'ny fikarohan-dalana.'],
+        ['Fivoarana', 'Finite State Machine (FSM) ho an\'ny fitondran\'ny AI.'],
+        ['Fitondrantena', 'Behavior Tree ho an\'ny AI saro-pady kokoa.'],
+        ['Taolana', 'Inverse Kinematics (FABRIK) ho an\'ny fihetsehan-taolana.'],
+        ['Zavona', 'Fog of war ho an\'ny lalao stratejika.'],
+        ['Entana', 'Rafitra entana (inventory) feno.'],
+        ['MpitantanaIraka', 'Rafitra "quest" / iraka ho an\'ny tantara.'],
+        ['MpitantanaResaka', 'Rafitra resaka (dialogue) miaraka amin\'ny sampana.'],
+    ]},
+    { cat: 'Rafitra fototra', items: [
+        ['Feo', 'Web Audio system feno: sfx procedural sy music.'],
+        ['Fanindry', 'Input unifié: keyboard, totohondry, tandroka, gamepad.'],
+        ['Kamera', 'Kamera manaraka, deadzone, bounds, shake.'],
+    ]},
+    { cat: 'Fandraisana', items: [
+        ['Fandraisana', 'Rafitra UI (bokotra, bara aina, sns.) ho an\'ny HUD/menu.'],
+        ['Sarintany', 'Minimap azo ovaovaina.'],
+        ['JoystickVirtoaly', 'Joystick virtoaly ho an\'ny findam-pitaovana (mobile).'],
+    ]},
+    { cat: 'Fitaovana', items: [
+        ['Dobo', 'Object pool hampihenana ny garbage collection.'],
+        ['Kisendrasendra', 'Seeded PRNG — kisendrasendra voafehy sy azo averina.'],
+        ['Tabataba', 'Noise generator (Perlin, Value, FBM) ho an\'ny procedural.'],
+        ['Famataranandro', 'Timer system: delay, interval, countdown.'],
+        ['Tehirizo', 'Save system amin\'ny localStorage, slots maro.'],
+        ['Teny', 'Localization (i18n) maro fiteny.'],
+        ['DebugDrafitra', 'Debug draw — mampiseho ny collision box, sns.'],
+        ['Antontanisa', 'Stats monitor: FPS, isan\'ny entity, memory.'],
+    ]},
+];
+
+const totalCount = API_DATA.reduce((s, c) => s + c.items.length, 0);
+document.getElementById('statModules').textContent = totalCount + '+';
+document.getElementById('apiCount').textContent = totalCount + '+';
+
+const catNav = document.getElementById('catNav');
+const apiGrid = document.getElementById('apiGrid');
+
+function renderGrid(filter) {
+    apiGrid.innerHTML = '';
+    let n = 1;
+    API_DATA.forEach(group => {
+        if (filter !== 'Rehetra' && filter !== group.cat) { n += group.items.length; return; }
+        const block = document.createElement('div');
+        block.className = 'cat-block';
+        block.innerHTML = `<div class="cat-title">${group.cat} · ${group.items.length}</div>`;
+        const grid = document.createElement('div');
+        grid.className = 'card-grid';
+        group.items.forEach(([name, desc]) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `<div class="num">#${String(n++).padStart(2,'0')}</div>
+                <div class="name">${name}</div>
+                <div class="desc">${desc}</div>`;
+            grid.appendChild(card);
+        });
+        block.appendChild(grid);
+        apiGrid.appendChild(block);
+    });
+}
+
+['Rehetra', ...API_DATA.map(g => g.cat)].forEach(cat => {
+    const pill = document.createElement('div');
+    pill.className = 'cat-pill' + (cat === 'Rehetra' ? ' active' : '');
+    pill.textContent = cat;
+    pill.addEventListener('click', () => {
+        document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        renderGrid(cat);
+    });
+    catNav.appendChild(pill);
+});
+renderGrid('Rehetra');
+
+// ============================================================
+// CODE TABS
+// ============================================================
+document.querySelectorAll('.code-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('pre.code').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+});
+
+// ============================================================
+// BOOT SEQUENCE — fanoratana milalao amin'ny hero
+// (ao anaty try/catch mba tsy hisy fiatoana ny pejy manontolo
+//  raha misy fahasamihafan'ny navigateur nampiasaina)
+// ============================================================
+try {
+    const lines = [
+        { t: 'RAKITRAKATRA_V4.boot()', cls: 'prompt' },
+        { t: '[OK] WebGL2 context ......... vonona', cls: 'ok' },
+        { t: '[OK] Vondrona (ECS/SoA) ...... voapetraka', cls: 'ok' },
+        { t: '[OK] Fanindry (kb/mouse/pad) . voapetraka', cls: 'ok' },
+        { t: '[OK] Feo (Web Audio) ......... voapetraka', cls: 'ok' },
+        { t: `[OK] ${totalCount}+ rafitra ............. voatondro`, cls: 'ok' },
+        { t: '[OK] fiankinana ivelany ...... 0', cls: 'ok' },
+        { t: 'READY.', cls: 'prompt' },
+    ];
+    const el = document.getElementById('boot');
+    const reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    if (reduced || !el) {
+        if (el) el.textContent = lines.map(l => l.t).join('\n');
+    } else {
+        let li = 0, ci = 0;
+        (function tick(){
+            if (li >= lines.length) {
+                el.innerHTML += '\n<span class="cursor"></span>';
+                return;
+            }
+            const line = lines[li];
+            if (ci === 0) el.innerHTML += (li > 0 ? '\n' : '') + `<span class="${line.cls}">`;
+            if (ci <= line.t.length) {
+                const partial = el.innerHTML;
+                el.innerHTML = partial.slice(0, partial.lastIndexOf('<span')) +
+                    `<span class="${line.cls}">` + line.t.slice(0, ci);
+                ci++;
+                setTimeout(tick, 10 + Math.random() * 18);
+            } else {
+                el.innerHTML += '</span>';
+                li++; ci = 0;
+                setTimeout(tick, 90);
+            }
+        })();
+    }
+} catch (e) {
+    const el = document.getElementById('boot');
+    if (el) el.textContent = 'RAKITRAKATRA_V4.boot()\n[OK] READY.';
+    console.warn('Boot animation skipped:', e);
+}
+</script>
+</body>
+</html>
