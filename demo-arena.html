@@ -83,7 +83,60 @@
   const W = 900, H = 600;
 
   // ECS - Vondrona miaraka amin'ny 5000 zavatra
-  const ecs = new Vondrona(5000);
+  // ECS tsotra vita tanana (mifanentana amin'ny RakitraKatra)
+class ECS {
+  constructor(max) {
+    this.max = max;
+    this.active = new Uint8Array(max);
+    this.x = new Float32Array(max);
+    this.y = new Float32Array(max);
+    this.w = new Float32Array(max);
+    this.h = new Float32Array(max);
+    this.vx = new Float32Array(max);
+    this.vy = new Float32Array(max);
+    this.color = new Array(max);
+    this.hp = new Float32Array(max);
+    this.maxHp = new Float32Array(max);
+    this.team = new Int8Array(max);
+    this.speed = new Float32Array(max);
+    this.friction = new Float32Array(max);
+    this.damage = new Float32Array(max);
+    this.lifetime = new Float32Array(max);
+    this.age = new Float32Array(max);
+    this.isBullet = new Uint8Array(max);
+    this.z = new Float32Array(max);
+    this.nextId = 0;
+  }
+  create() {
+    for (let i = 0; i < this.max; i++) {
+      if (!this.active[i]) {
+        this.active[i] = 1;
+        this.x[i] = 0; this.y[i] = 0; this.w[i] = 0; this.h[i] = 0;
+        this.vx[i] = 0; this.vy[i] = 0; this.color[i] = '#FFFFFF';
+        this.hp[i] = 0; this.maxHp[i] = 0; this.team[i] = 0;
+        this.speed[i] = 0; this.friction[i] = 0; this.damage[i] = 0;
+        this.lifetime[i] = 0; this.age[i] = 0; this.isBullet[i] = 0; this.z[i] = 0;
+        return i;
+      }
+    }
+    return -1;
+  }
+  forEach(callback) {
+    for (let i = 0; i < this.max; i++) {
+      if (this.active[i]) callback(i);
+    }
+  }
+  getIds() {
+    const result = [];
+    for (let i = 0; i < this.max; i++) {
+      if (this.active[i]) result.push(i);
+    }
+    return result;
+  }
+  destroy(id) { if (id >= 0 && id < this.max) this.active[id] = 0; }
+}
+
+const ecs = new ECS(5000);
 
   // ============================================================
   // 2. CONSTANTES
