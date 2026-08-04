@@ -1,6 +1,6 @@
 /**
  * ═══════════════════════════════════════════════════════════
- * RAKITRAKATRA V4.0.1 
+ * RAKITRAKATRA V4.2.0 
  * Moteur lalao 2D matihanina - WebGL 2 + Vondrona
  * © 2026 MIT Licence
  *
@@ -10,7 +10,7 @@
  *   hardware instancing marina — jereo CHANGELOG v4.0.1)
  * - Entity Component System (SoA), sparse-set + free-list ID
  * - Spatial Hash Grid
- * - 50+ Systems & Plugins
+ * - 100+ Systems & Plugins (nampiana 50 plugin vaovao tamin'ny v4.2.0)
  */
 (function(global) {
     'use strict';
@@ -3496,6 +3496,1356 @@
         list() { return Array.from(this.plugins.keys()); }
     }
 
+    /* ============================================================
+       51-100. FANITARANA V4.2.0 - 50 PLUGIN VAOVAO
+       ============================================================ */
+
+    /* 51. Rakotra Sary - Texture Atlas / Sprite Sheet parser */
+    class RakotraSary {
+        constructor(image, frameW, frameH, margin = 0, spacing = 0) {
+            this.image = image;
+            this.frameW = frameW;
+            this.frameH = frameH;
+            this.margin = margin;
+            this.spacing = spacing;
+            this.frames = [];
+            this._cut();
+        }
+        _cut() {
+            const cols = Math.floor((this.image.width - this.margin * 2 + this.spacing) / (this.frameW + this.spacing));
+            const rows = Math.floor((this.image.height - this.margin * 2 + this.spacing) / (this.frameH + this.spacing));
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    this.frames.push({
+                        x: this.margin + c * (this.frameW + this.spacing),
+                        y: this.margin + r * (this.frameH + this.spacing),
+                        w: this.frameW, h: this.frameH
+                    });
+                }
+            }
+        }
+        get(index) { return this.frames[index]; }
+        slice(from, to) { return this.frames.slice(from, to); }
+    }
+
+    /* 52. FizarinaSarimihetsika - Animation State Machine */
+    class FizarinaSarimihetsika {
+        constructor() {
+            this.states = new Map();
+            this.transitions = new Map();
+            this.current = null;
+            this.params = {};
+        }
+        addState(name, anim) {
+            this.states.set(name, anim);
+            if (!this.current) this.current = name;
+            return this;
+        }
+        addTransition(from, to, condition) {
+            if (!this.transitions.has(from)) this.transitions.set(from, []);
+            this.transitions.get(from).push({ to, condition });
+            return this;
+        }
+        setParam(key, value) { this.params[key] = value; }
+        update(dt) {
+            const list = this.transitions.get(this.current) || [];
+            for (const t of list) {
+                if (t.condition(this.params)) {
+                    this.current = t.to;
+                    break;
+                }
+            }
+            const anim = this.states.get(this.current);
+            if (anim && anim.update) anim.update(dt);
+        }
+        getAnim() { return this.states.get(this.current); }
+    }
+
+    /* 53. Fisononana - Parallax scrolling layers */
+    class Fisononana {
+        constructor() {
+            this.layers = [];
+        }
+        addLayer(drawFn, tileW, tileH, factor = 0.5, tileX = true, tileY = false) {
+            const layer = { drawFn, tileW, tileH, factor, tileX, tileY, offsetX: 0, offsetY: 0 };
+            this.layers.push(layer);
+            return layer;
+        }
+        update(camX, camY) {
+            for (const l of this.layers) {
+                l.offsetX = camX * l.factor;
+                l.offsetY = camY * l.factor;
+            }
+        }
+        render(renderer, viewW, viewH) {
+            for (const l of this.layers) {
+                const w = l.tileW || viewW;
+                const h = l.tileH || viewH;
+                const startX = l.tileX ? -((l.offsetX % w) + w) % w : -l.offsetX;
+                const startY = l.tileY ? -((l.offsetY % h) + h) % h : -l.offsetY;
+                const countX = l.tileX ? Math.ceil(viewW / w) + 2 : 1;
+                const countY = l.tileY ? Math.ceil(viewH / h) + 2 : 1;
+                for (let iy = 0; iy < countY; iy++) {
+                    for (let ix = 0; ix < countX; ix++) {
+                        l.drawFn(renderer, startX + ix * w, startY + iy * h);
+                    }
+                }
+            }
+        }
+    }
+
+    /* 54. Manaraka - Camera follow with deadzone and lookahead */
+    class Manaraka {
+        constructor(camera, target) {
+            this.camera = camera;
+            this.target = target;
+            this.deadzoneW = 80;
+            this.deadzoneH = 60;
+            this.smooth = 0.15;
+            this.lookahead = 0;
+            this._vx = 0; this._vy = 0;
+            this._px = target ? target.x : 0;
+            this._py = target ? target.y : 0;
+        }
+        setTarget(target) { this.target = target; }
+        update(dt) {
+            if (!this.target) return;
+            this._vx = this.target.x - this._px;
+            this._vy = this.target.y - this._py;
+            this._px = this.target.x;
+            this._py = this.target.y;
+            const dx = this.target.x - this.camera.x;
+            const dy = this.target.y - this.camera.y;
+            let moveX = 0, moveY = 0;
+            if (Math.abs(dx) > this.deadzoneW) moveX = dx - Z.sign(dx) * this.deadzoneW;
+            if (Math.abs(dy) > this.deadzoneH) moveY = dy - Z.sign(dy) * this.deadzoneH;
+            const aheadX = this._vx * this.lookahead;
+            const aheadY = this._vy * this.lookahead;
+            this.camera.x = Z.lerp(this.camera.x, this.camera.x + moveX + aheadX, this.smooth);
+            this.camera.y = Z.lerp(this.camera.y, this.camera.y + moveY + aheadY, this.smooth);
+        }
+    }
+
+    /* 55. LalanaDijkstra - Weighted grid pathfinding */
+    class LalanaDijkstra {
+        constructor(grid, cols, rows, costFn) {
+            this.grid = grid;
+            this.cols = cols;
+            this.rows = rows;
+            this.costFn = costFn || (() => 1);
+        }
+        find(sx, sy, tx, ty) {
+            const key = (x, y) => y * this.cols + x;
+            const dist = new Map();
+            const prev = new Map();
+            const visited = new Set();
+            const start = key(sx, sy);
+            dist.set(start, 0);
+            const queue = [{ k: start, d: 0, x: sx, y: sy }];
+            while (queue.length) {
+                queue.sort((a, b) => a.d - b.d);
+                const cur = queue.shift();
+                if (visited.has(cur.k)) continue;
+                visited.add(cur.k);
+                if (cur.x === tx && cur.y === ty) break;
+                const neighbors = [[1,0],[-1,0],[0,1],[0,-1]];
+                for (const [dx, dy] of neighbors) {
+                    const nx = cur.x + dx, ny = cur.y + dy;
+                    if (nx < 0 || ny < 0 || nx >= this.cols || ny >= this.rows) continue;
+                    if (this.grid[ny * this.cols + nx] === 1) continue;
+                    const nk = key(nx, ny);
+                    const nd = cur.d + this.costFn(nx, ny);
+                    if (!dist.has(nk) || nd < dist.get(nk)) {
+                        dist.set(nk, nd);
+                        prev.set(nk, cur.k);
+                        queue.push({ k: nk, d: nd, x: nx, y: ny });
+                    }
+                }
+            }
+            const path = [];
+            let curKey = key(tx, ty);
+            if (!prev.has(curKey) && !(sx === tx && sy === ty)) return null;
+            while (curKey !== undefined) {
+                path.unshift({ x: curKey % this.cols, y: Math.floor(curKey / this.cols) });
+                curKey = prev.get(curKey);
+            }
+            return path;
+        }
+    }
+
+    /* 56. HazoFitondrantena - Behavior Tree builder */
+    class HazoFitondrantena {
+        static sequence(...nodes) {
+            return (ctx) => {
+                for (const n of nodes) {
+                    if (n(ctx) !== 'lavorary') return 'tsy_lavorary';
+                }
+                return 'lavorary';
+            };
+        }
+        static selector(...nodes) {
+            return (ctx) => {
+                for (const n of nodes) {
+                    if (n(ctx) === 'lavorary') return 'lavorary';
+                }
+                return 'tsy_lavorary';
+            };
+        }
+        static action(fn) {
+            return (ctx) => fn(ctx) ? 'lavorary' : 'tsy_lavorary';
+        }
+        static condition(fn) {
+            return (ctx) => fn(ctx) ? 'lavorary' : 'tsy_lavorary';
+        }
+        static invert(node) {
+            return (ctx) => node(ctx) === 'lavorary' ? 'tsy_lavorary' : 'lavorary';
+        }
+    }
+
+    /* 57. MpandefaOnja - Enemy wave / spawner manager */
+    class MpandefaOnja {
+        constructor() {
+            this.waves = [];
+            this.index = 0;
+            this.timer = 0;
+            this.active = false;
+        }
+        addWave(count, interval, spawnFn, delayAfter = 0) {
+            this.waves.push({ count, interval, spawnFn, delayAfter, spawned: 0, timer: 0, done: false });
+            return this;
+        }
+        start() { this.active = true; this.index = 0; }
+        update(dt) {
+            if (!this.active || this.index >= this.waves.length) return;
+            const w = this.waves[this.index];
+            w.timer += dt;
+            if (w.spawned < w.count && w.timer >= w.interval) {
+                w.timer = 0;
+                w.spawnFn(w.spawned);
+                w.spawned++;
+            }
+            if (w.spawned >= w.count && !w.done) {
+                w.done = true;
+                w.timer = 0;
+            }
+            if (w.done && w.timer >= w.delayAfter) {
+                this.index++;
+            } else if (w.done) {
+                w.timer += dt;
+            }
+        }
+        isFinished() { return this.index >= this.waves.length; }
+    }
+
+    /* 58. IsaFahavoazana - Floating damage number popups */
+    class IsaFahavoazana {
+        constructor() {
+            this.popups = [];
+        }
+        spawn(x, y, text, color = 0xFFFFFFFF, life = 0.8) {
+            this.popups.push({ x, y, text, color, life, maxLife: life, vy: -40 });
+        }
+        update(dt) {
+            for (let i = this.popups.length - 1; i >= 0; i--) {
+                const p = this.popups[i];
+                p.y += p.vy * dt;
+                p.vy += 60 * dt;
+                p.life -= dt;
+                if (p.life <= 0) this.popups.splice(i, 1);
+            }
+        }
+        render(renderer) {
+            for (const p of this.popups) {
+                const alpha = Z.clamp(p.life / p.maxLife, 0, 1);
+                const a = Math.floor(alpha * 255) << 24;
+                renderer.drawText && renderer.drawText(p.text, p.x, p.y, (a | (p.color & 0xFFFFFF)));
+            }
+        }
+    }
+
+    /* 59. TsipikaFahasalamana - Health / progress bar widget */
+    class TsipikaFahasalamana {
+        constructor(x, y, w, h, max = 100) {
+            this.x = x; this.y = y; this.w = w; this.h = h;
+            this.max = max;
+            this.value = max;
+            this.displayValue = max;
+            this.smooth = 0.1;
+            this.bgColor = 0x333333FF;
+            this.fillColor = 0x22CC44FF;
+            this.lowColor = 0xCC2222FF;
+            this.lowThreshold = 0.3;
+        }
+        set(v) { this.value = Z.clamp(v, 0, this.max); }
+        update(dt) {
+            this.displayValue = Z.lerp(this.displayValue, this.value, this.smooth);
+        }
+        render(renderer) {
+            renderer.drawRect(this.x, this.y, this.w, this.h, this.bgColor);
+            const ratio = this.displayValue / this.max;
+            const color = ratio <= this.lowThreshold ? this.lowColor : this.fillColor;
+            renderer.drawRect(this.x, this.y, this.w * Z.clamp(ratio, 0, 1), this.h, color);
+        }
+    }
+
+    /* 60. Fahaizana - Ability cooldown manager */
+    class Fahaizana {
+        constructor() {
+            this.abilities = new Map();
+        }
+        register(name, cooldown) {
+            this.abilities.set(name, { cooldown, timer: 0, ready: true });
+        }
+        use(name) {
+            const a = this.abilities.get(name);
+            if (!a || !a.ready) return false;
+            a.ready = false;
+            a.timer = a.cooldown;
+            return true;
+        }
+        isReady(name) {
+            const a = this.abilities.get(name);
+            return a ? a.ready : false;
+        }
+        cooldownLeft(name) {
+            const a = this.abilities.get(name);
+            return a ? a.timer : 0;
+        }
+        update(dt) {
+            for (const a of this.abilities.values()) {
+                if (!a.ready) {
+                    a.timer -= dt;
+                    if (a.timer <= 0) { a.timer = 0; a.ready = true; }
+                }
+            }
+        }
+    }
+
+    /* 61. Kombo - Input buffer / combo detector */
+    class Kombo {
+        constructor(windowMs = 500) {
+            this.window = windowMs;
+            this.buffer = [];
+            this.combos = [];
+        }
+        addCombo(name, sequence, callback) {
+            this.combos.push({ name, sequence, callback });
+        }
+        press(inputName) {
+            const now = performance.now();
+            this.buffer.push({ input: inputName, t: now });
+            this.buffer = this.buffer.filter(b => now - b.t <= this.window);
+            for (const c of this.combos) {
+                const seq = this.buffer.slice(-c.sequence.length).map(b => b.input);
+                if (seq.length === c.sequence.length && seq.every((v, i) => v === c.sequence[i])) {
+                    c.callback();
+                    this.buffer = [];
+                    break;
+                }
+            }
+        }
+    }
+
+    /* 62. MpanovaHafainganan - Time scale / slow-motion manager */
+    class MpanovaHafainganan {
+        constructor() {
+            this.scale = 1;
+            this.targetScale = 1;
+            this.smooth = 1;
+            this._duration = 0;
+            this._timer = 0;
+        }
+        set(scale) { this.targetScale = scale; this.smooth = 1; }
+        tween(scale, duration) {
+            this.targetScale = scale;
+            this._duration = duration;
+            this._timer = 0;
+            this.smooth = 0;
+        }
+        update(dt) {
+            if (this.smooth < 1 && this._duration > 0) {
+                this._timer += dt;
+                this.smooth = Z.clamp(this._timer / this._duration, 0, 1);
+            }
+            this.scale = Z.lerp(this.scale, this.targetScale, this.smooth >= 1 ? 1 : 0.2);
+        }
+        apply(dt) { return dt * this.scale; }
+    }
+
+    /* 63. Balafomanga - Bullet pool wrapper */
+    class Balafomanga {
+        constructor(max = 200) {
+            this.pool = new Dobo(
+                () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 0, active: false, damage: 0, tag: '' }),
+                (obj, x, y, vx, vy, life, damage, tag) => {
+                    obj.x = x; obj.y = y; obj.vx = vx; obj.vy = vy;
+                    obj.life = life; obj.active = true; obj.damage = damage; obj.tag = tag;
+                },
+                max
+            );
+            this.active = [];
+        }
+        fire(x, y, vx, vy, life = 2, damage = 1, tag = 'bala') {
+            const b = this.pool.alaina(x, y, vx, vy, life, damage, tag);
+            this.active.push(b);
+            return b;
+        }
+        update(dt) {
+            for (let i = this.active.length - 1; i >= 0; i--) {
+                const b = this.active[i];
+                b.x += b.vx * dt;
+                b.y += b.vy * dt;
+                b.life -= dt;
+                if (b.life <= 0) {
+                    b.active = false;
+                    this.pool.avereno(b);
+                    this.active.splice(i, 1);
+                }
+            }
+        }
+        render(renderer, color = 0xFFFF00FF, size = 4) {
+            for (const b of this.active) {
+                renderer.drawRect(b.x - size / 2, b.y - size / 2, size, size, color);
+            }
+        }
+    }
+
+    /* 64. Taratra - 2D raycasting / line of sight */
+    class Taratra {
+        static cast(x1, y1, x2, y2, colliders) {
+            let closest = null;
+            let closestDist = Infinity;
+            for (const c of colliders) {
+                const hit = Taratra._rayVsRect(x1, y1, x2, y2, c.x, c.y, c.w, c.h);
+                if (hit) {
+                    const d = Z.distSq(x1, y1, hit.x, hit.y);
+                    if (d < closestDist) { closestDist = d; closest = { ...hit, target: c }; }
+                }
+            }
+            return closest;
+        }
+        static _rayVsRect(x1, y1, x2, y2, rx, ry, rw, rh) {
+            const dx = x2 - x1, dy = y2 - y1;
+            let tmin = 0, tmax = 1;
+            const edges = [
+                [-dx, x1 - rx], [dx, rx + rw - x1],
+                [-dy, y1 - ry], [dy, ry + rh - y1]
+            ];
+            for (const [p, q] of edges) {
+                if (p === 0) { if (q < 0) return null; continue; }
+                const r = q / p;
+                if (p < 0) { if (r > tmax) return null; if (r > tmin) tmin = r; }
+                else { if (r < tmin) return null; if (r < tmax) tmax = r; }
+            }
+            return { x: x1 + dx * tmin, y: y1 + dy * tmin, t: tmin };
+        }
+        static lineOfSight(x1, y1, x2, y2, blockers) {
+            return Taratra.cast(x1, y1, x2, y2, blockers) === null;
+        }
+    }
+
+    /* 65. Fitondrana - Steering behaviors (seek, flee, wander) */
+    class Fitondrana {
+        static seek(pos, vel, target, maxSpeed, maxForce) {
+            const dx = target.x - pos.x, dy = target.y - pos.y;
+            const len = Math.hypot(dx, dy) || 1;
+            const desiredX = (dx / len) * maxSpeed;
+            const desiredY = (dy / len) * maxSpeed;
+            let fx = desiredX - vel.x, fy = desiredY - vel.y;
+            const flen = Math.hypot(fx, fy);
+            if (flen > maxForce) { fx = (fx / flen) * maxForce; fy = (fy / flen) * maxForce; }
+            return { x: fx, y: fy };
+        }
+        static flee(pos, vel, target, maxSpeed, maxForce) {
+            const s = Fitondrana.seek(pos, vel, target, maxSpeed, maxForce);
+            return { x: -s.x, y: -s.y };
+        }
+        static wander(vel, state, maxSpeed, jitter = 0.3) {
+            state.angle = (state.angle || 0) + (Math.random() - 0.5) * jitter;
+            return { x: Math.cos(state.angle) * maxSpeed, y: Math.sin(state.angle) * maxSpeed };
+        }
+        static arrive(pos, vel, target, maxSpeed, maxForce, slowRadius = 100) {
+            const dx = target.x - pos.x, dy = target.y - pos.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            const speed = dist < slowRadius ? maxSpeed * (dist / slowRadius) : maxSpeed;
+            const desiredX = (dx / dist) * speed, desiredY = (dy / dist) * speed;
+            let fx = desiredX - vel.x, fy = desiredY - vel.y;
+            const flen = Math.hypot(fx, fy);
+            if (flen > maxForce) { fx = (fx / flen) * maxForce; fy = (fy / flen) * maxForce; }
+            return { x: fx, y: fy };
+        }
+    }
+
+    /* 66. Vorona - Flocking / boids simulation */
+    class Vorona {
+        constructor(maxSpeed = 100, radius = 50) {
+            this.boids = [];
+            this.maxSpeed = maxSpeed;
+            this.radius = radius;
+        }
+        add(x, y) {
+            const b = { x, y, vx: Z.rand(-1, 1), vy: Z.rand(-1, 1) };
+            this.boids.push(b);
+            return b;
+        }
+        update(dt) {
+            for (const b of this.boids) {
+                let alx = 0, aly = 0, cnt = 0;
+                let cohX = 0, cohY = 0;
+                let sepX = 0, sepY = 0;
+                for (const o of this.boids) {
+                    if (o === b) continue;
+                    const d = Z.dist(b.x, b.y, o.x, o.y);
+                    if (d < this.radius && d > 0) {
+                        alx += o.vx; aly += o.vy;
+                        cohX += o.x; cohY += o.y;
+                        sepX += (b.x - o.x) / d; sepY += (b.y - o.y) / d;
+                        cnt++;
+                    }
+                }
+                if (cnt > 0) {
+                    alx /= cnt; aly /= cnt;
+                    cohX = (cohX / cnt) - b.x; cohY = (cohY / cnt) - b.y;
+                    b.vx += (alx * 0.05 + cohX * 0.01 + sepX * 0.1) * dt * 60;
+                    b.vy += (aly * 0.05 + cohY * 0.01 + sepY * 0.1) * dt * 60;
+                }
+                const speed = Math.hypot(b.vx, b.vy) || 1;
+                if (speed > this.maxSpeed) { b.vx = (b.vx / speed) * this.maxSpeed; b.vy = (b.vy / speed) * this.maxSpeed; }
+                b.x += b.vx * dt; b.y += b.vy * dt;
+            }
+        }
+    }
+
+    /* 67. Isometrika - Isometric coordinate conversion */
+    class Isometrika {
+        constructor(tileW = 64, tileH = 32) {
+            this.tileW = tileW;
+            this.tileH = tileH;
+        }
+        toScreen(x, y) {
+            return {
+                x: (x - y) * (this.tileW / 2),
+                y: (x + y) * (this.tileH / 2)
+            };
+        }
+        toGrid(sx, sy) {
+            const x = (sx / (this.tileW / 2) + sy / (this.tileH / 2)) / 2;
+            const y = (sy / (this.tileH / 2) - sx / (this.tileW / 2)) / 2;
+            return { x: Math.floor(x), y: Math.floor(y) };
+        }
+    }
+
+    /* 68. AutoTile - Automatic tile edge/corner resolver */
+    class AutoTile {
+        constructor(rules) {
+            this.rules = rules || {};
+        }
+        resolve(grid, cols, rows, x, y) {
+            const at = (gx, gy) => (gx < 0 || gy < 0 || gx >= cols || gy >= rows) ? 0 : grid[gy * cols + gx];
+            const n = at(x, y - 1), s = at(x, y + 1), w = at(x - 1, y), e = at(x + 1, y);
+            const mask = (n ? 1 : 0) | (e ? 2 : 0) | (s ? 4 : 0) | (w ? 8 : 0);
+            return this.rules[mask] !== undefined ? this.rules[mask] : mask;
+        }
+    }
+
+    /* 69. MaripahatanterahanaSystem - Achievements */
+    class MaripahatanterahanaSystem {
+        constructor() {
+            this.achievements = new Map();
+            this.listeners = [];
+        }
+        register(id, title, description, condition) {
+            this.achievements.set(id, { id, title, description, condition, unlocked: false });
+        }
+        check(state) {
+            for (const a of this.achievements.values()) {
+                if (!a.unlocked && a.condition(state)) {
+                    a.unlocked = true;
+                    for (const fn of this.listeners) fn(a);
+                }
+            }
+        }
+        onUnlock(fn) { this.listeners.push(fn); }
+        getAll() { return Array.from(this.achievements.values()); }
+    }
+
+    /* 70. TarehimarikaLoka - Local leaderboard */
+    class TarehimarikaLoka {
+        constructor(key = 'tarehimarika', maxEntries = 10) {
+            this.key = key;
+            this.maxEntries = maxEntries;
+            this.scores = this._load();
+        }
+        _load() {
+            try {
+                const raw = localStorage.getItem(this.key);
+                return raw ? JSON.parse(raw) : [];
+            } catch (e) { return []; }
+        }
+        _save() {
+            try { localStorage.setItem(this.key, JSON.stringify(this.scores)); } catch (e) {}
+        }
+        submit(name, score) {
+            this.scores.push({ name, score, date: Date.now() });
+            this.scores.sort((a, b) => b.score - a.score);
+            this.scores = this.scores.slice(0, this.maxEntries);
+            this._save();
+            return this.scores.findIndex(s => s.name === name && s.score === score);
+        }
+        top(n = 10) { return this.scores.slice(0, n); }
+    }
+
+    /* 71. FitehirizanaMaro - Multi-slot save manager */
+    class FitehirizanaMaro {
+        constructor(gameKey = 'lalao', slotCount = 3) {
+            this.gameKey = gameKey;
+            this.slotCount = slotCount;
+        }
+        save(slot, data) {
+            try {
+                localStorage.setItem(`${this.gameKey}_slot${slot}`, JSON.stringify({ data, date: Date.now() }));
+                return true;
+            } catch (e) { return false; }
+        }
+        load(slot) {
+            try {
+                const raw = localStorage.getItem(`${this.gameKey}_slot${slot}`);
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) { return null; }
+        }
+        delete(slot) {
+            localStorage.removeItem(`${this.gameKey}_slot${slot}`);
+        }
+        listSlots() {
+            const out = [];
+            for (let i = 0; i < this.slotCount; i++) out.push(this.load(i));
+            return out;
+        }
+    }
+
+    /* 72. Kirakira - Settings / configuration manager */
+    class Kirakira {
+        constructor(defaults = {}) {
+            this.defaults = defaults;
+            this.settings = { ...defaults };
+        }
+        get(key) { return this.settings[key]; }
+        set(key, value) { this.settings[key] = value; }
+        reset() { this.settings = { ...this.defaults }; }
+        save(storageKey = 'kirakira') {
+            try { localStorage.setItem(storageKey, JSON.stringify(this.settings)); } catch (e) {}
+        }
+        load(storageKey = 'kirakira') {
+            try {
+                const raw = localStorage.getItem(storageKey);
+                if (raw) this.settings = { ...this.defaults, ...JSON.parse(raw) };
+            } catch (e) {}
+        }
+    }
+
+    /* 73. FifindraSehatra - Scene transition effects */
+    class FifindraSehatra {
+        constructor() {
+            this.type = 'fade';
+            this.duration = 0.5;
+            this.timer = 0;
+            this.active = false;
+            this.phase = 'none';
+            this.onMid = null;
+        }
+        start(type = 'fade', duration = 0.5, onMid = null) {
+            this.type = type;
+            this.duration = duration;
+            this.timer = 0;
+            this.active = true;
+            this.phase = 'out';
+            this.onMid = onMid;
+        }
+        update(dt) {
+            if (!this.active) return;
+            this.timer += dt;
+            const half = this.duration / 2;
+            if (this.phase === 'out' && this.timer >= half) {
+                this.phase = 'in';
+                this.timer = 0;
+                if (this.onMid) this.onMid();
+            } else if (this.phase === 'in' && this.timer >= half) {
+                this.active = false;
+                this.phase = 'none';
+            }
+        }
+        render(renderer, width, height) {
+            if (!this.active) return;
+            const half = this.duration / 2;
+            const t = Z.clamp(this.timer / half, 0, 1);
+            const alpha = this.phase === 'out' ? t : 1 - t;
+            const a = Math.floor(alpha * 255) << 24;
+            renderer.drawRect(0, 0, width, height, a | 0x000000);
+        }
+    }
+
+    /* 74. TsipikaFampidirana - Loading progress bar */
+    class TsipikaFampidirana {
+        constructor(loader) {
+            this.loader = loader;
+            this.progress = 0;
+        }
+        update() {
+            if (this.loader && this.loader._total > 0) {
+                this.progress = this.loader._loaded / this.loader._total;
+            }
+        }
+        render(renderer, x, y, w, h) {
+            renderer.drawRect(x, y, w, h, 0x222222FF);
+            renderer.drawRect(x, y, w * Z.clamp(this.progress, 0, 1), h, 0x44AAFFFF);
+        }
+    }
+
+    /* 75. Fampahafantarana - Toast notification queue */
+    class Fampahafantarana {
+        constructor() {
+            this.queue = [];
+            this.current = null;
+            this.timer = 0;
+        }
+        push(text, duration = 2, color = 0xFFFFFFFF) {
+            this.queue.push({ text, duration, color });
+        }
+        update(dt) {
+            if (!this.current && this.queue.length > 0) {
+                this.current = this.queue.shift();
+                this.timer = this.current.duration;
+            }
+            if (this.current) {
+                this.timer -= dt;
+                if (this.timer <= 0) this.current = null;
+            }
+        }
+        render(renderer, x, y) {
+            if (this.current && renderer.drawText) {
+                renderer.drawText(this.current.text, x, y, this.current.color);
+            }
+        }
+    }
+
+    /* 76. Efijoro - Modal dialog box */
+    class Efijoro {
+        constructor(x, y, w, h) {
+            this.x = x; this.y = y; this.w = w; this.h = h;
+            this.visible = false;
+            this.title = '';
+            this.body = '';
+            this.buttons = [];
+        }
+        open(title, body, buttons = []) {
+            this.title = title; this.body = body; this.buttons = buttons;
+            this.visible = true;
+        }
+        close() { this.visible = false; }
+        handleClick(px, py) {
+            if (!this.visible) return null;
+            for (const b of this.buttons) {
+                if (px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h) {
+                    if (b.onClick) b.onClick();
+                    return b;
+                }
+            }
+            return null;
+        }
+        render(renderer) {
+            if (!this.visible) return;
+            renderer.drawRect(0, 0, 99999, 99999, 0x000000AA);
+            renderer.drawRect(this.x, this.y, this.w, this.h, 0x222233FF);
+            for (const b of this.buttons) {
+                renderer.drawRect(b.x, b.y, b.w, b.h, 0x4466AAFF);
+            }
+        }
+    }
+
+    /* 77. Bokotra - Button widget with hover/press states */
+    class Bokotra {
+        constructor(x, y, w, h, label, onClick) {
+            this.x = x; this.y = y; this.w = w; this.h = h;
+            this.label = label;
+            this.onClick = onClick;
+            this.state = 'tsotra';
+            this.colors = { tsotra: 0x3366AAFF, hover: 0x4477BBFF, tsindry: 0x2255AAFF };
+        }
+        update(pointerX, pointerY, pointerDown) {
+            const inside = pointerX >= this.x && pointerX <= this.x + this.w &&
+                            pointerY >= this.y && pointerY <= this.y + this.h;
+            if (inside && pointerDown) this.state = 'tsindry';
+            else if (inside) this.state = 'hover';
+            else this.state = 'tsotra';
+            return inside;
+        }
+        click() { if (this.onClick) this.onClick(); }
+        render(renderer) {
+            renderer.drawRect(this.x, this.y, this.w, this.h, this.colors[this.state]);
+        }
+    }
+
+    /* 78. Sikaray - Grid layout UI container */
+    class Sikaray {
+        constructor(x, y, cols, cellW, cellH, gap = 4) {
+            this.x = x; this.y = y;
+            this.cols = cols;
+            this.cellW = cellW; this.cellH = cellH;
+            this.gap = gap;
+            this.items = [];
+        }
+        add(item) {
+            this.items.push(item);
+            this._layout();
+            return item;
+        }
+        _layout() {
+            this.items.forEach((item, i) => {
+                const col = i % this.cols;
+                const row = Math.floor(i / this.cols);
+                item.x = this.x + col * (this.cellW + this.gap);
+                item.y = this.y + row * (this.cellH + this.gap);
+            });
+        }
+    }
+
+    /* 79. SoratraBitmap - Bitmap font renderer */
+    class SoratraBitmap {
+        constructor(atlas, charMap, charW, charH) {
+            this.atlas = atlas;
+            this.charMap = charMap;
+            this.charW = charW;
+            this.charH = charH;
+        }
+        draw(renderer, text, x, y, scale = 1, textureKey = 'font', color = 0xFFFFFFFF) {
+            let cx = x;
+            for (const ch of text) {
+                const frame = this.charMap[ch];
+                if (frame) {
+                    renderer.drawSprite(cx, y, this.charW * scale, this.charH * scale,
+                        frame.x, frame.y, frame.w, frame.h, color, textureKey);
+                }
+                cx += (this.charW + 1) * scale;
+            }
+        }
+        measure(text, scale = 1) { return text.length * (this.charW + 1) * scale; }
+    }
+
+    /* 80. SoratraMiloko - Rich text tag parser [color=RRGGBB]...[/color] */
+    class SoratraMiloko {
+        static parse(input) {
+            const segments = [];
+            const regex = /\[color=([0-9A-Fa-f]{6})\](.*?)\[\/color\]/g;
+            let lastIndex = 0;
+            let match;
+            while ((match = regex.exec(input)) !== null) {
+                if (match.index > lastIndex) {
+                    segments.push({ text: input.slice(lastIndex, match.index), color: null });
+                }
+                segments.push({ text: match[2], color: parseInt(match[1], 16) });
+                lastIndex = regex.lastIndex;
+            }
+            if (lastIndex < input.length) segments.push({ text: input.slice(lastIndex), color: null });
+            return segments;
+        }
+    }
+
+    /* 81. Horohoro - Gamepad vibration wrapper */
+    class Horohoro {
+        static vibrate(gamepadIndex, weakMag = 0.5, strongMag = 0.5, duration = 200) {
+            const gp = navigator.getGamepads && navigator.getGamepads()[gamepadIndex];
+            if (gp && gp.vibrationActuator) {
+                gp.vibrationActuator.playEffect('dual-rumble', {
+                    duration, weakMagnitude: weakMag, strongMagnitude: strongMag
+                });
+                return true;
+            }
+            return false;
+        }
+    }
+
+    /* 82. Fihetsika - Touch gesture recognizer (swipe, pinch, tap) */
+    class Fihetsika {
+        constructor() {
+            this.onSwipe = null;
+            this.onPinch = null;
+            this.onTap = null;
+            this._touches = new Map();
+            this._startDist = 0;
+        }
+        touchStart(id, x, y) {
+            this._touches.set(id, { startX: x, startY: y, x, y, t: performance.now() });
+        }
+        touchMove(id, x, y) {
+            const t = this._touches.get(id);
+            if (t) { t.x = x; t.y = y; }
+            if (this._touches.size === 2) {
+                const pts = Array.from(this._touches.values());
+                const dist = Z.dist(pts[0].x, pts[0].y, pts[1].x, pts[1].y);
+                if (this._startDist > 0 && this.onPinch) {
+                    this.onPinch(dist / this._startDist);
+                }
+                if (this._startDist === 0) this._startDist = dist;
+            }
+        }
+        touchEnd(id) {
+            const t = this._touches.get(id);
+            if (t) {
+                const dx = t.x - t.startX, dy = t.y - t.startY;
+                const dist = Math.hypot(dx, dy);
+                const dt = performance.now() - t.t;
+                if (dist < 10 && dt < 300 && this.onTap) this.onTap(t.x, t.y);
+                else if (dist > 40 && this.onSwipe) {
+                    const angle = Math.atan2(dy, dx);
+                    const dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'havanana' : 'havia') : (dy > 0 ? 'ambany' : 'ambony');
+                    this.onSwipe(dir, angle, dist);
+                }
+            }
+            this._touches.delete(id);
+            if (this._touches.size < 2) this._startDist = 0;
+        }
+    }
+
+    /* 83. FisehoanaIndray - Input replay recorder/player */
+    class FisehoanaIndray {
+        constructor() {
+            this.frames = [];
+            this.recording = false;
+            this.playing = false;
+            this.playIndex = 0;
+        }
+        startRecording() { this.frames = []; this.recording = true; }
+        stopRecording() { this.recording = false; }
+        record(inputState) {
+            if (this.recording) this.frames.push({ ...inputState });
+        }
+        startPlayback() { this.playing = true; this.playIndex = 0; }
+        nextFrame() {
+            if (!this.playing || this.playIndex >= this.frames.length) { this.playing = false; return null; }
+            return this.frames[this.playIndex++];
+        }
+        toJSON() { return JSON.stringify(this.frames); }
+        fromJSON(json) { this.frames = JSON.parse(json); }
+    }
+
+    /* 84. Aloka - Motion trail / ghost effect */
+    class Aloka {
+        constructor(maxGhosts = 8, interval = 0.03) {
+            this.maxGhosts = maxGhosts;
+            this.interval = interval;
+            this.ghosts = [];
+            this.timer = 0;
+        }
+        update(dt, x, y, frame) {
+            this.timer += dt;
+            if (this.timer >= this.interval) {
+                this.timer = 0;
+                this.ghosts.push({ x, y, frame, life: 1 });
+                if (this.ghosts.length > this.maxGhosts) this.ghosts.shift();
+            }
+            for (const g of this.ghosts) g.life -= dt * 2;
+            this.ghosts = this.ghosts.filter(g => g.life > 0);
+        }
+        render(drawFn) {
+            for (const g of this.ghosts) {
+                const alpha = Math.floor(Z.clamp(g.life, 0, 1) * 120) << 24;
+                drawFn(g.x, g.y, g.frame, alpha | 0xFFFFFF);
+            }
+        }
+    }
+
+    /* 85. AndroSyAlina - Day-night cycle manager */
+    class AndroSyAlina {
+        constructor(dayLength = 120) {
+            this.dayLength = dayLength;
+            this.time = dayLength * 0.25;
+        }
+        update(dt) {
+            this.time = (this.time + dt) % this.dayLength;
+        }
+        getPhase() {
+            const t = this.time / this.dayLength;
+            if (t < 0.25) return 'maraina';
+            if (t < 0.5) return 'antoandro';
+            if (t < 0.75) return 'hariva';
+            return 'alina';
+        }
+        getTint() {
+            const t = this.time / this.dayLength;
+            const brightness = 0.4 + 0.6 * Math.sin(t * PI2 - HALF_PI) * 0.5 + 0.3;
+            const b = Z.clamp(brightness, 0.15, 1);
+            const v = Math.floor(b * 255);
+            return (255 << 24) | (v << 16) | (v << 8) | v;
+        }
+    }
+
+    /* 86. FamoronanaSehatra - Procedural room-based level generator */
+    class FamoronanaSehatra {
+        constructor(cols, rows, seed) {
+            this.cols = cols;
+            this.rows = rows;
+            this.rng = new Kisendrasendra(seed);
+            this.grid = new Array(cols * rows).fill(1);
+            this.rooms = [];
+        }
+        generate(roomCount = 8, minSize = 3, maxSize = 7) {
+            for (let i = 0; i < roomCount; i++) {
+                const w = this.rng.int(minSize, maxSize);
+                const h = this.rng.int(minSize, maxSize);
+                const x = this.rng.int(1, Math.max(1, this.cols - w - 1));
+                const y = this.rng.int(1, Math.max(1, this.rows - h - 1));
+                this._carveRoom(x, y, w, h);
+                this.rooms.push({ x, y, w, h, cx: Math.floor(x + w / 2), cy: Math.floor(y + h / 2) });
+            }
+            for (let i = 1; i < this.rooms.length; i++) {
+                this._carveCorridor(this.rooms[i - 1], this.rooms[i]);
+            }
+            return this.grid;
+        }
+        _carveRoom(x, y, w, h) {
+            for (let iy = y; iy < y + h && iy < this.rows; iy++) {
+                for (let ix = x; ix < x + w && ix < this.cols; ix++) {
+                    this.grid[iy * this.cols + ix] = 0;
+                }
+            }
+        }
+        _carveCorridor(a, b) {
+            let x = a.cx, y = a.cy;
+            while (x !== b.cx) { this.grid[y * this.cols + x] = 0; x += x < b.cx ? 1 : -1; }
+            while (y !== b.cy) { this.grid[y * this.cols + x] = 0; y += y < b.cy ? 1 : -1; }
+        }
+    }
+
+    /* 87. TanyFbm - Terrain height/biome generator via noise */
+    class TanyFbm {
+        constructor(seed = 1) {
+            this.seed = seed;
+        }
+        heightAt(x, y, octaves = 4, scale = 0.02) {
+            return Tabataba.fbm(x * scale, y * scale, octaves, this.seed);
+        }
+        biomeAt(x, y) {
+            const h = this.heightAt(x, y);
+            if (h < -0.2) return 'ranomasina';
+            if (h < 0) return 'moron-drano';
+            if (h < 0.3) return 'tanety';
+            if (h < 0.6) return 'ala';
+            return 'tendrombohitra';
+        }
+    }
+
+    /* 88. Vola - Currency / economy tracker */
+    class Vola {
+        constructor(start = 0) {
+            this.amount = start;
+            this.listeners = [];
+        }
+        add(n) { this.amount += n; this._notify(); }
+        spend(n) {
+            if (this.amount < n) return false;
+            this.amount -= n;
+            this._notify();
+            return true;
+        }
+        onChange(fn) { this.listeners.push(fn); }
+        _notify() { for (const fn of this.listeners) fn(this.amount); }
+    }
+
+    /* 89. Fivarotana - Shop / trade system */
+    class Fivarotana {
+        constructor(wallet) {
+            this.wallet = wallet;
+            this.items = [];
+        }
+        stock(id, name, price, qty = -1) {
+            this.items.push({ id, name, price, qty });
+        }
+        buy(id, inventory) {
+            const item = this.items.find(i => i.id === id);
+            if (!item || item.qty === 0) return false;
+            if (!this.wallet.spend(item.price)) return false;
+            if (item.qty > 0) item.qty--;
+            if (inventory) inventory.add({ id: item.id, qty: 1 });
+            return true;
+        }
+        sell(id, price, inventory) {
+            if (!inventory || !inventory.has(id)) return false;
+            inventory.remove(id, 1);
+            this.wallet.add(price);
+            return true;
+        }
+    }
+
+    /* 90. Safidy - Branching dialogue choice manager */
+    class Safidy {
+        constructor(dialogue) {
+            this.dialogue = dialogue;
+            this.choices = new Map();
+        }
+        addChoices(nodeId, options) {
+            this.choices.set(nodeId, options);
+        }
+        getChoices(nodeId) { return this.choices.get(nodeId) || []; }
+        choose(nodeId, index) {
+            const options = this.getChoices(nodeId);
+            const chosen = options[index];
+            if (chosen && chosen.next) this.dialogue.start(chosen.next);
+            if (chosen && chosen.onChoose) chosen.onChoose();
+            return chosen;
+        }
+    }
+
+    /* 91. Horonantsary - Cutscene sequencer */
+    class Horonantsary {
+        constructor() {
+            this.steps = [];
+            this.index = 0;
+            this.playing = false;
+            this._waitTimer = 0;
+        }
+        addWait(duration) { this.steps.push({ type: 'miandry', duration }); return this; }
+        addAction(fn) { this.steps.push({ type: 'hetsika', fn }); return this; }
+        play() { this.playing = true; this.index = 0; this._waitTimer = 0; }
+        update(dt) {
+            if (!this.playing || this.index >= this.steps.length) { this.playing = false; return; }
+            const step = this.steps[this.index];
+            if (step.type === 'hetsika') {
+                step.fn();
+                this.index++;
+            } else if (step.type === 'miandry') {
+                this._waitTimer += dt;
+                if (this._waitTimer >= step.duration) { this._waitTimer = 0; this.index++; }
+            }
+        }
+    }
+
+    /* 92. Rohy - Basic WebSocket networking helper */
+    class Rohy {
+        constructor(url) {
+            this.url = url;
+            this.socket = null;
+            this.handlers = new Map();
+            this.connected = false;
+        }
+        connect() {
+            this.socket = new WebSocket(this.url);
+            this.socket.onopen = () => { this.connected = true; this._emit('misokatra'); };
+            this.socket.onclose = () => { this.connected = false; this._emit('mikatona'); };
+            this.socket.onmessage = (e) => {
+                try {
+                    const msg = JSON.parse(e.data);
+                    this._emit(msg.type, msg.data);
+                } catch (err) { this._emit('hafahafa', e.data); }
+            };
+        }
+        on(type, fn) {
+            if (!this.handlers.has(type)) this.handlers.set(type, []);
+            this.handlers.get(type).push(fn);
+        }
+        _emit(type, data) {
+            const list = this.handlers.get(type);
+            if (list) for (const fn of list) fn(data);
+        }
+        send(type, data) {
+            if (this.connected) this.socket.send(JSON.stringify({ type, data }));
+        }
+    }
+
+    /* 93. Marika - Entity tagging / grouping registry */
+    class Marika {
+        constructor() {
+            this.groups = new Map();
+        }
+        tag(entity, tagName) {
+            if (!this.groups.has(tagName)) this.groups.set(tagName, new Set());
+            this.groups.get(tagName).add(entity);
+        }
+        untag(entity, tagName) {
+            const g = this.groups.get(tagName);
+            if (g) g.delete(entity);
+        }
+        getGroup(tagName) {
+            return this.groups.has(tagName) ? Array.from(this.groups.get(tagName)) : [];
+        }
+        hasTag(entity, tagName) {
+            const g = this.groups.get(tagName);
+            return g ? g.has(entity) : false;
+        }
+    }
+
+    /* 94. SokajyHalina - Depth / layer sort manager */
+    class SokajyHalina {
+        constructor() {
+            this.layers = new Map();
+        }
+        add(layerName, item, z = 0) {
+            if (!this.layers.has(layerName)) this.layers.set(layerName, []);
+            this.layers.get(layerName).push({ item, z });
+        }
+        clear(layerName) {
+            if (layerName) this.layers.set(layerName, []);
+            else this.layers.clear();
+        }
+        renderAll(renderFn, order) {
+            const names = order || Array.from(this.layers.keys());
+            for (const name of names) {
+                const list = this.layers.get(name);
+                if (!list) continue;
+                list.sort((a, b) => a.z - b.z);
+                for (const entry of list) renderFn(entry.item, name);
+            }
+        }
+    }
+
+    /* 95. Vovonana - Hitbox / hurtbox combat resolver */
+    class Vovonana {
+        constructor() {
+            this.hitboxes = [];
+            this.hurtboxes = [];
+            this._hitPairs = new Set();
+        }
+        addHitbox(owner, x, y, w, h, damage, tag = 'hitbox') {
+            const box = { owner, x, y, w, h, damage, tag };
+            this.hitboxes.push(box);
+            return box;
+        }
+        addHurtbox(owner, x, y, w, h, tag = 'hurtbox') {
+            const box = { owner, x, y, w, h, tag };
+            this.hurtboxes.push(box);
+            return box;
+        }
+        resolve(onHit) {
+            for (const hb of this.hitboxes) {
+                for (const hu of this.hurtboxes) {
+                    if (hb.owner === hu.owner) continue;
+                    const key = hb.owner + '_' + hu.owner + '_' + hb.tag;
+                    if (this._hitPairs.has(key)) continue;
+                    const chevauche = hb.x < hu.x + hu.w && hb.x + hb.w > hu.x &&
+                                       hb.y < hu.y + hu.h && hb.y + hb.h > hu.y;
+                    if (chevauche) {
+                        this._hitPairs.add(key);
+                        onHit(hb, hu);
+                    }
+                }
+            }
+        }
+        clearFrame() {
+            this.hitboxes = [];
+            this.hurtboxes = [];
+        }
+        resetHitPairs() { this._hitPairs.clear(); }
+    }
+
+    /* 96. Fanosehana - Knockback / impulse resolver */
+    class Fanosehana {
+        static apply(velocity, fromX, fromY, toX, toY, force, decay = 0.9) {
+            const dx = toX - fromX, dy = toY - fromY;
+            const len = Math.hypot(dx, dy) || 1;
+            velocity.x += (dx / len) * force;
+            velocity.y += (dy / len) * force;
+            velocity._decay = decay;
+            return velocity;
+        }
+        static update(velocity, dt) {
+            if (velocity._decay) {
+                const d = Math.pow(velocity._decay, dt * 60);
+                velocity.x *= d;
+                velocity.y *= d;
+            }
+        }
+    }
+
+    /* 97. AlokaEfijoro - Screen fade and vignette overlay */
+    class AlokaEfijoro {
+        constructor() {
+            this.fadeAlpha = 0;
+            this.vignetteStrength = 0;
+        }
+        fadeTo(alpha, speed = 2) { this._targetFade = alpha; this._fadeSpeed = speed; }
+        update(dt) {
+            if (this._targetFade !== undefined) {
+                this.fadeAlpha = Z.approach(this.fadeAlpha, this._targetFade, this._fadeSpeed * dt);
+            }
+        }
+        render(renderer, width, height) {
+            if (this.fadeAlpha > 0) {
+                const a = Math.floor(Z.clamp(this.fadeAlpha, 0, 1) * 255) << 24;
+                renderer.drawRect(0, 0, width, height, a | 0x000000);
+            }
+            if (this.vignetteStrength > 0) {
+                const border = 40 * this.vignetteStrength;
+                const c = (Math.floor(180 * this.vignetteStrength) << 24) | 0x000000;
+                renderer.drawRect(0, 0, width, border, c);
+                renderer.drawRect(0, height - border, width, border, c);
+                renderer.drawRect(0, 0, border, height, c);
+                renderer.drawRect(width - border, 0, border, height, c);
+            }
+        }
+    }
+
+    /* 98. FitaovanaFanampiny - Ready-made example plugins pack */
+    const FitaovanaFanampinyExamples = {
+        fpsCounter: {
+            name: 'fpsCounter',
+            version: '1.0.0',
+            install() { console.log('fpsCounter plugin: ampiasao R.Antontanisa hijerena fps'); }
+        },
+        autoSave: {
+            name: 'autoSave',
+            version: '1.0.0',
+            install() {
+                this._interval = setInterval(() => console.log('autoSave: tehirizina'), 60000);
+            },
+            uninstall() { if (this._interval) clearInterval(this._interval); }
+        }
+    };
+
+    /* 99. MpitantanaSokajy - Simple job/task scheduler for deferred calls */
+    class MpitantanaSokajy {
+        constructor() {
+            this.tasks = [];
+        }
+        schedule(delay, fn, repeat = false) {
+            const task = { delay, timer: delay, fn, repeat, done: false };
+            this.tasks.push(task);
+            return task;
+        }
+        update(dt) {
+            for (const t of this.tasks) {
+                if (t.done) continue;
+                t.timer -= dt;
+                if (t.timer <= 0) {
+                    t.fn();
+                    if (t.repeat) t.timer = t.delay;
+                    else t.done = true;
+                }
+            }
+            this.tasks = this.tasks.filter(t => !t.done);
+        }
+        cancel(task) { task.done = true; }
+    }
+
+    /* 100. MpitantanaFanampinyLehibe - Extended plugin manager with hooks */
+    class MpitantanaFanampinyLehibe extends MpitantanaFanampiny {
+        constructor() {
+            super();
+            this.hooks = new Map();
+        }
+        addHook(name, fn) {
+            if (!this.hooks.has(name)) this.hooks.set(name, []);
+            this.hooks.get(name).push(fn);
+        }
+        runHook(name, ...args) {
+            const list = this.hooks.get(name);
+            if (list) for (const fn of list) fn(...args);
+        }
+        installAll(plugins) {
+            let count = 0;
+            for (const p of plugins) if (this.install(p)) count++;
+            return count;
+        }
+    }
+
     // ============================================================
     // GAME LOOP - Fototra lalao
     // ============================================================
@@ -3674,8 +5024,7 @@
     // EXPORT - Mamoaka ny API
     // ============================================================
     const RakitrakatraV4 = {
-        // Version
-        KINOVANA: '4.0.1',
+        KINOVANA: '4.2.0',
         ANARANMIAFINA: 'Ady Goavana',
         
         // Core
@@ -3741,7 +5090,58 @@
         MpitantanaEfitra,
         EfitraTaloha,
         Famirapiratana,
-        Hozongozona
+        Hozongozona,
+
+        RakotraSary,
+        FizarinaSarimihetsika,
+        Fisononana,
+        Manaraka,
+        LalanaDijkstra,
+        HazoFitondrantena,
+        MpandefaOnja,
+        IsaFahavoazana,
+        TsipikaFahasalamana,
+        Fahaizana,
+        Kombo,
+        MpanovaHafainganan,
+        Balafomanga,
+        Taratra,
+        Fitondrana,
+        Vorona,
+        Isometrika,
+        AutoTile,
+        MaripahatanterahanaSystem,
+        TarehimarikaLoka,
+        FitehirizanaMaro,
+        Kirakira,
+        FifindraSehatra,
+        TsipikaFampidirana,
+        Fampahafantarana,
+        Efijoro,
+        Bokotra,
+        Sikaray,
+        SoratraBitmap,
+        SoratraMiloko,
+        Horohoro,
+        Fihetsika,
+        FisehoanaIndray,
+        Aloka,
+        AndroSyAlina,
+        FamoronanaSehatra,
+        TanyFbm,
+        Vola,
+        Fivarotana,
+        Safidy,
+        Horonantsary,
+        Rohy,
+        Marika,
+        SokajyHalina,
+        Vovonana,
+        Fanosehana,
+        AlokaEfijoro,
+        FitaovanaFanampinyExamples,
+        MpitantanaSokajy,
+        MpitantanaFanampinyLehibe
     };
 
     // Export to global
