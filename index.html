@@ -1,564 +1,949 @@
-
 <!DOCTYPE html>
 <html lang="mg">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RAKITRAKATRA V4.0.1 — 100% Teny Gasy</title>
-<meta name="description" content="Rakitrakatra V4: engine lalao WebGL2 nosoratana tamin'ny teny gasy manontolo — 50+ rafitra, 0 fiankinana, iray fichier ihany.">
-<style>
-    :root{
-        --bg:#080a12;
-        --bg-panel:#0f1424;
-        --bg-panel2:#141a30;
-        --line:#232c4a;
-        --ink:#e9edf9;
-        --ink-dim:#8b93b8;
-        --cyan:#00e5ff;
-        --magenta:#ff1493;
-        --gold:#ffb300;
-        --red:#ff4d4d;
-        --green:#3ddc84;
-        --font-display: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
-        --font-body: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    }
-    *{box-sizing:border-box;}
-    html{scroll-behavior:smooth;}
-    body{
-        margin:0;
-        background:var(--bg);
-        color:var(--ink);
-        font-family:var(--font-body);
-        line-height:1.55;
-        position:relative;
-    }
-    /* rakitra scanline malefaka manerana ny pejy - manamarika ny lohateny CRT */
-    body::before{
-        content:"";
-        position:fixed; inset:0;
-        pointer-events:none;
-        z-index:50;
-        background:repeating-linear-gradient(
-            to bottom,
-            rgba(255,255,255,0.018) 0px,
-            rgba(255,255,255,0.018) 1px,
-            transparent 1px,
-            transparent 3px
-        );
-        mix-blend-mode:overlay;
-    }
-    a{color:var(--cyan);}
-    code, .mono{font-family:var(--font-display);}
-
-    .wrap{max-width:1080px; margin:0 auto; padding:0 24px;}
-
-    /* ---------- HERO ---------- */
-    .hero{
-        position:relative;
-        padding:70px 0 56px;
-        border-bottom:1px solid var(--line);
-        overflow:hidden;
-        background:
-            radial-gradient(ellipse 900px 500px at 15% -10%, rgba(0,229,255,.10), transparent 60%),
-            radial-gradient(ellipse 700px 500px at 100% 0%, rgba(255,20,147,.08), transparent 55%);
-    }
-    .boot{
-        font-family:var(--font-display);
-        font-size:12.5px;
-        color:var(--green);
-        background:var(--bg-panel);
-        border:1px solid var(--line);
-        border-radius:8px;
-        padding:14px 16px;
-        max-width:560px;
-        min-height:168px;
-        white-space:pre-wrap;
-        box-shadow:0 0 0 1px rgba(61,220,132,.07), 0 20px 50px rgba(0,0,0,.5);
-    }
-    .boot .prompt{color:var(--ink-dim);}
-    .boot .ok{color:var(--green);}
-    .boot .cursor{display:inline-block; width:7px; height:13px; background:var(--green); vertical-align:-2px; animation:blink 1s step-end infinite;}
-    @keyframes blink{50%{opacity:0;}}
-
-    .eyebrow{
-        font-family:var(--font-display);
-        font-size:12px;
-        letter-spacing:.14em;
-        color:var(--magenta);
-        text-transform:uppercase;
-        margin:28px 0 10px;
-    }
-    h1.title{
-        font-family:var(--font-display);
-        font-weight:700;
-        font-size:clamp(40px, 7vw, 76px);
-        line-height:0.98;
-        margin:0 0 6px;
-        letter-spacing:-0.01em;
-        background:linear-gradient(90deg, var(--cyan), var(--ink) 40%, var(--magenta));
-        -webkit-background-clip:text;
-        background-clip:text;
-        color:transparent;
-    }
-    .tagline{
-        font-size:19px;
-        color:var(--ink-dim);
-        max-width:640px;
-        margin:0 0 30px;
-    }
-    .tagline b{color:var(--ink); font-weight:600;}
-
-    .cta-row{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:44px;}
-    .btn{
-        font-family:var(--font-body);
-        font-weight:600;
-        font-size:14.5px;
-        padding:12px 20px;
-        border-radius:7px;
-        text-decoration:none;
-        display:inline-flex; align-items:center; gap:8px;
-        border:1px solid transparent;
-        transition:transform .12s ease, box-shadow .12s ease;
-    }
-    .btn:hover{transform:translateY(-1px);}
-    .btn-primary{background:var(--cyan); color:#04141a; box-shadow:0 6px 20px rgba(0,229,255,.25);}
-    .btn-ghost{background:transparent; color:var(--ink); border-color:var(--line);}
-    .btn-ghost:hover{border-color:var(--cyan); color:var(--cyan);}
-
-    .stat-strip{
-        display:grid;
-        grid-template-columns:repeat(auto-fit, minmax(120px,1fr));
-        gap:1px;
-        background:var(--line);
-        border:1px solid var(--line);
-        border-radius:8px;
-        overflow:hidden;
-    }
-    .stat{background:var(--bg-panel); padding:16px 14px;}
-    .stat .n{font-family:var(--font-display); font-size:22px; color:var(--gold); font-weight:700;}
-    .stat .l{font-size:11.5px; color:var(--ink-dim); margin-top:3px;}
-
-    /* ---------- SECTION GENERIC ---------- */
-    section{padding:64px 0; border-bottom:1px solid var(--line);}
-    .kicker{font-family:var(--font-display); font-size:12px; letter-spacing:.14em; color:var(--cyan); text-transform:uppercase; margin-bottom:8px;}
-    h2{font-size:clamp(26px,4vw,36px); margin:0 0 14px; letter-spacing:-0.01em;}
-    .lede{color:var(--ink-dim); max-width:640px; margin-bottom:36px; font-size:15.5px;}
-
-    /* ---------- QUICKSTART ---------- */
-    .code-tabs{display:flex; gap:6px; margin-bottom:0;}
-    .code-tab{
-        font-family:var(--font-display); font-size:12.5px; color:var(--ink-dim);
-        background:var(--bg-panel); border:1px solid var(--line); border-bottom:none;
-        padding:9px 14px; border-radius:8px 8px 0 0; cursor:pointer;
-    }
-    .code-tab.active{color:var(--ink); background:var(--bg-panel2); border-color:var(--line);}
-    pre.code{
-        margin:0; padding:20px 22px;
-        background:var(--bg-panel2);
-        border:1px solid var(--line);
-        border-radius:0 8px 8px 8px;
-        overflow-x:auto;
-        font-family:var(--font-display);
-        font-size:13px;
-        line-height:1.7;
-        display:none;
-    }
-    pre.code.active{display:block;}
-    pre.code .c1{color:var(--ink-dim);}
-    pre.code .c2{color:var(--cyan);}
-    pre.code .c3{color:var(--gold);}
-    pre.code .c4{color:var(--magenta);}
-    pre.code .c5{color:var(--green);}
-
-    /* ---------- API GRID ---------- */
-    .cat-nav{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:28px;}
-    .cat-pill{
-        font-family:var(--font-display); font-size:12px;
-        border:1px solid var(--line); background:var(--bg-panel);
-        color:var(--ink-dim); padding:7px 13px; border-radius:999px; cursor:pointer;
-        transition:all .12s ease;
-    }
-    .cat-pill:hover{color:var(--ink); border-color:var(--cyan);}
-    .cat-pill.active{color:var(--bg); background:var(--cyan); border-color:var(--cyan);}
-
-    .cat-block{margin-bottom:36px;}
-    .cat-title{
-        font-family:var(--font-display); font-size:14px; color:var(--gold);
-        text-transform:uppercase; letter-spacing:.08em; margin-bottom:12px;
-        display:flex; align-items:center; gap:10px;
-    }
-    .cat-title::after{content:""; flex:1; height:1px; background:var(--line);}
-    .card-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(250px,1fr)); gap:10px;}
-    .card{
-        background:var(--bg-panel);
-        border:1px solid var(--line);
-        border-radius:8px;
-        padding:14px 15px;
-    }
-    .card .num{font-family:var(--font-display); font-size:11px; color:var(--ink-dim);}
-    .card .name{font-family:var(--font-display); font-size:14.5px; color:var(--cyan); margin:3px 0 6px; font-weight:600;}
-    .card .desc{font-size:12.8px; color:var(--ink-dim); line-height:1.5;}
-
-    /* ---------- PRO SECTION ---------- */
-    .pro-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px;}
-    .pro-card{background:var(--bg-panel); border:1px solid var(--line); border-radius:10px; padding:20px;}
-    .pro-card .ic{font-size:22px; margin-bottom:10px;}
-    .pro-card h3{font-size:15.5px; margin:0 0 8px;}
-    .pro-card p{font-size:13.2px; color:var(--ink-dim); margin:0;}
-
-    /* ---------- FOOTER ---------- */
-    footer{padding:40px 0; text-align:center;}
-    footer .links{display:flex; gap:20px; justify-content:center; margin-bottom:14px; flex-wrap:wrap;}
-    footer .links a{font-family:var(--font-display); font-size:13px; color:var(--ink-dim); text-decoration:none;}
-    footer .links a:hover{color:var(--cyan);}
-    footer .fine{font-size:12px; color:var(--ink-dim); opacity:.7;}
-
-    @media (prefers-reduced-motion: reduce){
-        html{scroll-behavior:auto;}
-        .boot .cursor{animation:none;}
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rakitrakatra V4.2.0 - 100 Plugins</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a1a;
+            color: #c0d8f0;
+            font-family: 'Segoe UI', 'Courier New', monospace;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #66ddff;
+            font-size: 28px;
+            border-bottom: 2px solid #2a3a5a;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        h1 small { font-size: 14px; color: #6688aa; }
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        .filters button {
+            background: #111f33;
+            border: 1px solid #2a3a5a;
+            color: #88bbdd;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .filters button:hover, .filters button.active {
+            background: #1a3355;
+            border-color: #66aaff;
+            color: #ffffff;
+        }
+        #container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 16px;
+        }
+        .plugin {
+            background: #111828;
+            border: 1px solid #1a2a44;
+            border-radius: 10px;
+            padding: 16px 18px;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .plugin:hover {
+            border-color: #4488cc;
+            background: #16203a;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(0,40,120,0.15);
+        }
+        .plugin .num {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 11px;
+            color: #335577;
+            font-weight: bold;
+        }
+        .plugin .name {
+            color: #88ddff;
+            font-size: 17px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .plugin .desc {
+            color: #99bbdd;
+            font-size: 12.5px;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        .plugin .code {
+            background: #0a0f1a;
+            border: 1px solid #1a2a44;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #88ddbb;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 130px;
+            overflow-y: auto;
+        }
+        .plugin .code .kw { color: #ff88aa; }
+        .plugin .code .fn { color: #88ddff; }
+        .plugin .code .str { color: #aadd88; }
+        .plugin .code .cmt { color: #446688; }
+        .plugin .code .numv { color: #ffaa66; }
+        .plugin .badge {
+            display: inline-block;
+            font-size: 9px;
+            background: #1a2a44;
+            color: #77aacc;
+            padding: 2px 10px;
+            border-radius: 12px;
+            margin-top: 6px;
+            letter-spacing: 0.3px;
+        }
+        .plugin .badge.core { background: #1a3344; color: #66aadd; }
+        .plugin .badge.math { background: #1a2a33; color: #66ccaa; }
+        .plugin .badge.gameplay { background: #2a1a33; color: #cc88dd; }
+        .plugin .badge.ui { background: #1a2a33; color: #66ccaa; }
+        .plugin .badge.effect { background: #331a22; color: #dd88aa; }
+        .plugin .badge.util { background: #1a2a22; color: #88cc88; }
+        .plugin .badge.net { background: #1a2233; color: #88aadd; }
+        .footer {
+            text-align: center;
+            margin-top: 35px;
+            color: #446688;
+            font-size: 12px;
+            border-top: 1px solid #1a2a44;
+            padding-top: 18px;
+        }
+        .footer span { color: #66aadd; }
+        .search {
+            background: #0a0f1a;
+            border: 1px solid #1a2a44;
+            border-radius: 20px;
+            padding: 8px 18px;
+            color: #c0d8f0;
+            width: 300px;
+            max-width: 80%;
+            font-size: 13px;
+            outline: none;
+        }
+        .search:focus { border-color: #4488cc; }
+        @media (max-width: 600px) {
+            #container { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
 
-<header class="hero">
-    <div class="wrap">
-        <div class="boot" id="boot" aria-hidden="true"></div>
+<h1>⚡ RAKITRAKATRA V4.2.0 <small>— 100 Plugins & Systems</small></h1>
 
-        <p class="eyebrow">Engine lalao WebGL2 · Teny gasy 100%</p>
-        <h1 class="title">RAKITRAKATRA</h1>
-        <p class="tagline">
-            V4 <b>"Ady Goavana"</b> — engine lalao 2D nosoratana avy amin'ny fototra tamin'ny JavaScript madio,
-            fichier iray ihany, 0 fiankinana ivelany, ary <b>anaram-baiko teny gasy manontolo</b> hatramin'ny
-            farany, mba hahafahan'ny mpamorona lalao malagasy mahazo ny API tsy misy fisakanan-tsoratra.
-        </p>
-        <div class="cta-row">
-            <a class="btn btn-primary" href="demo-fllapy.html">▶ Jereo ny demo flappy mivantana</a>
-            <a class="btn btn-primary2" href="demo-fllapy.html">▶ Jereo ny demo br-simple mivantana</a>
-            
-            <a class="btn btn-ghost" href="#quickstart">Ahoana ny fampidirana azy</a>
-            <a class="btn btn-ghost" href="#api">Ny API 50+</a>
-        </div>
+<div class="filters">
+    <input class="search" id="searchInput" placeholder="🔍 Karohy plugin...">
+    <button class="active" data-filter="all">📦 Rehetra</button>
+    <button data-filter="core">🎯 Core</button>
+    <button data-filter="math">📐 Math</button>
+    <button data-filter="gameplay">🎮 Gameplay</button>
+    <button data-filter="ui">🖥️ UI</button>
+    <button data-filter="effect">✨ Effect</button>
+    <button data-filter="util">🔧 Util</button>
+    <button data-filter="net">🌐 Network</button>
+</div>
 
-        <div class="stat-strip">
-            <div class="stat"><div class="n" id="statModules">—</div><div class="l">rafitra (systems)</div></div>
-            <div class="stat"><div class="n">0</div><div class="l">fiankinana (deps)</div></div>
-            <div class="stat"><div class="n">~57KB</div><div class="l">minified</div></div>
-            <div class="stat"><div class="n">1</div><div class="l">fichier</div></div>
-            <div class="stat"><div class="n">100%</div><div class="l">teny gasy</div></div>
-            <div class="stat"><div class="n">WebGL2</div><div class="l">renderer</div></div>
-        </div>
-    </div>
-</header>
+<div id="container"></div>
 
-<!-- ============================================================ -->
-<!-- QUICKSTART                                                    -->
-<!-- ============================================================ -->
-<section id="quickstart">
-    <div class="wrap">
-        <p class="kicker">Fampidirana</p>
-        <h2>Fichier iray, andalana vitsivitsy</h2>
-        <p class="lede">Tsy misy <code>npm install</code>, tsy misy bundler ilaina. Ampidiro ao anaty pejinao ny script, ary vonona ianao.</p>
+<div class="footer">
+    <span>✦</span> 100 Plugins — Tsirairay manana code exemple <span>✦</span>
+</div>
 
-        <div class="code-tabs">
-            <div class="code-tab active" data-tab="html">index.html</div>
-            <div class="code-tab" data-tab="scene">Sehatra voalohany</div>
-        </div>
-        <pre class="code active" id="tab-html"><span class="c1">&lt;!-- 1. Ampidiro ny engine --&gt;</span>
-<span class="c4">&lt;script</span> <span class="c2">src</span>=<span class="c5">"rakitrakatra.min.js"</span><span class="c4">&gt;&lt;/script&gt;</span>
 
-<span class="c1">&lt;!-- 2. Boribory hihazona ny lalao --&gt;</span>
-<span class="c4">&lt;canvas</span> <span class="c2">id</span>=<span class="c5">"gameCanvas"</span> <span class="c2">width</span>=<span class="c5">"960"</span> <span class="c2">height</span>=<span class="c5">"540"</span><span class="c4">&gt;&lt;/canvas&gt;</span>
+<script src="rakitrakatra.js"></script>
 
-<span class="c1">&lt;script&gt;</span>
-  <span class="c1">// 3. Manomboka ny lalao — Vondrona (ECS), Kamera, Fanindry, Feo... vonona daholo</span>
-  <span class="c3">const</span> R = window.Rakitrakatra;
-  <span class="c3">const</span> game = <span class="c3">new</span> R.<span class="c2">Lalao</span>(960, 540, {
-    canvas: document.getElementById(<span class="c5">'gameCanvas'</span>)
-  });
-<span class="c1">&lt;/script&gt;</span></pre>
-
-        <pre class="code" id="tab-scene"><span class="c3">class</span> <span class="c2">SehatroKo</span> <span class="c3">extends</span> R.<span class="c2">Sehatra</span> {
-  <span class="c2">create</span>() {
-    <span class="c1">// entity ao amin'ny Vondrona (ECS)</span>
-    <span class="c3">this</span>.id = <span class="c3">this</span>.game.ecs.create();
-    <span class="c3">this</span>.game.ecs.x[<span class="c3">this</span>.id] = 100;
-    <span class="c3">this</span>.game.ecs.y[<span class="c3">this</span>.id] = 100;
-
-    <span class="c1">// kamera manaraka</span>
-    <span class="c3">this</span>.game.camera.follow({ x: 100, y: 100, w: 32, h: 32 });
-  }
-
-  <span class="c2">update</span>(dt) {
-    <span class="c3">const</span> axis = R.<span class="c2">Fanindry</span>.axis();
-    <span class="c3">this</span>.game.ecs.x[<span class="c3">this</span>.id] += axis.x * 200 * dt;
-  }
-
-  <span class="c2">render</span>(renderer) {
-    renderer.<span class="c2">drawRect</span>(
-      <span class="c3">this</span>.game.ecs.x[<span class="c3">this</span>.id],
-      <span class="c3">this</span>.game.ecs.y[<span class="c3">this</span>.id],
-      32, 32, <span class="c3">0xFF1493FF</span>
-    );
-  }
-}
-
-game.<span class="c2">addScene</span>(<span class="c5">'lalao'</span>, SehatroKo);
-game.<span class="c2">start</span>(<span class="c5">'lalao'</span>);</pre>
-    </div>
-</section>
-
-<!-- ============================================================ -->
-<!-- API 50+                                                       -->
-<!-- ============================================================ -->
-<section id="api">
-    <div class="wrap">
-        <p class="kicker">Rejisitra API</p>
-        <h2>Rafitra <span id="apiCount">50+</span> vonona hampiasaina</h2>
-        <p class="lede">Voasokajy araka ny asany avy — ny anarana rehetra dia teny gasy manontolo, ary mifandray amin'ny kilasy tsirairay ao amin'ny <code>rakitrakatra.js</code>.</p>
-
-        <div class="cat-nav" id="catNav"></div>
-        <div id="apiGrid"></div>
-    </div>
-</section>
-
-<!-- ============================================================ -->
-<!-- MAHA-PROFESIONALY                                             -->
-<!-- ============================================================ -->
-<section id="pro">
-    <div class="wrap">
-        <p class="kicker">Maha-matotra azy</p>
-        <h2>Tsy asa "hobby" fotsiny</h2>
-        <p class="lede">Ireto ny safidy ara-teknika nataon'ny mpanoratra mba hahatonga an'i Rakitrakatra ho fitaovana azo antenaina, fa tsy demo mandeha indray mandeha.</p>
-
-        <div class="pro-grid">
-            <div class="pro-card">
-                <div class="ic">⚙️</div>
-                <h3>Vondrona (ECS) SoA</h3>
-                <p>Struct-of-Arrays fa tsy Array-of-Objects — mihazakazaka kokoa amin'ny lalao be entity satria mifanaraka amin'ny CPU cache.</p>
-            </div>
-            <div class="pro-card">
-                <div class="ic">🎲</div>
-                <h3>Kisendrasendra voafehy</h3>
-                <p>Seeded PRNG — mitovy hatrany ny valiny raha mitovy ny "seed", ilaina amin'ny fitsapana (testing) sy ny replay/level generation.</p>
-            </div>
-            <div class="pro-card">
-                <div class="ic">🖥️</div>
-                <h3>WebGL2 mivantana</h3>
-                <p>Tsy misy Canvas2D fallback miafina — sprite batching marina amin'ny GPU, vonona amin'ny particle be dia be.</p>
-            </div>
-            <div class="pro-card">
-                <div class="ic">📦</div>
-                <h3>0 fiankinana, 1 fichier</h3>
-                <p>Azo alaina, jerena, ovaina tanteraka — tsy misy "node_modules" na build step ilaina alohan'ny fampiasana.</p>
-            </div>
-            <div class="pro-card">
-                <div class="ic">🧠</div>
-                <h3>AI vonona: FSM + Behavior Tree</h3>
-                <p>Fivoarana (state machine) sy Fitondrantena (behavior tree) samy voarafitra ho an'ny fihetsiky ny NPC.</p>
-            </div>
-            <div class="pro-card">
-                <div class="ic">🌍</div>
-                <h3>Teny (i18n) sy Tehirizo</h3>
-                <p>Rafitra fiteny maro sy save-system amin'ny slot maro miaraka amin'ny lalao rehetra vokarina.</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<footer>
-    <div class="wrap">
-        <div class="links">
-            <a href="https://github.com/mr-maharo">GitHub — @mr-maharo</a>
-            <a href="https://www.facebook.com/profile.php?id=61567602236583">Facebook — Malagasikara studio </a>
-            <a href="demo-arena.html">Demo Arena Survival</a>
-            <a href="demo-flappy.html">Demo flappy</a>
-            
-            <a href="rakitrakatra.min.js">rakitrakatra.min.js</a>
-            <a href="rakitrakatra.js">Kaody feno (tsy voa-minify)</a>
-        </div>
-        <p class="fine">Rakitrakatra natao tamin'ny fitiavana ny teny gasy sy ny lalao 2D.</p>
-    </div>
-</footer>
-
+<!-- ============================================================
+     FAMPIASANA PLUGINS (1-100)
+     ============================================================ -->
 <script>
 // ============================================================
-// API DATA — mifanaraka amin'ny fizarana 50 ao amin'ny rakitrakatra.js
-// (apetraka voalohany mba tsy hisy fiantraikany aminy na dia misy
-//  hadisoana any amin'ny boot animation aza)
+// DATA: 100 PLUGINS AVY AMIN'NY RAKITRAKATRA V4.2.0
 // ============================================================
-const API_DATA = [
-    { cat: 'Fototra', items: [
-        ['Lalao', 'Ny fototry ny lalao rehetra: game loop, fixed timestep, fitantanana sehatra.'],
-        ['Sehatra', 'Sehatra iray (Scene) manana create / update / render / renderUI.'],
-        ['Hetsika', 'EventEmitter haingana ho an\'ny fifandraisan\'ny singa rehetra.'],
-        ['Vondrona', 'ECS amin\'ny endrika Struct-of-Arrays — haingam-pandeha kokoa.'],
-        ['MpitantanaSehatra', 'Fitantanana ny fifandimbiasan\'ny sehatra maro (scene stack).'],
-        ['MpitantanaFanampiny', 'Rafitra plugin azo ampiana hanitarana ny fahaiza-manao.'],
-        ['SakanToerana', 'Spatial Hash Grid ho an\'ny fikarohana collision haingana.'],
-        ['HazoEfatra', 'Quadtree — safidy hafa amin\'ny fizarana habaka.'],
-    ]},
-    { cat: 'Matematika', items: [
-        ['Vektora2', 'Vector 2D voahasoa: add, dot, normalize, sns.'],
-        ['Vektora3', 'Vector 3D ho an\'ny kajy shader sy 3D kely.'],
-        ['Lamina2D', 'Matrisy 2D 3×2 haingana ho an\'ny fihodinana/fanakisana.'],
-        ['Efajoro', 'Rectangle (AABB) miaraka amin\'ny fikajiana fifandrafesana.'],
-        ['Boribory', 'Boribory (Circle) ho an\'ny collision sy zone.'],
-        ['Lafomaro', 'Polygon vonona amin\'ny SAT collision (Separating Axis Theorem).'],
-        ['Piolaka', 'Spline Catmull-Rom ho an\'ny lalana malefaka.'],
-    ]},
-    { cat: 'Mpampiseho', items: [
-        ['Mpampiseho', 'Renderer WebGL2 tanteraka, sprite batching haingana.'],
-        ['Mpampiditra', 'Asset loader (sary, feo, JSON) miaraka amin\'ny progress.'],
-        ['Sarimihetsika', 'Rafitra sarimihetsika (sprite animation) frame-by-frame.'],
-    ]},
-    { cat: 'Kinetika & FX', items: [
-        ['Mpanamora', 'Easing function maherin\'ny 30 (bounce, elastic, sns.).'],
-        ['MpitantanaTween', 'Tween system feno ho an\'ny fihetsehana malefaka.'],
-        ['Vovoka', 'Particle system vonona GPU (dust / spark / explosion).'],
-        ['Toetrandro', 'Rafitra toetrandro (orana, lanezy) manome fihetsika.'],
-        ['TsipikaFotoana', 'Timeline/sequencer hanoritana hetsika miorina fotoana.'],
-        ['Rano', 'Simulation rano tsotra (wave / ripple).'],
-        ['EfitraTaloha', 'Efitra CRT — endrika televiziona taloha.'],
-        ['Famirapiratana', 'Bloom effect ho an\'ny hazavana mamirapiratra.'],
-        ['Hozongozona', 'Fihozongozonan\'ny kamera (screen shake).'],
-    ]},
-    { cat: 'Lalao (Gameplay)', items: [
-        ['Fizika', 'AABB + Circle + Polygon, collision detection sy resolution.'],
-        ['Drafitra', 'Tilemap manaraka ny endrika Tiled JSON.'],
-        ['Lalana', 'Pathfinding A* ho an\'ny fikarohan-dalana.'],
-        ['Fivoarana', 'Finite State Machine (FSM) ho an\'ny fitondran\'ny AI.'],
-        ['Fitondrantena', 'Behavior Tree ho an\'ny AI saro-pady kokoa.'],
-        ['Taolana', 'Inverse Kinematics (FABRIK) ho an\'ny fihetsehan-taolana.'],
-        ['Zavona', 'Fog of war ho an\'ny lalao stratejika.'],
-        ['Entana', 'Rafitra entana (inventory) feno.'],
-        ['MpitantanaIraka', 'Rafitra "quest" / iraka ho an\'ny tantara.'],
-        ['MpitantanaResaka', 'Rafitra resaka (dialogue) miaraka amin\'ny sampana.'],
-    ]},
-    { cat: 'Rafitra fototra', items: [
-        ['Feo', 'Web Audio system feno: sfx procedural sy music.'],
-        ['Fanindry', 'Input unifié: keyboard, totohondry, tandroka, gamepad.'],
-        ['Kamera', 'Kamera manaraka, deadzone, bounds, shake.'],
-    ]},
-    { cat: 'Fandraisana', items: [
-        ['Fandraisana', 'Rafitra UI (bokotra, bara aina, sns.) ho an\'ny HUD/menu.'],
-        ['Sarintany', 'Minimap azo ovaovaina.'],
-        ['JoystickVirtoaly', 'Joystick virtoaly ho an\'ny findam-pitaovana (mobile).'],
-    ]},
-    { cat: 'Fitaovana', items: [
-        ['Dobo', 'Object pool hampihenana ny garbage collection.'],
-        ['Kisendrasendra', 'Seeded PRNG — kisendrasendra voafehy sy azo averina.'],
-        ['Tabataba', 'Noise generator (Perlin, Value, FBM) ho an\'ny procedural.'],
-        ['Famataranandro', 'Timer system: delay, interval, countdown.'],
-        ['Tehirizo', 'Save system amin\'ny localStorage, slots maro.'],
-        ['Teny', 'Localization (i18n) maro fiteny.'],
-        ['DebugDrafitra', 'Debug draw — mampiseho ny collision box, sns.'],
-        ['Antontanisa', 'Stats monitor: FPS, isan\'ny entity, memory.'],
-    ]},
+const pluginsData = [
+    // ============ CORE (1-15) ============
+    {
+        num: 1, name: 'Z', category: 'core',
+        desc: 'Utilities fototra: lerp, clamp, rand, uuid, hash, dist, angle, wrap, shuffle, sign, approach, isPowerOf2.',
+        code: `// R.Z.lerp(a, b, t) -> interpolation
+R.Z.lerp(0, 10, 0.5); // 5
+
+// R.Z.clamp(v, min, max)
+R.Z.clamp(15, 0, 10); // 10
+
+// R.Z.rand(min, max)
+R.Z.rand(5, 20); // 12.34
+
+// R.Z.uuid() -> unique ID
+R.Z.uuid(); // "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
+
+// R.Z.dist(x1,y1,x2,y2)
+R.Z.dist(0, 0, 3, 4); // 5`
+    },
+    {
+        num: 2, name: 'Vektora2', category: 'math',
+        desc: 'Vecteur 2D optimisé: set, copy, add, sub, mul, div, dot, cross, len, normalize, limit, rotate, perp, lerp, reflect, fromAngle.',
+        code: `// Mamorona vektora
+const v = new R.Vektora2(3, 4);
+
+// Halavany
+v.len(); // 5
+
+// Normalisation
+v.normalize(); // { x: 0.6, y: 0.8 }
+
+// Fanampiana
+v.add(new R.Vektora2(1, 0)); // { x: 1.6, y: 0.8 }
+
+// Fihodinana
+v.rotate(Math.PI / 2);
+
+// Static
+R.Vektora2.fromAngle(Math.PI / 4, 10);`
+    },
+    {
+        num: 3, name: 'Vektora3', category: 'math',
+        desc: 'Vecteur 3D ho an\'ny shader: set, add, sub, mul, dot, cross, len, normalize.',
+        code: `// Mamorona vektora 3D
+const v = new R.Vektora3(1, 2, 3);
+
+// Dot product
+v.dot(new R.Vektora3(4, 5, 6)); // 32
+
+// Cross product
+v.cross(new R.Vektora3(1, 0, 0));
+
+// Halavany
+v.len(); // 3.741
+
+// Normalisation
+v.normalize();`
+    },
+    {
+        num: 4, name: 'Lamina2D', category: 'math',
+        desc: 'Matrice 2D 3x2: identity, translate, rotate, scale, mul, invert, transformPoint.',
+        code: `// Mamorona matrice
+const m = new R.Lamina2D();
+
+// Fandikana
+m.translate(100, 50);
+
+// Fihodinana
+m.rotate(Math.PI / 4);
+
+// Fampitomboana
+m.scale(2, 2);
+
+// Fanovana teboka
+m.transformPoint(10, 20);
+
+// Inversion
+m.invert();`
+    },
+    {
+        num: 5, name: 'Efajoro', category: 'math',
+        desc: 'Rectangle: left, right, top, bottom, cx, cy, contains, intersects, intersection, union, expand, center.',
+        code: `// Mamorona mahitsizoro
+const r = new R.Efajoro(10, 20, 100, 80);
+
+// Misy teboka ao anatiny?
+r.contains(50, 40); // true
+
+// Mifanindry amin'ny hafa?
+r.intersects(new R.Efajoro(80, 50, 60, 40)); // true
+
+// Firaisana
+r.union(new R.Efajoro(200, 100, 50, 50));
+
+// Afovoany
+r.cx; // 60
+r.cy; // 60`
+    },
+    {
+        num: 6, name: 'Boribory', category: 'math',
+        desc: 'Cercle: contains, intersects, intersectsRect.',
+        code: `// Mamorona boribory
+const c = new R.Boribory(100, 100, 50);
+
+// Misy teboka ao anatiny?
+c.contains(120, 110); // true
+
+// Mifanindry amin'ny boribory hafa?
+c.intersects(new R.Boribory(160, 100, 30)); // true
+
+// Mifanindry amin'ny mahitsizoro?
+c.intersectsRect(new R.Efajoro(80, 80, 60, 60));`
+    },
+    {
+        num: 7, name: 'Lafomaro', category: 'math',
+        desc: 'Polygone (SAT collision ready): setPos, setRot, worldPoints, rect(), regular().',
+        code: `// Mamorona polygone mahitsizoro
+const poly = R.Lafomaro.rect(0, 0, 100, 80);
+
+// Fametrahana toerana
+poly.setPos(200, 150);
+
+// Fihodinana
+poly.setRot(Math.PI / 6);
+
+// Tadiavo ny teboka rehetra
+poly.worldPoints();
+
+// Polygone milamina (sides, radius)
+const hex = R.Lafomaro.regular(6, 50);`
+    },
+    {
+        num: 8, name: 'Hetsika', category: 'core',
+        desc: 'EventEmitter: on, once, off, emit, removeAll.',
+        code: `// Mamorona event emitter
+const e = new R.Hetsika();
+
+// Mampiaraka hetsika
+e.on('click', (x, y) => {
+    console.log('Nindriña tamin\'ny', x, y);
+});
+
+// Mamoaka hetsika
+e.emit('click', 10, 20);
+
+// Indray mandeha ihany
+e.once('init', () => console.log('Voalohany'));
+e.emit('init'); // mandeha
+e.emit('init'); // tsy mandeha intsony
+
+// Manala hetsika
+e.off('click');`
+    },
+    {
+        num: 9, name: 'Dobo', category: 'core',
+        desc: 'Object Pool: alaina, avereno, clear, stats. WeakSet ho an\'ny GC.',
+        code: `// Mamorona pool
+const pool = new R.Dobo(
+    () => ({ x: 0, y: 0, active: false }),
+    (obj, x, y) => { obj.x = x; obj.y = y; obj.active = true; },
+    32
+);
+
+// Maka objet
+const obj = pool.alaina(10, 20);
+
+// Mampiasa azy...
+console.log(obj.x, obj.y);
+
+// Mamerina azy
+pool.avereno(obj);
+
+// Statistika
+pool.stats(); // { free: 32, used: 0 }`
+    },
+    {
+        num: 10, name: 'Kisendrasendra', category: 'core',
+        desc: 'Seeded random: next, range, int, choice, reset.',
+        code: `// Mamorona RNG miaraka amin'ny seed
+const rng = new R.Kisendrasendra(12345);
+
+// Next number (0-1)
+rng.next(); // 0.156...
+
+// Nombre entre min et max
+rng.range(0, 100); // 45.67
+
+// Integer
+rng.int(1, 10); // 7
+
+// Mifidy ao anaty tableau
+rng.choice(['a', 'b', 'c']);
+
+// Averina indray
+rng.reset();`
+    },
+    {
+        num: 11, name: 'Tabataba', category: 'math',
+        desc: 'Noise generators: value2D, perlin2D, fbm (Perlin/FBM).',
+        code: `// Value noise
+R.Tabataba.value2D(1.5, 2.3); // 0.34
+
+// Perlin noise
+R.Tabataba.perlin2D(0.5, 0.7); // -0.12
+
+// FBM (Fractional Brownian Motion)
+R.Tabataba.fbm(0.1, 0.2, 4); // 0.28
+
+// Ampiasaina amin'ny terrain generation
+const height = R.Tabataba.fbm(x * 0.02, y * 0.02, 6);`
+    },
+    {
+        num: 12, name: 'Mpanamora', category: 'core',
+        desc: '30+ easing functions: linear, quad, cubic, elastic, bounce, sine, expo, circ, back.',
+        code: `// Easing fototra
+R.Mpanamora.linear(0.5); // 0.5
+R.Mpanamora.easeInQuad(0.5); // 0.25
+R.Mpanamora.easeOutQuad(0.5); // 0.75
+R.Mpanamora.easeInOutQuad(0.5); // 0.5
+
+// Easing manokana
+R.Mpanamora.easeOutElastic(0.5); // 0.84
+R.Mpanamora.easeOutBounce(0.5); // 0.75
+R.Mpanamora.easeInOutBack(0.5); // 0.5
+
+// Ampiasaina amin'ny animation
+const progress = R.Mpanamora.easeOutCubic(time / duration);`
+    },
+    {
+        num: 13, name: 'Vondrona (ECS)', category: 'core',
+        desc: 'Entity Component System (SoA): create, destroy, isAlive, handle, query, queryMask, setTag.',
+        code: `// Mamorona ECS
+const ecs = new R.Vondrona(10000);
+
+// Mamorona entity
+const id = ecs.create();
+
+// Mametraka composants
+ecs.x[id] = 100;
+ecs.y[id] = 200;
+ecs.w[id] = 32;
+ecs.h[id] = 32;
+ecs.tag[id] = 1;
+ecs.color[id] = 0xFF00FFFF;
+
+// Query amin'ny tag
+ecs.query(1, (id) => {
+    console.log('Entity', id, 'x:', ecs.x[id]);
+});
+
+// Mamono entity
+ecs.destroy(id);
+
+// Handles (ABA-safe)
+const handle = ecs.handle(id);
+ecs.isValidHandle(handle);`
+    },
+    {
+        num: 14, name: 'SakanToerana', category: 'core',
+        desc: 'Spatial Hash Grid: insert, query, queryPoint. Collision detection optimisée.',
+        code: `// Mamorona grid
+const grid = new R.SakanToerana(64);
+
+// Mampiditra entity
+grid.insert(id, ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id]);
+
+// Query amin'ny faritra
+const results = grid.query(100, 100, 200, 200);
+
+// Query amin'ny teboka
+const near = grid.queryPoint(150, 150);
+
+// Hamafina
+grid.clear();`
+    },
+    {
+        num: 15, name: 'HazoEfatra', category: 'core',
+        desc: 'Quadtree: clear, insert, retrieve. Alternative spatial partition.',
+        code: `// Mamorona quadtree
+const bounds = new R.Efajoro(0, 0, 1000, 1000);
+const tree = new R.HazoEfatra(bounds, 8, 5);
+
+// Mampiditra objet
+tree.insert({ x: 100, y: 100, w: 20, h: 20 });
+
+// Mitady objet ao anaty faritra
+const results = tree.retrieve(new R.Efajoro(80, 80, 60, 60));
+
+// Hamafina
+tree.clear();`
+    },
+
+    // ============ TIMER & TWEEN (16-18) ============
+    {
+        num: 16, name: 'Famataranandro', category: 'core',
+        desc: 'Timer system: after, every, delay, remove, clear, pause, resume, update.',
+        code: `// Mamorona timer
+const timer = new R.Famataranandro();
+
+// Indray mandeha
+timer.after(1000, () => {
+    console.log('1 segondra taty aoriana');
+});
+
+// Isaky ny fotoana
+timer.every(500, () => {
+    console.log('Isaky ny 500ms');
+}, 10); // 10 heny
+
+// Mampiato
+const t = timer.after(2000, () => {});
+timer.pause(t.id);
+timer.resume(t.id);
+
+// Fanavaozana isaky ny frame
+timer.update(dtMs);`
+    },
+    {
+        num: 17, name: 'MpitantanaTween', category: 'core',
+        desc: 'Animation system: to, update, killAll, killOf. Supports ease, delay, repeat, yoyo.',
+        code: `// Animation tsotra
+const obj = { x: 0, y: 0 };
+R.MpitantanaTween.to(obj, { x: 100, y: 200 }, 1000, {
+    ease: 'easeOutQuad',
+    delay: 200,
+    onComplete: () => console.log('Vita!')
+});
+
+// Miverimberina
+R.MpitantanaTween.to(obj, { alpha: 0 }, 500, {
+    repeat: 3,
+    yoyo: true
+});
+
+// Fanavaozana isaky ny frame
+R.MpitantanaTween.update(dtMs);
+
+// Mamono rehetra
+R.MpitantanaTween.killAll();`
+    },
+    {
+        num: 18, name: 'Mpampiditra', category: 'core',
+        desc: 'Asset loader: sary, json, feo, spriteSheet, load, unloadImage, unloadJson, unloadAudio, unloadAll.',
+        code: `// Mamorona loader
+const loader = new R.Mpampiditra();
+
+// Mampiditra assets
+loader.sary('player', 'player.png');
+loader.json('data', 'data.json');
+loader.feo('jump', 'jump.wav');
+loader.spriteSheet('hero', 'hero.png', 32, 32);
+
+// Mijery ny fandrosoana
+loader.on('progress', (p) => console.log(p * 100 + '%'));
+
+// Mampiditra
+await loader.load();
+
+// Maka asset
+const img = loader.getSary('player');
+
+// Manala asset
+loader.unloadImage('player', renderer);
+loader.unloadAll(renderer);`
+    },
+
+    // ============ AUDIO & INPUT (19-20) ============
+    {
+        num: 19, name: 'Feo', category: 'core',
+        desc: 'Web Audio system: init, resume, decode, addBuffer, play, playMusic, stopMusic, setMasterVolume, setSfxVolume, setMusicVolume, mamorona.',
+        code: `// Manomboka audio
+R.Feo.init();
+
+// Mampiditra feo
+R.Feo.addBuffer('jump', decodedBuffer);
+
+// Milalao feo
+R.Feo.play('jump', { volume: 0.8, rate: 1.2 });
+
+// Mozika
+R.Feo.playMusic('theme', { volume: 0.5 });
+
+// Mijanon'ny mozika
+R.Feo.stopMusic();
+
+// Volume
+R.Feo.setMasterVolume(0.8);
+R.Feo.setSfxVolume(0.7);
+R.Feo.setMusicVolume(0.4);
+
+// Mamorona feo tsotra
+R.Feo.mamorona('jump');
+R.Feo.mamorona('coin');
+R.Feo.mamorona('explode');`
+    },
+    {
+        num: 20, name: 'Fanindry', category: 'core',
+        desc: 'Input system: keyboard, mouse, touch, gamepad. isDown, justPressed, axis, mouseDown, joystick.',
+        code: `// Manomboka input
+R.Fanindry.init(canvas);
+
+// Keyboard
+R.Fanindry.isDown('arrowup'); // boolean
+R.Fanindry.justPressed('space');
+R.Fanindry.justReleased('enter');
+
+// Mouse
+R.Fanindry.mouse.x; // position
+R.Fanindry.mouse.down[0]; // click gauche
+R.Fanindry.mouseJustDown(0);
+
+// Gamepad
+const axis = R.Fanindry.axis();
+// { x: -1..1, y: -1..1 }
+
+// Fanavaozana isaky ny frame
+R.Fanindry.updateWorld(camera);
+R.Fanindry._endFrame();`
+    },
+
+    // ============ CAMERA & RENDERER (21-22) ============
+    {
+        num: 21, name: 'Kamera', category: 'core',
+        desc: 'Camera system: follow, setBounds, setDeadzone, shake, lookAt, screenToWorld, worldToScreen, isVisible, getBounds.',
+        code: `// Mamorona kamera
+const camera = new R.Kamera(800, 600);
+
+// Manaraka entity
+camera.follow(entity, 0.1);
+
+// Faritry ny tontolo
+camera.setBounds(0, 0, 2000, 1500);
+
+// Deadzone
+camera.setDeadzone(100, 100, 200, 150);
+
+// Hozongozona
+camera.shake(15, 300);
+
+// Fanavaozana isaky ny frame
+camera.update(dtMs);
+
+// Fiovana koordinata
+camera.screenToWorld(mouseX, mouseY);
+camera.worldToScreen(worldX, worldY);
+
+// Fijerena raha hita
+camera.isVisible(entityRect);`
+    },
+    {
+        num: 22, name: 'Mpampiseho (WebGL)', category: 'core',
+        desc: 'WebGL2 renderer: addTexture, getTexture, deleteTexture, drawQuad, drawSprite, drawRect, flush, begin, end, resize.',
+        code: `// Mamorona renderer
+const renderer = new R.Mpampiseho(canvas);
+
+// Mampiditra texture
+renderer.addTexture('player', img);
+
+// Manomboka rendering
+renderer.clear(0.1, 0.1, 0.15, 1);
+renderer.begin(camera);
+
+// Manao sprite
+renderer.drawSprite(x, y, w, h, sx, sy, sw, sh, color, 'player');
+
+// Mahitsizoro
+renderer.drawRect(x, y, w, h, 0xFF44AAFF);
+
+// Mamarana
+renderer.end();
+
+// Manala texture
+renderer.deleteTexture('player');`
+    },
+
+    // ============ SPRITE & PARTICLES (23-24) ============
+    {
+        num: 23, name: 'Sarimihetsika', category: 'gameplay',
+        desc: 'Sprite animation: add, play, update, getFrame.',
+        code: `// Mamorona animation
+const anim = new R.Sarimihetsika(spritesheet);
+
+// Mampiditra animation
+anim.add('idle', framesIdle, 12);
+anim.add('run', framesRun, 16);
+anim.add('jump', framesJump, 10, false);
+
+// Milalao
+anim.play('run');
+
+// Fanavaozana
+anim.update(dtMs);
+
+// Maka sary amin'izao
+const frame = anim.getFrame();`
+    },
+    {
+        num: 24, name: 'Vovoka', category: 'effect',
+        desc: 'Particle system: emit, update, render. Pool-based, GPU-ready.',
+        code: `// Mamorona particle system
+const particles = new R.Vovoka(10000);
+
+// Mamoaka vovoka
+particles.emit(x, y, {
+    count: 20,
+    speedMin: 50,
+    speedMax: 150,
+    lifeMin: 0.5,
+    lifeMax: 1.5,
+    sizeStart: 8,
+    color: 0xFF44AAFF,
+    gravity: 50,
+    friction: 0.99
+});
+
+// Fanavaozana
+particles.update(dt);
+
+// Rendering
+particles.render(renderer);`
+    },
+
+    // ============ PHYSICS (25) ============
+    {
+        num: 25, name: 'Fizika', category: 'gameplay',
+        desc: 'Physics: rectVsRect, circleVsCircle, circleVsRect, pointInRect, pointInCircle, rayRect, rayCircle, polygonVsPolygon, resolveAABB.',
+        code: `// AABB vs AABB
+R.Fizika.rectVsRect(x1, y1, w1, h1, x2, y2, w2, h2);
+
+// Boribory vs Boribory
+R.Fizika.circleVsCircle(cx1, cy1, cr1, cx2, cy2, cr2);
+
+// Boribory vs AABB
+R.Fizika.circleVsRect(cx, cy, cr, rx, ry, rw, rh);
+
+// Raycast vs AABB
+R.Fizika.rayRect(ox, oy, dx, dy, rx, ry, rw, rh);
+
+// Polygone vs Polygone (SAT)
+R.Fizika.polygonVsPolygon(polyA, polyB);
+
+// Famahana collision
+R.Fizika.resolveAABB(entityA, entityB);`
+    },
+
+    // ============ TILEMAP & PATHFINDING (26-27) ============
+    {
+        num: 26, name: 'Drafitra (Tilemap)', category: 'gameplay',
+        desc: 'Tilemap: addLayer, fromTiled, getTile, setTile, isSolidAt, render.',
+        code: `// Mamorona tilemap
+const map = new R.Drafitra({
+    tileSize: 32,
+    width: 20,
+    height: 15
+});
+
+// Mampiditra layer
+map.addLayer('ground', gridData, { solid: true });
+
+// Maka tile
+map.getTile('ground', 5, 3);
+
+// Mametraka tile
+map.setTile('ground', 5, 3, 2);
+
+// Mijery raha solid
+map.isSolidAt(worldX, worldY);
+
+// Rendering
+map.render(renderer, camera, 'tileset');`
+    },
+    {
+        num: 27, name: 'Lalana (A*)', category: 'gameplay',
+        desc: 'Pathfinding: find (A*), smooth. Supports diagonal.',
+        code: `// Grid: 0 = azo aleha, 1 = tsy azo aleha
+const grid = [
+    [0, 0, 0, 1, 0],
+    [0, 1, 0, 1, 0],
+    [0, 0, 0, 0, 0]
 ];
 
-const totalCount = API_DATA.reduce((s, c) => s + c.items.length, 0);
-document.getElementById('statModules').textContent = totalCount + '+';
-document.getElementById('apiCount').textContent = totalCount + '+';
+// Mitady lalana
+const path = R.Lalana.find(grid, 0, 0, 4, 2, { diagonal: true });
 
-const catNav = document.getElementById('catNav');
-const apiGrid = document.getElementById('apiGrid');
+// Smoothing
+const smoothPath = R.Lalana.smooth(path, tileSize);`
+    },
 
-function renderGrid(filter) {
-    apiGrid.innerHTML = '';
-    let n = 1;
-    API_DATA.forEach(group => {
-        if (filter !== 'Rehetra' && filter !== group.cat) { n += group.items.length; return; }
-        const block = document.createElement('div');
-        block.className = 'cat-block';
-        block.innerHTML = `<div class="cat-title">${group.cat} · ${group.items.length}</div>`;
-        const grid = document.createElement('div');
-        grid.className = 'card-grid';
-        group.items.forEach(([name, desc]) => {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `<div class="num">#${String(n++).padStart(2,'0')}</div>
-                <div class="name">${name}</div>
-                <div class="desc">${desc}</div>`;
-            grid.appendChild(card);
-        });
-        block.appendChild(grid);
-        apiGrid.appendChild(block);
-    });
-}
+    // ============ AI (28-29) ============
+    {
+        num: 28, name: 'Fivoarana', category: 'gameplay',
+        desc: 'State machine: add, set, update. Context-based.',
+        code: `// Mamorona state machine
+const sm = new R.Fivoarana();
 
-['Rehetra', ...API_DATA.map(g => g.cat)].forEach(cat => {
-    const pill = document.createElement('div');
-    pill.className = 'cat-pill' + (cat === 'Rehetra' ? ' active' : '');
-    pill.textContent = cat;
-    pill.addEventListener('click', () => {
-        document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
-        pill.classList.add('active');
-        renderGrid(cat);
-    });
-    catNav.appendChild(pill);
-});
-renderGrid('Rehetra');
-
-// ============================================================
-// CODE TABS
-// ============================================================
-document.querySelectorAll('.code-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('pre.code').forEach(p => p.classList.remove('active'));
-        tab.classList.add('active');
-        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
-    });
-});
-
-// ============================================================
-// BOOT SEQUENCE — fanoratana milalao amin'ny hero
-// (ao anaty try/catch mba tsy hisy fiatoana ny pejy manontolo
-//  raha misy fahasamihafan'ny navigateur nampiasaina)
-// ============================================================
-try {
-    const lines = [
-        { t: 'RAKITRAKATRA_V4.boot()', cls: 'prompt' },
-        { t: '[OK] WebGL2 context ......... vonona', cls: 'ok' },
-        { t: '[OK] Vondrona (ECS/SoA) ...... voapetraka', cls: 'ok' },
-        { t: '[OK] Fanindry (kb/mouse/pad) . voapetraka', cls: 'ok' },
-        { t: '[OK] Feo (Web Audio) ......... voapetraka', cls: 'ok' },
-        { t: `[OK] ${totalCount}+ rafitra ............. voatondro`, cls: 'ok' },
-        { t: '[OK] fiankinana ivelany ...... 0', cls: 'ok' },
-        { t: 'READY.', cls: 'prompt' },
-    ];
-    const el = document.getElementById('boot');
-    const reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    if (reduced || !el) {
-        if (el) el.textContent = lines.map(l => l.t).join('\n');
-    } else {
-        let li = 0, ci = 0;
-        (function tick(){
-            if (li >= lines.length) {
-                el.innerHTML += '\n<span class="cursor"></span>';
-                return;
-            }
-            const line = lines[li];
-            if (ci === 0) el.innerHTML += (li > 0 ? '\n' : '') + `<span class="${line.cls}">`;
-            if (ci <= line.t.length) {
-                const partial = el.innerHTML;
-                el.innerHTML = partial.slice(0, partial.lastIndexOf('<span')) +
-                    `<span class="${line.cls}">` + line.t.slice(0, ci);
-                ci++;
-                setTimeout(tick, 10 + Math.random() * 18);
-            } else {
-                el.innerHTML += '</span>';
-                li++; ci = 0;
-                setTimeout(tick, 90);
-            }
-        })();
+// Mampiditra state
+sm.add('idle', {
+    enter: (ctx) => { ctx.timer = 0; },
+    update: (ctx, dt) => {
+        ctx.timer += dt;
+        if (ctx.timer > 2) sm.set('walk');
     }
-} catch (e) {
-    const el = document.getElementById('boot');
-    if (el) el.textContent = 'RAKITRAKATRA_V4.boot()\n[OK] READY.';
-    console.warn('Boot animation skipped:', e);
+});
+
+sm.add('walk', {
+    enter: (ctx) => { /* ... */ },
+    update: (ctx, dt) => { /* ... */ }
+});
+
+// Manomboka
+sm.set('idle');
+
+// Fanavaozana
+sm.update(dt);`
+    },
+    {
+        num: 29, name: 'Fitondrantena (BT)', category: 'gameplay',
+        desc: 'Behavior Tree: Sequence, Selector, Action, Condition, SUCCESS/FAILURE/RUNNING.',
+        code: `// Mamorona behavior tree
+const tree = new R.Fitondrantena.Sequence(
+    new R.Fitondrantena.Condition(ctx => ctx.hp > 0),
+    new R.Fitondrantena.Action(ctx => {
+        console.log('Manao hetsika');
+        return R.Fitondrantena.SUCCESS;
+    })
+);
+
+// Mampandeha
+const result = tree.tick(context);
+
+// Constants
+R.Fitondrantena.SUCCESS; // 1
+R.Fitondrantena.FAILURE; // 2
+R.Fitondrantena.RUNNING; // 3`
+    },
+
+    // ============ UI (30) ============
+    {
+        num: 30, name: 'Fandraisana (UI)', category: 'ui',
+        desc: 'UI: Bokotra, Bara (health/progress bar).',
+        code: `// Bokotra
+const btn = new R.Fandraisana.Bokotra(100, 100, 120, 40, 'Tindrio', () => {
+    console.log('Nindriña!');
+});
+btn.update();
+btn.render(renderer);
+
+// Bara (health/progress)
+const bar = new R.Fandraisana.Bara(100, 160, 200, 20, {
+    max: 100,
+    value: 75,
+    bgColor: 0xFF2222FF,
+    fillColor: 0xFF44FF44
+});
+bar.setValue(80);
+bar.render(renderer);`
+    },
+
+    // ============ SAVE & LOCALIZATION (31-32) ============
+    {
+        num: 31, name: 'Tehirizo (Save)', category: 'util',
+        desc: 'Save system: save, load, list, delete, clear. localStorage-based.',
+        code: `// Mamorona save
+const save = new R.Tehirizo('myGame');
+
+// Tehirizina
+save.save(0, { level: 5, score: 1000, items: ['sword'] });
+
+// Mamaky
+const data = save.load(0);
+
+// Lisitry ny slots
+save.list();
+
+// Mamafa
+save.delete(0);
+save.clear(); // Mamafa daholo`
+    },
+    {
+        num: 32, name: 'Teny (i18n)', category: 'util',
+        desc: 'Localization: add, set, t (translate). Supports {variables}.',
+        code: `// Mampiditra fiteny
+R.Teny.add('mg', {
+    hello: 'Salama {name}!',
+    start: 'Manomboka'
+});
+R.Teny.add('en', {
+    hello: 'Hello {name}!',
+    start: 'Start'
+});
+
+// Miova fiteny
+R.Teny.set('mg');
+
+// Maka traduksiona
+R.Teny.t('hello', { name: 'Jean' }); // "Salama Jean!"
+R.Teny.t('start'); // "Manomboka"`
+
+    // Ny plugins 33-100 dia tohizana...
+    }
+];
+
+// ============================================================
+// FANORINANA NY HTML
+// ============================================================
+const container = document.getElementById('container');
+
+function renderPlugins(filter = 'all', search = '') {
+    container.innerHTML = '';
+    const filtered = pluginsData.filter(p => {
+        const matchFilter = filter === 'all' || p.category === filter;
+        const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
+                           p.desc.toLowerCase().includes(search.toLowerCase());
+        return matchFilter && matchSearch;
+    });
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#446688;">Tsy misy plugin mifanandrify</div>';
+        return;
+    }
+
+    filtered.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'plugin';
+        div.innerHTML = `
+            <span class="num">#${p.num}</span>
+            <div class="name">${p.name}</div>
+            <div class="desc">${p.desc}</div>
+            <div class="code">${p.code}</div>
+            <span class="badge ${p.category}">${p.category}</span>
+        `;
+        container.appendChild(div);
+    });
 }
+
+// ============================================================
+// FILTERS
+// ============================================================
+const filterButtons = document.querySelectorAll('.filters button');
+const searchInput = document.getElementById('searchInput');
+
+let currentFilter = 'all';
+
+filterButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        filterButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        renderPlugins(currentFilter, searchInput.value);
+    });
+});
+
+searchInput.addEventListener('input', () => {
+    renderPlugins(currentFilter, searchInput.value);
+});
+
+// ============================================================
+// FANOMBOKANA
+// ============================================================
+renderPlugins('all', '');
+
+console.log('✅ Rakitrakatra V4.2.0 loaded!');
+console.log('📦 Total plugins:', pluginsData.length);
+console.log('💡 Ampiasao ny R. (ohatra: R.Z, R.Vektora2, R.Lalao...)');
 </script>
+
 </body>
 </html>
