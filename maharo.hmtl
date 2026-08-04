@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="mg">
+<head>
+    <meta charset="UTF-8">
+    <title>RakitraKatra maharo - 100 Niveaux</title>
+    <style>
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        canvas { background: #87CEEB; image-rendering: pixelated; border: 2px solid #333; }
+        #ui { position: absolute; top: 10px; left: 10px; color: white; font-family: monospace; font-size: 18px; text-shadow: 2px 2px 0 #000; pointer-events: none; z-index: 10; }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <div>NIVEAU: <span id="levelText">1</span> / 100</div>
+        <div>VIE: <span id="livesText">3</span></div>
+        <div>SCORE: <span id="scoreText">0</span></div>
+    </div>
+    <canvas id="gameCanvas" width="800" height="480"></canvas>
+
+    <!-- ATAo ETO AMIN'NY SCRIPT ILAY RAKITRAKATRA.MIN.JS -->
+    <script>
+    // Mba ho tsy misy olana, dia apetraka eto ny rakitrakatra.min.js-nao.
+    // Raha efa separate file, dia <script src="rakitrakatra.min.js"></script>
+    // Satria tsy mahavery eo amin'ity chat ity aho, dia hanao CORE simulation fototra izahay mampiasa ny anarana tianao.
+    // (Ao amin'ny tena izy dia apesain'ny R.Vondrona, R.Kamera, sns)
+    
+    // =========================================================================
+    // SIMULATION RAKITRAKATRA CORE (Mba hahafahan'ny code rohana)
+    // Raha efa manana ny .min.js ianao, fafà ny code eto anaty ary ampiasao ny `R` global.
+    // =========================================================================
+    const R = {};
+    R.Z = { lerp: (a,b,t)=>a+(b-a)*t, clamp: (v,m,x)=>v<m?m:v>x?x:v, rand: (a,b)=>Math.random()*(b-a)+a, randInt: (a,b)=>Math.floor(Math.random()*(b-a+1))+a };
+    R.Vektora2 = class { constructor(x=0,y=0){this.x=x;this.y=y} };
+    R.Efajoro = class { constructor(x=0,y=0,w=0,h=0){this.x=x;this.y=y;this.w=w;this.h=h} get right(){return this.x+this.w} get bottom(){return this.y+this.h} };
+    
+    R.Vondrona = class {
+        constructor(max=5000){this.max=max;this.count=0;this._free=[];this.id=new Uint32Array(max);this.alive=new Uint8Array(max);this.x=new Float32Array(max);this.y=new Float32Array(max);this.w=new Float32Array(max);this.h=new Float32Array(max);this.vx=new Float32Array(max);this.vy=new Float32Array(max);this.color=new Uint32Array(max);this.tag=new Uint16Array(max);this.isSolid=new Uint8Array(max);this.bounce=new Float32Array(max);this.hp=new Float32Array(max);this.maxHp=new Float32Array(max);}
+        create(){let id;if(this._free.length>0){id=this._free.pop()}else{if(this.count>=this.max)return -1;id=this.count++}this.alive[id]=1;this.x[id]=0;this.y[id]=0;this.w[id]=0;this.h[id]=0;this.vx[id]=0;this.vy[id]=0;this.color[id]=0xFFFFFFFF;this.tag[id]=0;this.isSolid[id]=0;this.bounce[id]=0;this.hp[id]=1;return id}
+        destroy(id){if(id>=0&&id<this.count&&this.alive[id]){this.alive[id]=0;this._free.push(id)}}
+        forEach(fn){for(let i=0;i<this.count;i++){if(this.alive[i])fn(i)}}
+    };
+
+    R.SakanToerana = class {
+        constructor(cs=64){this.cs=cs;this.cells=new Map();this._q=new Set()}
+        clear(){this.cells.clear()}
+        _k(cx,cy){return(cx*73856093)^(cy*19349663)}
+        insert(id,x,y,w,h){const mn=Math.floor(x/this.cs),mx=Math.floor((x+w)/this.cs),mny=Math.floor(y/this.cs),mxy=Math.floor((y+h)/this.cs);for(let cx=mn;cx<=mx;cx++)for(let cy=mny;cy<=mxy;cy++){const k=this._k(cx,cy);let a=this.cells.get(k);if(!a){a=[];this.cells.set(k,a)}a.push(id)}}
+        query(x,y,w,h){this._q.clear();const mn=Math.floor(x/this.cs),mx=Math.floor((x+w)/this.cs),mny=Math.floor(y/this.cs),mxy=Math.floor((y+h)/this.cs);for(let cx=mn;cx<=mx;cx++)for(let cy=mny;cy<=mxy;cy++){const a=this.cells.get(this._k(cx,cy));if(a)for(let i=0;i<a.length;i++)this._q.add(a[i])}return this._q}
+    };
+
+    R.Kamera = class {
+        constructor(w,h){this.x=0;this.y=0;this.w=w;this.h=h;this.target=null;this.bounds=null}
+        follow(t){this.target=t}
+        setBounds(x,y,w,h){this.bounds={x,y,w,h}}
+        update(){if(this.target){this.x=this.target.x-this.w/4;this.y=this.target.y-this.h/2}if(this.bounds){this.x=R.Z.clamp(this.x,this.bounds.x,this.bounds.x+this.bounds.w-this.w);this.y=R.Z.clamp(this.y,this.bounds.y,this.bounds.y+this.bounds.h-this.h)}}
+        isVisible(x,y,w,h){return x+w>this.x&&x<this.x+this.w&&y+h>this.y&&y<this.y+this.h}
+    };
+
+    // =========================================================================
+    // maharo GAME LOGIC - 100 NIVEAUX DATA DRIVEN
+    // =========================================================================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    const ecs = new R.Vondrona(10000);
+    const spatial = new R.SakanToerana(64);
+    const cam = new R.Kamera(800, 480);
+    
+    // TAGS (Mba ahafantarana ny karazan'ny entity)
+    const T_PLAYER = 1, T_SOLID = 2, T_ENEMY = 3, T_COIN = 4, T_FLAG = 5, T_DEADZONE = 6;
+    
+    // LALAO STATE
+    let level = 1;
+    let lives = 3;
+    let score = 0;
+    let playerID = -1;
+    let gameState = 'PLAY'; // PLAY, DEAD, WIN, GAMEOVER
+    let levelWidth = 0;
+    let levelHeight = 480;
+    
+    // INPUT
+    const keys = {};
+    window.addEventListener('keydown', e => keys[e.code] = true);
+    window.addEventListener('keyup', e => keys[e.code] = false);
+    
+    // --- COLOR DATA (Tsy mampiasa sary, fa loko fotsiny) ---
+    const C_SKY = '#87CEEB';
+    const C_PLAYER = '#FF0000'; // Mena
+    const C_GROUND = '#8B4513'; // Volon'ny tany
+    const C_BRICK = '#D2691E';
+    const C_ENEMY = '#000000'; // Mainty
+    const C_COIN = '#FFD700'; // Volamena
+    const C_FLAG = '#00FF00'; // Maitso
+    const C_PIPE = '#008000';
+    
+    function hexToUint(hex) {
+        let r = parseInt(hex.slice(1,3), 16);
+        let g = parseInt(hex.slice(3,5), 16);
+        let b = parseInt(hex.slice(5,7), 16);
+        return (r << 24) | (g << 16) | (b << 8) | 255;
+    }
+    
+    // --- LEVEL GENERATOR (Procedural - 1 ka hatramin'ny 100) ---
+    function generateLevel(lvl) {
+        ecs.forEach(id => ecs.destroy(id));
+        spatial.clear();
+        
+        // Niveau parameters (mitombo ny hatsarana)
+        const chunkCount = 10 + lvl * 2;
+        levelWidth = 800 + chunkCount * 300;
+        const baseY = 400;
+        const gapChance = R.Z.clamp(0.1 + lvl * 0.005, 0.1, 0.35);
+        const enemyChance = R.Z.clamp(0.2 + lvl * 0.01, 0.2, 0.8);
+        const platformChance = R.Z.clamp(0.3 + lvl * 0.005, 0.3, 0.6);
+        
+        // 1. Ground & Gaps
+        let cx = 0;
+        while(cx < levelWidth) {
+            let isGap = cx > 400 && Math.random() < gapChance;
+            if(isGap) {
+                let gapW = 100 + Math.random() * 100;
+                // Deadzone (Lavaka mahafaty)
+                let dz = ecs.create(); ecs.x[dz]=cx; ecs.y[dz]=baseY+50; ecs.w[dz]=gapW; ecs.h[dz]=200; ecs.tag[dz]=T_DEADZONE; ecs.color[dz]=0;
+                cx += gapW;
+            } else {
+                let groundW = 200 + Math.random() * 300;
+                let g = ecs.create(); ecs.x[g]=cx; ecs.y[g]=baseY; ecs.w[g]=groundW; ecs.h[g]=80; ecs.tag[g]=T_SOLID; ecs.isSolid[g]=1; ecs.color[g]=hexToUint(C_GROUND);
+                cx += groundW;
+            }
+        }
+        
+        // 2. Platforms, Enemies, Coins
+        for(let i=0; i<chunkCount; i++) {
+            let px = 600 + i * 300 + R.Z.rand(-50, 50);
+            let py = baseY - 100 - R.Z.rand(0, 150);
+            
+            // Platform (Brick)
+            if(Math.random() < platformChance) {
+                let pw = 100 + R.Z.randInt(2, 6) * 32;
+                let p = ecs.create(); ecs.x[p]=px; ecs.y[p]=py; ecs.w[p]=pw; ecs.h[p]=32; ecs.tag[p]=T_SOLID; ecs.isSolid[p]=1; ecs.color[p]=hexToUint(C_BRICK);
+                
+                // Coins above platform
+                let coinCount = R.Z.randInt(1, 5);
+                for(let c=0; c<coinCount; c++) {
+                    let coin = ecs.create(); ecs.x[coin]=px+c*32+8; ecs.y[coin]=py-40; ecs.w[coin]=16; ecs.h[coin]=16; ecs.tag[coin]=T_COIN; ecs.color[coin]=hexToUint(C_COIN);
+                }
+            }
+            
+            // Enemy
+            if(Math.random() < enemyChance) {
+                let e = ecs.create(); ecs.x[e]=px; ecs.y[e]=baseY-32; ecs.w[e]=32; ecs.h[e]=32; ecs.tag[e]=T_ENEMY; ecs.color[e]=hexToUint(C_ENEMY); ecs.vx[e]=-80 - lvl*5; ecs.hp[e]=1;
+            }
+        }
+        
+        // 3. Pipes (Obstacle mavesatra)
+        for(let i=0; i<lvl; i++) {
+            let px = 800 + i * (levelWidth / lvl);
+            let pipeH = 100 + R.Z.rand(0, 100);
+            let p = ecs.create(); ecs.x[p]=px; ecs.y[p]=baseY-pipeH; ecs.w[p]=64; ecs.h[p]=pipeH; ecs.tag[p]=T_SOLID; ecs.isSolid[p]=1; ecs.color[p]=hexToUint(C_PIPE);
+        }
+        
+        // 4. Flag (Farany)
+        let flag = ecs.create(); ecs.x[flag]=levelWidth-100; ecs.y[flag]=baseY-200; ecs.w[flag]=32; ecs.h[flag]=200; ecs.tag[flag]=T_FLAG; ecs.color[flag]=hexToUint(C_FLAG);
+        // Solid for flag pole base
+        let fBase = ecs.create(); ecs.x[fBase]=levelWidth-100; ecs.y[fBase]=baseY-32; ecs.w[fBase]=32; ecs.h[fBase]=32; ecs.tag[fBase]=T_SOLID; ecs.isSolid[fBase]=1; ecs.color[fBase]=hexToUint(C_FLAG);
+        
+        // 5. Player
+        playerID = ecs.create();
+        ecs.x[playerID] = 100; ecs.y[playerID] = baseY - 64;
+        ecs.w[playerID] = 32; ecs.h[playerID] = 48;
+        ecs.vx[playerID] = 0; ecs.vy[playerID] = 0;
+        ecs.tag[playerID] = T_PLAYER; ecs.color[playerID] = hexToUint(C_PLAYER);
+        ecs.hp[playerID] = 1;
+        
+        // Camera bounds
+        cam.setBounds(0, 0, levelWidth, levelHeight);
+        cam.target = { x: ecs.x[playerID], y: ecs.y[playerID], w: ecs.w[playerID], h: ecs.h[playerID] };
+    }
+    
+    // --- PHYSICS & LOGIC UPDATE ---
+    const GRAVITY = 1200;
+    const JUMP_FORCE = -550;
+    const MOVE_SPEED = 250;
+    const MAX_FALL = 800;
+    let isGrounded = false;
+    let invincibleTimer = 0;
+    
+    function updateGame(dt) {
+        if (gameState !== 'PLAY') return;
+        
+        spatial.clear();
+        ecs.forEach(id => {
+            if(ecs.isSolid[id] || ecs.tag[id] === T_ENEMY || ecs.tag[id] === T_COIN || ecs.tag[id] === T_FLAG || ecs.tag[id] === T_DEADZONE) {
+                spatial.insert(id, ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id]);
+            }
+        });
+        
+        if(playerID === -1 || !ecs.alive[playerID]) return;
+        
+        // Player Input
+        let moveX = 0;
+        if(keys['ArrowRight'] || keys['KeyD']) moveX = 1;
+        if(keys['ArrowLeft'] || keys['KeyA']) moveX = -1;
+        
+        ecs.vx[playerID] = moveX * MOVE_SPEED;
+        
+        if((keys['ArrowUp'] || keys['KeyW'] || keys['Space']) && isGrounded) {
+            ecs.vy[playerID] = JUMP_FORCE;
+            isGrounded = false;
+        }
+        
+        // Gravity
+        ecs.vy[playerID] += GRAVITY * dt;
+        if(ecs.vy[playerID] > MAX_FALL) ecs.vy[playerID] = MAX_FALL;
+        
+        // Invincibility
+        if(invincibleTimer > 0) invincibleTimer -= dt;
+        
+        // Move X & Collide
+        ecs.x[playerID] += ecs.vx[playerID] * dt;
+        let pRect = new R.Efajoro(ecs.x[playerID], ecs.y[playerID], ecs.w[playerID], ecs.h[playerID]);
+        let nearX = spatial.query(pRect.x, pRect.y, pRect.w, pRect.h);
+        for(const id of nearX) {
+            if(id === playerID || !ecs.isSolid[id]) continue;
+            let sRect = new R.Efajoro(ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id]);
+            if(pRect.intersects(sRect)) {
+                if(ecs.vx[playerID] > 0) ecs.x[playerID] = sRect.x - ecs.w[playerID];
+                else if(ecs.vx[playerID] < 0) ecs.x[playerID] = sRect.right;
+                ecs.vx[playerID] = 0;
+                pRect.x = ecs.x[playerID];
+            }
+        }
+        
+        // Move Y & Collide
+        ecs.y[playerID] += ecs.vy[playerID] * dt;
+        isGrounded = false;
+        pRect.y = ecs.y[playerID];
+        let nearY = spatial.query(pRect.x, pRect.y, pRect.w, pRect.h);
+        for(const id of nearY) {
+            if(id === playerID || !ecs.isSolid[id]) continue;
+            let sRect = new R.Efajoro(ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id]);
+            if(pRect.intersects(sRect)) {
+                if(ecs.vy[playerID] > 0) {
+                    ecs.y[playerID] = sRect.y - ecs.h[playerID];
+                    isGrounded = true;
+                } else if(ecs.vy[playerID] < 0) {
+                    ecs.y[playerID] = sRect.bottom;
+                }
+                ecs.vy[playerID] = 0;
+                pRect.y = ecs.y[playerID];
+            }
+        }
+        
+        // Check Overlaps (Coin, Enemy, Flag, Deadzone)
+        let overlaps = spatial.query(ecs.x[playerID], ecs.y[playerID], ecs.w[playerID], ecs.h[playerID]);
+        for(const id of overlaps) {
+            if(id === playerID) continue;
+            let oRect = new R.Efajoro(ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id]);
+            if(!pRect.intersects(oRect)) continue;
+            
+            let t = ecs.tag[id];
+            
+            if(t === T_COIN) {
+                score += 10;
+                ecs.destroy(id);
+            }
+            else if(t === T_ENEMY && invincibleTimer <= 0) {
+                // Raha mikasika ny lohan'ny fahavalo (mipetraka ianao dia manafika)
+                if(ecs.vy[playerID] > 0 && ecs.y[playerID] + ecs.h[playerID] - ecs.y[id] < 20) {
+                    ecs.vy[playerID] = JUMP_FORCE * 0.6; // Bounce
+                    ecs.destroy(id); // Maty ny fahavalo
+                    score += 50;
+                } else {
+                    // maharo voavoy
+                    lives--;
+                    invincibleTimer = 1.5;
+                    ecs.vy[playerID] = JUMP_FORCE * 0.8;
+                    if(lives <= 0) gameState = 'GAMEOVER';
+                }
+            }
+            else if(t === T_FLAG) {
+                gameState = 'WIN';
+            }
+            else if(t === T_DEADZONE) {
+                lives--;
+                if(lives <= 0) gameState = 'GAMEOVER';
+                else resetPlayerPosition();
+            }
+        }
+        
+        // Update Enemies
+        ecs.forEach(id => {
+            if(ecs.tag[id] === T_ENEMY && ecs.alive[id]) {
+                ecs.x[id] += ecs.vx[id] * dt;
+                // Simple edge detection (miverina rehefa manelingotra)
+                // (Amin'ny tena lalao dia apiana raycast)
+            }
+        });
+        
+        // Camera Update
+        cam.target.x = ecs.x[playerID];
+        cam.target.y = ecs.y[playerID];
+        cam.update();
+        
+        // UI Update
+        document.getElementById('levelText').innerText = level;
+        document.getElementById('livesText').innerText = lives;
+        document.getElementById('scoreText').innerText = score;
+    }
+    
+    function resetPlayerPosition() {
+        ecs.x[playerID] = 100; ecs.y[playerID] = 200;
+        ecs.vx[playerID] = 0; ecs.vy[playerID] = 0;
+        invincibleTimer = 2.0;
+        gameState = 'PLAY';
+    }
+    
+    // --- RENDERING (Canvas 2D mampiasa Data Loko) ---
+    function renderGame() {
+        ctx.clearRect(0, 0, 800, 480);
+        
+        // Background
+        ctx.fillStyle = C_SKY;
+        ctx.fillRect(0, 0, 800, 480);
+        
+        // Camera Transform
+        ctx.save();
+        ctx.translate(-cam.x, -cam.y);
+        
+        // Draw Entities
+        ecs.forEach(id => {
+            if(!ecs.alive[id]) return;
+            if(!cam.isVisible(ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id])) return;
+            
+            let t = ecs.tag[id];
+            let c = ecs.color[id];
+            
+            // Skip Deadzone (tsy hita maso)
+            if(t === T_DEADZONE) return;
+            
+            // Convert color to CSS string
+            let r = (c >>> 24) & 255, g = (c >>> 16) & 255, b = (c >>> 8) & 255, a = (c & 255) / 255;
+            ctx.fillStyle = `rgba(${r},${g},${b},${a})`;
+            
+            // Flashing raha invincible
+            if(id === playerID && invincibleTimer > 0 && Math.floor(invincibleTimer * 10) % 2 === 0) {
+                ctx.globalAlpha = 0.5;
+            } else {
+                ctx.globalAlpha = 1.0;
+            }
+            
+            // Draw specific shapes
+            if(t === T_PLAYER) {
+                // maharo: Body (Mena), Head (Mavy), Shoes (Mainty)
+                ctx.fillStyle = C_PLAYER; ctx.fillRect(ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id]); // Body
+                ctx.fillStyle = '#F5DEB3'; ctx.fillRect(ecs.x[id]+4, ecs.y[id]+4, 24, 16); // Face
+                ctx.fillStyle = '#0000FF'; ctx.fillRect(ecs.x[id]+2, ecs.y[id], 28, 8); // Hat
+                ctx.fillStyle = '#8B4513'; ctx.fillRect(ecs.x[id], ecs.y[id]+36, 12, 12); ctx.fillRect(ecs.x[id]+20, ecs.y[id]+36, 12, 12); // Shoes
+            }
+            else if(t === T_ENEMY) {
+                // Goomba: Mainty misy mason-tsotry
+                ctx.fillRect(ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id]);
+                ctx.fillStyle = '#FFFFFF'; ctx.fillRect(ecs.x[id]+6, ecs.y[id]+8, 8, 8); ctx.fillRect(ecs.x[id]+18, ecs.y[id]+8, 8, 8);
+                ctx.fillStyle = '#000000'; ctx.fillRect(ecs.x[id]+10, ecs.y[id]+10, 4, 4); ctx.fillRect(ecs.x[id]+22, ecs.y[id]+10, 4, 4);
+            }
+            else if(t === T_COIN) {
+                // Kintana boribory volamena
+                ctx.beginPath(); ctx.arc(ecs.x[id]+ecs.w[id]/2, ecs.y[id]+ecs.h[id]/2, ecs.w[id]/2, 0, Math.PI*2); ctx.fill();
+            }
+            else {
+                // Block, Brick, Pipe, Flag
+                ctx.fillRect(ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id]);
+                if(t === T_SOLID) {
+                    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.strokeRect(ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id]);
+                }
+            }
+            ctx.globalAlpha = 1.0;
+        });
+        
+        ctx.restore();
+        
+        // Game Overlays
+        if(gameState === 'WIN') {
+            ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0,0,800,480);
+            ctx.fillStyle = '#FFD700'; ctx.font = '48px monospace'; ctx.textAlign = 'center';
+            ctx.fillText('NIVEAU VITA!', 400, 200);
+            ctx.font = '24px monospace'; ctx.fillText(`Score: ${score}`, 400, 260);
+            ctx.fillText("Tsindrio SPACE ho any amin'ny manaraka...", 400, 320);
+        }
+        else if(gameState === 'GAMEOVER') {
+            ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0,0,800,480);
+            ctx.fillStyle = '#FF0000'; ctx.font = '48px monospace'; ctx.textAlign = 'center';
+            ctx.fillText('LALAO VITA!', 400, 200);
+            ctx.font = '24px monospace'; ctx.fillText(`Score farany: ${score}`, 400, 260);
+            ctx.fillText("Tsindrio R mba hiverina...", 400, 320);
+        }
+    }
+    
+    // --- MAIN LOOP ---
+    let lastTime = 0;
+    function gameLoop(time) {
+        let dt = (time - lastTime) / 1000;
+        if(dt > 0.1) dt = 0.016; // Prevent huge jumps
+        lastTime = time;
+        
+        updateGame(dt);
+        renderGame();
+        
+        // State transitions
+        if(gameState === 'WIN' && (keys['Space'] || keys['ArrowUp'])) {
+            level++;
+            if(level > 100) level = 100; // Max niveau
+            generateLevel(level);
+            gameState = 'PLAY';
+            keys['Space'] = false;
+        }
+        if(gameState === 'GAMEOVER' && keys['KeyR']) {
+            level = 1; lives = 3; score = 0;
+            generateLevel(level);
+            gameState = 'PLAY';
+            keys['KeyR'] = false;
+        }
+        
+        requestAnimationFrame(gameLoop);
+    }
+    
+    // INIT
+    generateLevel(level);
+    requestAnimationFrame(gameLoop);
+    
+    </script>
+</body>
+</html>
