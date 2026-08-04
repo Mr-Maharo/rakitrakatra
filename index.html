@@ -21,928 +21,2369 @@
             margin-bottom: 25px;
         }
         h1 small { font-size: 14px; color: #6688aa; }
-        .filters {
+        .nav {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 6px;
             margin-bottom: 20px;
             justify-content: center;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #0f1628;
+            border-radius: 10px;
+            border: 1px solid #1a2a44;
         }
-        .filters button {
+        .nav button {
             background: #111f33;
             border: 1px solid #2a3a5a;
             color: #88bbdd;
-            padding: 6px 16px;
+            padding: 4px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .nav button:hover, .nav button.active {
+            background: #1a3355;
+            border-color: #66aaff;
+            color: #ffffff;
+        }
+        .nav button.done {
+            border-color: #44aa66;
+            color: #88dd99;
+        }
+        #display {
+            background: #111828;
+            border: 1px solid #2a3a5a;
+            border-radius: 12px;
+            padding: 20px 24px;
+            min-height: 400px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .plugin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2a3a5a;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+        }
+        .plugin-header .name {
+            color: #88ddff;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .plugin-header .num {
+            color: #335577;
+            font-size: 14px;
+        }
+        .plugin-header .badge {
+            background: #1a2a44;
+            color: #77aacc;
+            padding: 2px 14px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+        .plugin-desc {
+            color: #99bbdd;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 14px;
+        }
+        .plugin-demo {
+            background: #0a0f1a;
+            border: 1px solid #1a2a44;
+            border-radius: 8px;
+            padding: 16px 18px;
+            margin: 10px 0;
+            min-height: 60px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+        .plugin-demo .result {
+            color: #88ddbb;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            background: #0d1222;
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid #1a2a44;
+            min-width: 80px;
+        }
+        .plugin-demo .label {
+            color: #6688aa;
+            font-size: 12px;
+        }
+        .plugin-code {
+            background: #0a0f1a;
+            border: 1px solid #1a2a44;
+            border-radius: 6px;
+            padding: 12px 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #88ddbb;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 180px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .plugin-code .kw { color: #ff88aa; }
+        .plugin-code .fn { color: #88ddff; }
+        .plugin-code .str { color: #aadd88; }
+        .plugin-code .numv { color: #ffaa66; }
+        .plugin-code .cmt { color: #446688; }
+        .btn-demo {
+            background: #1a3355;
+            border: 1px solid #4488cc;
+            color: #88ddff;
+            padding: 6px 18px;
             border-radius: 20px;
             cursor: pointer;
             font-size: 12px;
             transition: all 0.2s;
         }
-        .filters button:hover, .filters button.active {
-            background: #1a3355;
+        .btn-demo:hover {
+            background: #224466;
             border-color: #66aaff;
-            color: #ffffff;
         }
-        #container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-            gap: 16px;
-        }
-        .plugin {
-            background: #111828;
-            border: 1px solid #1a2a44;
-            border-radius: 10px;
-            padding: 16px 18px;
-            transition: all 0.2s;
-            position: relative;
-        }
-        .plugin:hover {
-            border-color: #4488cc;
-            background: #16203a;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 30px rgba(0,40,120,0.15);
-        }
-        .plugin .num {
-            position: absolute;
-            top: 8px;
-            right: 12px;
-            font-size: 11px;
-            color: #335577;
-            font-weight: bold;
-        }
-        .plugin .name {
-            color: #88ddff;
-            font-size: 17px;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-        .plugin .desc {
-            color: #99bbdd;
-            font-size: 12.5px;
-            line-height: 1.5;
-            margin-bottom: 8px;
-        }
-        .plugin .code {
-            background: #0a0f1a;
-            border: 1px solid #1a2a44;
-            border-radius: 6px;
-            padding: 10px 12px;
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            color: #88ddbb;
-            overflow-x: auto;
-            white-space: pre-wrap;
-            word-break: break-all;
-            max-height: 130px;
-            overflow-y: auto;
-        }
-        .plugin .code .kw { color: #ff88aa; }
-        .plugin .code .fn { color: #88ddff; }
-        .plugin .code .str { color: #aadd88; }
-        .plugin .code .cmt { color: #446688; }
-        .plugin .code .numv { color: #ffaa66; }
-        .plugin .badge {
-            display: inline-block;
-            font-size: 9px;
-            background: #1a2a44;
-            color: #77aacc;
-            padding: 2px 10px;
-            border-radius: 12px;
-            margin-top: 6px;
-            letter-spacing: 0.3px;
-        }
-        .plugin .badge.core { background: #1a3344; color: #66aadd; }
-        .plugin .badge.math { background: #1a2a33; color: #66ccaa; }
-        .plugin .badge.gameplay { background: #2a1a33; color: #cc88dd; }
-        .plugin .badge.ui { background: #1a2a33; color: #66ccaa; }
-        .plugin .badge.effect { background: #331a22; color: #dd88aa; }
-        .plugin .badge.util { background: #1a2a22; color: #88cc88; }
-        .plugin .badge.net { background: #1a2233; color: #88aadd; }
         .footer {
             text-align: center;
-            margin-top: 35px;
+            margin-top: 25px;
             color: #446688;
             font-size: 12px;
             border-top: 1px solid #1a2a44;
-            padding-top: 18px;
+            padding-top: 16px;
         }
         .footer span { color: #66aadd; }
-        .search {
-            background: #0a0f1a;
-            border: 1px solid #1a2a44;
-            border-radius: 20px;
-            padding: 8px 18px;
-            color: #c0d8f0;
-            width: 300px;
-            max-width: 80%;
+        .progress {
+            text-align: center;
+            color: #6688aa;
             font-size: 13px;
-            outline: none;
+            margin-bottom: 12px;
         }
-        .search:focus { border-color: #4488cc; }
+        .progress span { color: #88ddff; font-weight: bold; }
         @media (max-width: 600px) {
-            #container { grid-template-columns: 1fr; }
+            .plugin-header .name { font-size: 18px; }
+            #display { padding: 14px; }
+            .nav button { font-size: 9px; padding: 2px 8px; }
         }
     </style>
 </head>
 <body>
 
-<h1>⚡ RAKITRAKATRA V4.2.0 <small>— 100 Plugins & Systems</small></h1>
+<h1>⚡ RAKITRAKATRA V4.2.0 <small>— 100 Plugins 1 par 1</small></h1>
 
-<div class="filters">
-    <input class="search" id="searchInput" placeholder="🔍 Karohy plugin...">
-    <button class="active" data-filter="all">📦 Rehetra</button>
-    <button data-filter="core">🎯 Core</button>
-    <button data-filter="math">📐 Math</button>
-    <button data-filter="gameplay">🎮 Gameplay</button>
-    <button data-filter="ui">🖥️ UI</button>
-    <button data-filter="effect">✨ Effect</button>
-    <button data-filter="util">🔧 Util</button>
-    <button data-filter="net">🌐 Network</button>
+<div class="nav" id="navButtons"></div>
+
+<div id="display">
+    <div class="progress" id="progressDisplay">Plugin <span id="currentNum">1</span> / <span id="totalNum">100</span></div>
+    <div id="pluginContent"></div>
 </div>
-
-<div id="container"></div>
 
 <div class="footer">
-    <span>✦</span> 100 Plugins — Tsirairay manana code exemple <span>✦</span>
+    <span>✦</span> Tsindrio ny isa plugin na ampiasao ny ◄ ► <span>✦</span>
 </div>
 
-
+<!-- ============================================================
+     CHARGE RAKITRAKATRA.JS
+     ============================================================ -->
 <script src="rakitrakatra.js"></script>
 
 <!-- ============================================================
-     FAMPIASANA PLUGINS (1-100)
+     DEMO 1 PAR 1
      ============================================================ -->
 <script>
 // ============================================================
 // DATA: 100 PLUGINS AVY AMIN'NY RAKITRAKATRA V4.2.0
 // ============================================================
 const pluginsData = [
-    // ============ CORE (1-15) ============
+    // ============ 1-10: CORE ============
     {
-        num: 1, name: 'Z', category: 'core',
-        desc: 'Utilities fototra: lerp, clamp, rand, uuid, hash, dist, angle, wrap, shuffle, sign, approach, isPowerOf2.',
-        code: `// R.Z.lerp(a, b, t) -> interpolation
-R.Z.lerp(0, 10, 0.5); // 5
-
-// R.Z.clamp(v, min, max)
-R.Z.clamp(15, 0, 10); // 10
-
-// R.Z.rand(min, max)
-R.Z.rand(5, 20); // 12.34
-
-// R.Z.uuid() -> unique ID
-R.Z.uuid(); // "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
-
-// R.Z.dist(x1,y1,x2,y2)
-R.Z.dist(0, 0, 3, 4); // 5`
+        num: 1, name: 'Z', category: 'Core',
+        desc: 'Utilities fototra: lerp, clamp, rand, uuid, hash, dist, angle, wrap, shuffle, sign, approach, isPowerOf2, nextPowerOf2.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">R.Z.lerp(0, 10, 0.5) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">R.Z.clamp(15, 0, 10) =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">R.Z.rand(5, 20) =</span>
+                    <span class="result" id="demoResult3">...</span>
+                    <button class="btn-demo" onclick="demo3()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => document.getElementById('demoResult1').textContent = R.Z.lerp(0, 10, 0.5);
+            window.demo2 = () => document.getElementById('demoResult2').textContent = R.Z.clamp(15, 0, 10);
+            window.demo3 = () => document.getElementById('demoResult3').textContent = R.Z.rand(5, 20).toFixed(4);
+        }
     },
     {
-        num: 2, name: 'Vektora2', category: 'math',
+        num: 2, name: 'Vektora2', category: 'Math',
         desc: 'Vecteur 2D optimisé: set, copy, add, sub, mul, div, dot, cross, len, normalize, limit, rotate, perp, lerp, reflect, fromAngle.',
-        code: `// Mamorona vektora
-const v = new R.Vektora2(3, 4);
-
-// Halavany
-v.len(); // 5
-
-// Normalisation
-v.normalize(); // { x: 0.6, y: 0.8 }
-
-// Fanampiana
-v.add(new R.Vektora2(1, 0)); // { x: 1.6, y: 0.8 }
-
-// Fihodinana
-v.rotate(Math.PI / 2);
-
-// Static
-R.Vektora2.fromAngle(Math.PI / 4, 10);`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">v = new R.Vektora2(3, 4); v.len() =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">v.normalize() =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">R.Vektora2.fromAngle(PI/4, 10) =</span>
+                    <span class="result" id="demoResult3">...</span>
+                    <button class="btn-demo" onclick="demo3()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const v = new R.Vektora2(3, 4);
+                document.getElementById('demoResult1').textContent = v.len();
+            };
+            window.demo2 = () => {
+                const v = new R.Vektora2(3, 4);
+                v.normalize();
+                document.getElementById('demoResult2').textContent = `(${v.x.toFixed(2)}, ${v.y.toFixed(2)})`;
+            };
+            window.demo3 = () => {
+                const v = R.Vektora2.fromAngle(Math.PI/4, 10);
+                document.getElementById('demoResult3').textContent = `(${v.x.toFixed(2)}, ${v.y.toFixed(2)})`;
+            };
+        }
     },
     {
-        num: 3, name: 'Vektora3', category: 'math',
+        num: 3, name: 'Vektora3', category: 'Math',
         desc: 'Vecteur 3D ho an\'ny shader: set, add, sub, mul, dot, cross, len, normalize.',
-        code: `// Mamorona vektora 3D
-const v = new R.Vektora3(1, 2, 3);
-
-// Dot product
-v.dot(new R.Vektora3(4, 5, 6)); // 32
-
-// Cross product
-v.cross(new R.Vektora3(1, 0, 0));
-
-// Halavany
-v.len(); // 3.741
-
-// Normalisation
-v.normalize();`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">v = new R.Vektora3(1,2,3); v.len() =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">v.dot(new R.Vektora3(4,5,6)) =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">v.cross(new R.Vektora3(1,0,0)) =</span>
+                    <span class="result" id="demoResult3">...</span>
+                    <button class="btn-demo" onclick="demo3()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const v = new R.Vektora3(1, 2, 3);
+                document.getElementById('demoResult1').textContent = v.len().toFixed(3);
+            };
+            window.demo2 = () => {
+                const v = new R.Vektora3(1, 2, 3);
+                document.getElementById('demoResult2').textContent = v.dot(new R.Vektora3(4, 5, 6));
+            };
+            window.demo3 = () => {
+                const v = new R.Vektora3(1, 2, 3);
+                const r = v.cross(new R.Vektora3(1, 0, 0));
+                document.getElementById('demoResult3').textContent = `(${r.x}, ${r.y}, ${r.z})`;
+            };
+        }
     },
     {
-        num: 4, name: 'Lamina2D', category: 'math',
+        num: 4, name: 'Lamina2D', category: 'Math',
         desc: 'Matrice 2D 3x2: identity, translate, rotate, scale, mul, invert, transformPoint.',
-        code: `// Mamorona matrice
-const m = new R.Lamina2D();
-
-// Fandikana
-m.translate(100, 50);
-
-// Fihodinana
-m.rotate(Math.PI / 4);
-
-// Fampitomboana
-m.scale(2, 2);
-
-// Fanovana teboka
-m.transformPoint(10, 20);
-
-// Inversion
-m.invert();`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">m = new R.Lamina2D(); m.translate(100, 50); m.transformPoint(10,20) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">m.rotate(PI/4); m.transformPoint(10,20) =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const m = new R.Lamina2D();
+                m.translate(100, 50);
+                const p = m.transformPoint(10, 20);
+                document.getElementById('demoResult1').textContent = `(${p.x}, ${p.y})`;
+            };
+            window.demo2 = () => {
+                const m = new R.Lamina2D();
+                m.translate(100, 50);
+                m.rotate(Math.PI/4);
+                const p = m.transformPoint(10, 20);
+                document.getElementById('demoResult2').textContent = `(${p.x.toFixed(1)}, ${p.y.toFixed(1)})`;
+            };
+        }
     },
     {
-        num: 5, name: 'Efajoro', category: 'math',
+        num: 5, name: 'Efajoro', category: 'Math',
         desc: 'Rectangle: left, right, top, bottom, cx, cy, contains, intersects, intersection, union, expand, center.',
-        code: `// Mamorona mahitsizoro
-const r = new R.Efajoro(10, 20, 100, 80);
-
-// Misy teboka ao anatiny?
-r.contains(50, 40); // true
-
-// Mifanindry amin'ny hafa?
-r.intersects(new R.Efajoro(80, 50, 60, 40)); // true
-
-// Firaisana
-r.union(new R.Efajoro(200, 100, 50, 50));
-
-// Afovoany
-r.cx; // 60
-r.cy; // 60`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">r = new R.Efajoro(10,20,100,80); r.contains(50,40) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">r.intersects(new R.Efajoro(80,50,60,40)) =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">r.cx, r.cy =</span>
+                    <span class="result" id="demoResult3">...</span>
+                    <button class="btn-demo" onclick="demo3()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const r = new R.Efajoro(10, 20, 100, 80);
+                document.getElementById('demoResult1').textContent = r.contains(50, 40);
+            };
+            window.demo2 = () => {
+                const r = new R.Efajoro(10, 20, 100, 80);
+                document.getElementById('demoResult2').textContent = r.intersects(new R.Efajoro(80, 50, 60, 40));
+            };
+            window.demo3 = () => {
+                const r = new R.Efajoro(10, 20, 100, 80);
+                document.getElementById('demoResult3').textContent = `(${r.cx}, ${r.cy})`;
+            };
+        }
     },
     {
-        num: 6, name: 'Boribory', category: 'math',
+        num: 6, name: 'Boribory', category: 'Math',
         desc: 'Cercle: contains, intersects, intersectsRect.',
-        code: `// Mamorona boribory
-const c = new R.Boribory(100, 100, 50);
-
-// Misy teboka ao anatiny?
-c.contains(120, 110); // true
-
-// Mifanindry amin'ny boribory hafa?
-c.intersects(new R.Boribory(160, 100, 30)); // true
-
-// Mifanindry amin'ny mahitsizoro?
-c.intersectsRect(new R.Efajoro(80, 80, 60, 60));`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">c = new R.Boribory(100,100,50); c.contains(120,110) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">c.intersects(new R.Boribory(160,100,30)) =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const c = new R.Boribory(100, 100, 50);
+                document.getElementById('demoResult1').textContent = c.contains(120, 110);
+            };
+            window.demo2 = () => {
+                const c = new R.Boribory(100, 100, 50);
+                document.getElementById('demoResult2').textContent = c.intersects(new R.Boribory(160, 100, 30));
+            };
+        }
     },
     {
-        num: 7, name: 'Lafomaro', category: 'math',
+        num: 7, name: 'Lafomaro', category: 'Math',
         desc: 'Polygone (SAT collision ready): setPos, setRot, worldPoints, rect(), regular().',
-        code: `// Mamorona polygone mahitsizoro
-const poly = R.Lafomaro.rect(0, 0, 100, 80);
-
-// Fametrahana toerana
-poly.setPos(200, 150);
-
-// Fihodinana
-poly.setRot(Math.PI / 6);
-
-// Tadiavo ny teboka rehetra
-poly.worldPoints();
-
-// Polygone milamina (sides, radius)
-const hex = R.Lafomaro.regular(6, 50);`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">poly = R.Lafomaro.rect(0,0,100,80); poly.worldPoints() =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">R.Lafomaro.regular(6, 50) =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const poly = R.Lafomaro.rect(0, 0, 100, 80);
+                poly.setPos(200, 150);
+                const pts = poly.worldPoints();
+                document.getElementById('demoResult1').textContent = pts.length + ' points';
+            };
+            window.demo2 = () => {
+                const poly = R.Lafomaro.regular(6, 50);
+                document.getElementById('demoResult2').textContent = poly.points.length + ' sides';
+            };
+        }
     },
     {
-        num: 8, name: 'Hetsika', category: 'core',
+        num: 8, name: 'Hetsika', category: 'Core',
         desc: 'EventEmitter: on, once, off, emit, removeAll.',
-        code: `// Mamorona event emitter
-const e = new R.Hetsika();
-
-// Mampiaraka hetsika
-e.on('click', (x, y) => {
-    console.log('Nindriña tamin\'ny', x, y);
-});
-
-// Mamoaka hetsika
-e.emit('click', 10, 20);
-
-// Indray mandeha ihany
-e.once('init', () => console.log('Voalohany'));
-e.emit('init'); // mandeha
-e.emit('init'); // tsy mandeha intsony
-
-// Manala hetsika
-e.off('click');`
+        demo: function(display) {
+            let log = [];
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">e = new R.Hetsika(); e.on("test", fn); e.emit("test", "Hello")</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">e.once("once", fn); e.emit("once"); e.emit("once") =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const e = new R.Hetsika();
+                e.on('test', (msg) => log.push(msg));
+                e.emit('test', 'Hello');
+                document.getElementById('demoResult1').textContent = log.join(', ');
+            };
+            window.demo2 = () => {
+                const e = new R.Hetsika();
+                let count = 0;
+                e.once('once', () => count++);
+                e.emit('once');
+                e.emit('once');
+                document.getElementById('demoResult2').textContent = count;
+            };
+        }
     },
     {
-        num: 9, name: 'Dobo', category: 'core',
+        num: 9, name: 'Dobo', category: 'Core',
         desc: 'Object Pool: alaina, avereno, clear, stats. WeakSet ho an\'ny GC.',
-        code: `// Mamorona pool
-const pool = new R.Dobo(
-    () => ({ x: 0, y: 0, active: false }),
-    (obj, x, y) => { obj.x = x; obj.y = y; obj.active = true; },
-    32
-);
-
-// Maka objet
-const obj = pool.alaina(10, 20);
-
-// Mampiasa azy...
-console.log(obj.x, obj.y);
-
-// Mamerina azy
-pool.avereno(obj);
-
-// Statistika
-pool.stats(); // { free: 32, used: 0 }`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">pool = new R.Dobo(()=>({x:0}), null, 5); pool.stats() =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">obj = pool.alaina(); pool.stats() =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const pool = new R.Dobo(() => ({ x: 0 }), null, 5);
+                document.getElementById('demoResult1').textContent = `free: ${pool.free.length}, used: ${pool._usedCount}`;
+            };
+            window.demo2 = () => {
+                const pool = new R.Dobo(() => ({ x: 0 }), null, 5);
+                const obj = pool.alaina();
+                document.getElementById('demoResult2').textContent = `free: ${pool.free.length}, used: ${pool._usedCount}`;
+            };
+        }
     },
     {
-        num: 10, name: 'Kisendrasendra', category: 'core',
+        num: 10, name: 'Kisendrasendra', category: 'Core',
         desc: 'Seeded random: next, range, int, choice, reset.',
-        code: `// Mamorona RNG miaraka amin'ny seed
-const rng = new R.Kisendrasendra(12345);
-
-// Next number (0-1)
-rng.next(); // 0.156...
-
-// Nombre entre min et max
-rng.range(0, 100); // 45.67
-
-// Integer
-rng.int(1, 10); // 7
-
-// Mifidy ao anaty tableau
-rng.choice(['a', 'b', 'c']);
-
-// Averina indray
-rng.reset();`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">rng = new R.Kisendrasendra(12345); rng.next() =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">rng.range(0, 100) =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">rng.choice(['a','b','c']) =</span>
+                    <span class="result" id="demoResult3">...</span>
+                    <button class="btn-demo" onclick="demo3()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const rng = new R.Kisendrasendra(12345);
+                document.getElementById('demoResult1').textContent = rng.next().toFixed(6);
+            };
+            window.demo2 = () => {
+                const rng = new R.Kisendrasendra(12345);
+                document.getElementById('demoResult2').textContent = rng.range(0, 100).toFixed(2);
+            };
+            window.demo3 = () => {
+                const rng = new R.Kisendrasendra(12345);
+                document.getElementById('demoResult3').textContent = rng.choice(['a', 'b', 'c']);
+            };
+        }
     },
+
+    // ============ 11-20 ============
     {
-        num: 11, name: 'Tabataba', category: 'math',
+        num: 11, name: 'Tabataba', category: 'Math',
         desc: 'Noise generators: value2D, perlin2D, fbm (Perlin/FBM).',
-        code: `// Value noise
-R.Tabataba.value2D(1.5, 2.3); // 0.34
-
-// Perlin noise
-R.Tabataba.perlin2D(0.5, 0.7); // -0.12
-
-// FBM (Fractional Brownian Motion)
-R.Tabataba.fbm(0.1, 0.2, 4); // 0.28
-
-// Ampiasaina amin'ny terrain generation
-const height = R.Tabataba.fbm(x * 0.02, y * 0.02, 6);`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">R.Tabataba.value2D(1.5, 2.3) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">R.Tabataba.perlin2D(0.5, 0.7) =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">R.Tabataba.fbm(0.1, 0.2, 4) =</span>
+                    <span class="result" id="demoResult3">...</span>
+                    <button class="btn-demo" onclick="demo3()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => document.getElementById('demoResult1').textContent = R.Tabataba.value2D(1.5, 2.3).toFixed(4);
+            window.demo2 = () => document.getElementById('demoResult2').textContent = R.Tabataba.perlin2D(0.5, 0.7).toFixed(4);
+            window.demo3 = () => document.getElementById('demoResult3').textContent = R.Tabataba.fbm(0.1, 0.2, 4).toFixed(4);
+        }
     },
     {
-        num: 12, name: 'Mpanamora', category: 'core',
+        num: 12, name: 'Mpanamora', category: 'Core',
         desc: '30+ easing functions: linear, quad, cubic, elastic, bounce, sine, expo, circ, back.',
-        code: `// Easing fototra
-R.Mpanamora.linear(0.5); // 0.5
-R.Mpanamora.easeInQuad(0.5); // 0.25
-R.Mpanamora.easeOutQuad(0.5); // 0.75
-R.Mpanamora.easeInOutQuad(0.5); // 0.5
-
-// Easing manokana
-R.Mpanamora.easeOutElastic(0.5); // 0.84
-R.Mpanamora.easeOutBounce(0.5); // 0.75
-R.Mpanamora.easeInOutBack(0.5); // 0.5
-
-// Ampiasaina amin'ny animation
-const progress = R.Mpanamora.easeOutCubic(time / duration);`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">R.Mpanamora.linear(0.5) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">R.Mpanamora.easeOutQuad(0.5) =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">R.Mpanamora.easeOutElastic(0.5) =</span>
+                    <span class="result" id="demoResult3">...</span>
+                    <button class="btn-demo" onclick="demo3()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => document.getElementById('demoResult1').textContent = R.Mpanamora.linear(0.5);
+            window.demo2 = () => document.getElementById('demoResult2').textContent = R.Mpanamora.easeOutQuad(0.5);
+            window.demo3 = () => document.getElementById('demoResult3').textContent = R.Mpanamora.easeOutElastic(0.5).toFixed(4);
+        }
     },
     {
-        num: 13, name: 'Vondrona (ECS)', category: 'core',
+        num: 13, name: 'Vondrona (ECS)', category: 'Core',
         desc: 'Entity Component System (SoA): create, destroy, isAlive, handle, query, queryMask, setTag.',
-        code: `// Mamorona ECS
-const ecs = new R.Vondrona(10000);
-
-// Mamorona entity
-const id = ecs.create();
-
-// Mametraka composants
-ecs.x[id] = 100;
-ecs.y[id] = 200;
-ecs.w[id] = 32;
-ecs.h[id] = 32;
-ecs.tag[id] = 1;
-ecs.color[id] = 0xFF00FFFF;
-
-// Query amin'ny tag
-ecs.query(1, (id) => {
-    console.log('Entity', id, 'x:', ecs.x[id]);
-});
-
-// Mamono entity
-ecs.destroy(id);
-
-// Handles (ABA-safe)
-const handle = ecs.handle(id);
-ecs.isValidHandle(handle);`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">ecs = new R.Vondrona(100); id = ecs.create(); ecs.isAlive(id) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">ecs.x[id] = 100; ecs.x[id] =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">ecs.destroy(id); ecs.isAlive(id) =</span>
+                    <span class="result" id="demoResult3">...</span>
+                    <button class="btn-demo" onclick="demo3()">▶ Alaivo</button>
+                </div>
+            `;
+            let ecs, id;
+            window.demo1 = () => {
+                ecs = new R.Vondrona(100);
+                id = ecs.create();
+                document.getElementById('demoResult1').textContent = ecs.isAlive(id);
+            };
+            window.demo2 = () => {
+                if (!ecs) { ecs = new R.Vondrona(100); id = ecs.create(); }
+                ecs.x[id] = 100;
+                document.getElementById('demoResult2').textContent = ecs.x[id];
+            };
+            window.demo3 = () => {
+                if (!ecs) { ecs = new R.Vondrona(100); id = ecs.create(); }
+                ecs.destroy(id);
+                document.getElementById('demoResult3').textContent = ecs.isAlive(id);
+            };
+        }
     },
     {
-        num: 14, name: 'SakanToerana', category: 'core',
+        num: 14, name: 'SakanToerana', category: 'Core',
         desc: 'Spatial Hash Grid: insert, query, queryPoint. Collision detection optimisée.',
-        code: `// Mamorona grid
-const grid = new R.SakanToerana(64);
-
-// Mampiditra entity
-grid.insert(id, ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id]);
-
-// Query amin'ny faritra
-const results = grid.query(100, 100, 200, 200);
-
-// Query amin'ny teboka
-const near = grid.queryPoint(150, 150);
-
-// Hamafina
-grid.clear();`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">grid = new R.SakanToerana(64); grid.insert(1,100,100,32,32); grid.query(80,80,60,60) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const grid = new R.SakanToerana(64);
+                grid.insert(1, 100, 100, 32, 32);
+                const result = grid.query(80, 80, 60, 60);
+                document.getElementById('demoResult1').textContent = Array.from(result).join(', ');
+            };
+        }
     },
     {
-        num: 15, name: 'HazoEfatra', category: 'core',
+        num: 15, name: 'HazoEfatra', category: 'Core',
         desc: 'Quadtree: clear, insert, retrieve. Alternative spatial partition.',
-        code: `// Mamorona quadtree
-const bounds = new R.Efajoro(0, 0, 1000, 1000);
-const tree = new R.HazoEfatra(bounds, 8, 5);
-
-// Mampiditra objet
-tree.insert({ x: 100, y: 100, w: 20, h: 20 });
-
-// Mitady objet ao anaty faritra
-const results = tree.retrieve(new R.Efajoro(80, 80, 60, 60));
-
-// Hamafina
-tree.clear();`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">tree = new R.HazoEfatra(new R.Efajoro(0,0,1000,1000), 8, 5); tree.insert({x:100,y:100,w:20,h:20})</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const tree = new R.HazoEfatra(new R.Efajoro(0, 0, 1000, 1000), 8, 5);
+                tree.insert({ x: 100, y: 100, w: 20, h: 20 });
+                const result = tree.retrieve(new R.Efajoro(80, 80, 60, 60));
+                document.getElementById('demoResult1').textContent = result.length + ' objet(s)';
+            };
+        }
     },
-
-    // ============ TIMER & TWEEN (16-18) ============
     {
-        num: 16, name: 'Famataranandro', category: 'core',
+        num: 16, name: 'Famataranandro', category: 'Core',
         desc: 'Timer system: after, every, delay, remove, clear, pause, resume, update.',
-        code: `// Mamorona timer
-const timer = new R.Famataranandro();
-
-// Indray mandeha
-timer.after(1000, () => {
-    console.log('1 segondra taty aoriana');
-});
-
-// Isaky ny fotoana
-timer.every(500, () => {
-    console.log('Isaky ny 500ms');
-}, 10); // 10 heny
-
-// Mampiato
-const t = timer.after(2000, () => {});
-timer.pause(t.id);
-timer.resume(t.id);
-
-// Fanavaozana isaky ny frame
-timer.update(dtMs);`
+        demo: function(display) {
+            let log = [];
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">timer = new R.Famataranandro(); timer.after(100, () => log.push("done")); timer.update(100)</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const timer = new R.Famataranandro();
+                timer.after(100, () => log.push('done'));
+                timer.update(100);
+                document.getElementById('demoResult1').textContent = log.join(', ');
+            };
+        }
     },
     {
-        num: 17, name: 'MpitantanaTween', category: 'core',
+        num: 17, name: 'MpitantanaTween', category: 'Core',
         desc: 'Animation system: to, update, killAll, killOf. Supports ease, delay, repeat, yoyo.',
-        code: `// Animation tsotra
-const obj = { x: 0, y: 0 };
-R.MpitantanaTween.to(obj, { x: 100, y: 200 }, 1000, {
-    ease: 'easeOutQuad',
-    delay: 200,
-    onComplete: () => console.log('Vita!')
-});
-
-// Miverimberina
-R.MpitantanaTween.to(obj, { alpha: 0 }, 500, {
-    repeat: 3,
-    yoyo: true
-});
-
-// Fanavaozana isaky ny frame
-R.MpitantanaTween.update(dtMs);
-
-// Mamono rehetra
-R.MpitantanaTween.killAll();`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">obj = {x:0}; R.MpitantanaTween.to(obj, {x:100}, 100); R.MpitantanaTween.update(50); obj.x =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const obj = { x: 0 };
+                R.MpitantanaTween.to(obj, { x: 100 }, 100);
+                R.MpitantanaTween.update(50);
+                document.getElementById('demoResult1').textContent = obj.x;
+                R.MpitantanaTween.killAll();
+            };
+        }
     },
     {
-        num: 18, name: 'Mpampiditra', category: 'core',
+        num: 18, name: 'Mpampiditra', category: 'Core',
         desc: 'Asset loader: sary, json, feo, spriteSheet, load, unloadImage, unloadJson, unloadAudio, unloadAll.',
-        code: `// Mamorona loader
-const loader = new R.Mpampiditra();
-
-// Mampiditra assets
-loader.sary('player', 'player.png');
-loader.json('data', 'data.json');
-loader.feo('jump', 'jump.wav');
-loader.spriteSheet('hero', 'hero.png', 32, 32);
-
-// Mijery ny fandrosoana
-loader.on('progress', (p) => console.log(p * 100 + '%'));
-
-// Mampiditra
-await loader.load();
-
-// Maka asset
-const img = loader.getSary('player');
-
-// Manala asset
-loader.unloadImage('player', renderer);
-loader.unloadAll(renderer);`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">loader = new R.Mpampiditra(); loader.sary("test", "test.png"); loader._queue.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const loader = new R.Mpampiditra();
+                loader.sary('test', 'test.png');
+                document.getElementById('demoResult1').textContent = loader._queue.length;
+            };
+        }
     },
-
-    // ============ AUDIO & INPUT (19-20) ============
     {
-        num: 19, name: 'Feo', category: 'core',
+        num: 19, name: 'Feo', category: 'Core',
         desc: 'Web Audio system: init, resume, decode, addBuffer, play, playMusic, stopMusic, setMasterVolume, setSfxVolume, setMusicVolume, mamorona.',
-        code: `// Manomboka audio
-R.Feo.init();
-
-// Mampiditra feo
-R.Feo.addBuffer('jump', decodedBuffer);
-
-// Milalao feo
-R.Feo.play('jump', { volume: 0.8, rate: 1.2 });
-
-// Mozika
-R.Feo.playMusic('theme', { volume: 0.5 });
-
-// Mijanon'ny mozika
-R.Feo.stopMusic();
-
-// Volume
-R.Feo.setMasterVolume(0.8);
-R.Feo.setSfxVolume(0.7);
-R.Feo.setMusicVolume(0.4);
-
-// Mamorona feo tsotra
-R.Feo.mamorona('jump');
-R.Feo.mamorona('coin');
-R.Feo.mamorona('explode');`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">R.Feo.init(); R.Feo._ctx !== null =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">R.Feo.mamorona("select")</span>
+                    <span class="result" id="demoResult2">✔</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Mamoaka feo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                R.Feo.init();
+                document.getElementById('demoResult1').textContent = R.Feo._ctx !== null;
+            };
+            window.demo2 = () => {
+                R.Feo.init();
+                R.Feo.mamorona('select');
+                document.getElementById('demoResult2').textContent = '🔊 Nandre!';
+            };
+        }
     },
     {
-        num: 20, name: 'Fanindry', category: 'core',
+        num: 20, name: 'Fanindry', category: 'Core',
         desc: 'Input system: keyboard, mouse, touch, gamepad. isDown, justPressed, axis, mouseDown, joystick.',
-        code: `// Manomboka input
-R.Fanindry.init(canvas);
-
-// Keyboard
-R.Fanindry.isDown('arrowup'); // boolean
-R.Fanindry.justPressed('space');
-R.Fanindry.justReleased('enter');
-
-// Mouse
-R.Fanindry.mouse.x; // position
-R.Fanindry.mouse.down[0]; // click gauche
-R.Fanindry.mouseJustDown(0);
-
-// Gamepad
-const axis = R.Fanindry.axis();
-// { x: -1..1, y: -1..1 }
-
-// Fanavaozana isaky ny frame
-R.Fanindry.updateWorld(camera);
-R.Fanindry._endFrame();`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">R.Fanindry.init(canvas); R.Fanindry._init =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">Tsindrio ny kitendry rehetra:</span>
+                    <span class="result" id="demoResult2">-</span>
+                    <span style="font-size:11px;color:#6688aa;">(tsindrio eo amin'ny pejy)</span>
+                </div>
+            `;
+            window.demo1 = () => {
+                const c = document.createElement('canvas');
+                R.Fanindry.init(c);
+                document.getElementById('demoResult1').textContent = R.Fanindry._init;
+            };
+            // Key listener
+            document.addEventListener('keydown', (e) => {
+                document.getElementById('demoResult2').textContent = e.key;
+            });
+        }
     },
 
-    // ============ CAMERA & RENDERER (21-22) ============
+    // ============ 21-30 ============
     {
-        num: 21, name: 'Kamera', category: 'core',
+        num: 21, name: 'Kamera', category: 'Core',
         desc: 'Camera system: follow, setBounds, setDeadzone, shake, lookAt, screenToWorld, worldToScreen, isVisible, getBounds.',
-        code: `// Mamorona kamera
-const camera = new R.Kamera(800, 600);
-
-// Manaraka entity
-camera.follow(entity, 0.1);
-
-// Faritry ny tontolo
-camera.setBounds(0, 0, 2000, 1500);
-
-// Deadzone
-camera.setDeadzone(100, 100, 200, 150);
-
-// Hozongozona
-camera.shake(15, 300);
-
-// Fanavaozana isaky ny frame
-camera.update(dtMs);
-
-// Fiovana koordinata
-camera.screenToWorld(mouseX, mouseY);
-camera.worldToScreen(worldX, worldY);
-
-// Fijerena raha hita
-camera.isVisible(entityRect);`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">cam = new R.Kamera(800,600); cam.setBounds(0,0,2000,1500); cam.getBounds() =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">cam.shake(15, 300); cam._shakeMag =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const cam = new R.Kamera(800, 600);
+                cam.setBounds(0, 0, 2000, 1500);
+                const b = cam.getBounds();
+                document.getElementById('demoResult1').textContent = `(${b.x}, ${b.y}, ${b.w}, ${b.h})`;
+            };
+            window.demo2 = () => {
+                const cam = new R.Kamera(800, 600);
+                cam.shake(15, 300);
+                document.getElementById('demoResult2').textContent = cam._shakeMag;
+            };
+        }
     },
     {
-        num: 22, name: 'Mpampiseho (WebGL)', category: 'core',
+        num: 22, name: 'Mpampiseho (WebGL)', category: 'Core',
         desc: 'WebGL2 renderer: addTexture, getTexture, deleteTexture, drawQuad, drawSprite, drawRect, flush, begin, end, resize.',
-        code: `// Mamorona renderer
-const renderer = new R.Mpampiseho(canvas);
-
-// Mampiditra texture
-renderer.addTexture('player', img);
-
-// Manomboka rendering
-renderer.clear(0.1, 0.1, 0.15, 1);
-renderer.begin(camera);
-
-// Manao sprite
-renderer.drawSprite(x, y, w, h, sx, sy, sw, sh, color, 'player');
-
-// Mahitsizoro
-renderer.drawRect(x, y, w, h, 0xFF44AAFF);
-
-// Mamarana
-renderer.end();
-
-// Manala texture
-renderer.deleteTexture('player');`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">renderer = new R.Mpampiseho(canvas); renderer.isWebGL2 =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">renderer._textures.size (white texture) =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const c = document.createElement('canvas');
+                try {
+                    const r = new R.Mpampiseho(c);
+                    document.getElementById('demoResult1').textContent = r.isWebGL2;
+                } catch(e) {
+                    document.getElementById('demoResult1').textContent = 'WebGL tsy misy';
+                }
+            };
+            window.demo2 = () => {
+                const c = document.createElement('canvas');
+                try {
+                    const r = new R.Mpampiseho(c);
+                    document.getElementById('demoResult2').textContent = r._textures.size;
+                } catch(e) {
+                    document.getElementById('demoResult2').textContent = 'WebGL tsy misy';
+                }
+            };
+        }
     },
-
-    // ============ SPRITE & PARTICLES (23-24) ============
     {
-        num: 23, name: 'Sarimihetsika', category: 'gameplay',
+        num: 23, name: 'Sarimihetsika', category: 'Gameplay',
         desc: 'Sprite animation: add, play, update, getFrame.',
-        code: `// Mamorona animation
-const anim = new R.Sarimihetsika(spritesheet);
-
-// Mampiditra animation
-anim.add('idle', framesIdle, 12);
-anim.add('run', framesRun, 16);
-anim.add('jump', framesJump, 10, false);
-
-// Milalao
-anim.play('run');
-
-// Fanavaozana
-anim.update(dtMs);
-
-// Maka sary amin'izao
-const frame = anim.getFrame();`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">anim = new R.Sarimihetsika({frames:[]}); anim.add("test", [0,1,2], 10); anim.current =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const anim = new R.Sarimihetsika({ frames: [] });
+                anim.add('test', [0, 1, 2], 10);
+                anim.play('test');
+                document.getElementById('demoResult1').textContent = anim.current;
+            };
+        }
     },
     {
-        num: 24, name: 'Vovoka', category: 'effect',
+        num: 24, name: 'Vovoka', category: 'Effect',
         desc: 'Particle system: emit, update, render. Pool-based, GPU-ready.',
-        code: `// Mamorona particle system
-const particles = new R.Vovoka(10000);
-
-// Mamoaka vovoka
-particles.emit(x, y, {
-    count: 20,
-    speedMin: 50,
-    speedMax: 150,
-    lifeMin: 0.5,
-    lifeMax: 1.5,
-    sizeStart: 8,
-    color: 0xFF44AAFF,
-    gravity: 50,
-    friction: 0.99
-});
-
-// Fanavaozana
-particles.update(dt);
-
-// Rendering
-particles.render(renderer);`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">particles = new R.Vovoka(1000); particles.emit(0,0,{count:10}); particles.particles.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">particles.update(0.016); particles.particles.length =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+            `;
+            let particles;
+            window.demo1 = () => {
+                particles = new R.Vovoka(1000);
+                particles.emit(0, 0, { count: 10 });
+                document.getElementById('demoResult1').textContent = particles.particles.length;
+            };
+            window.demo2 = () => {
+                if (!particles) particles = new R.Vovoka(1000);
+                particles.emit(0, 0, { count: 10 });
+                particles.update(0.016);
+                document.getElementById('demoResult2').textContent = particles.particles.length;
+            };
+        }
     },
-
-    // ============ PHYSICS (25) ============
     {
-        num: 25, name: 'Fizika', category: 'gameplay',
+        num: 25, name: 'Fizika', category: 'Gameplay',
         desc: 'Physics: rectVsRect, circleVsCircle, circleVsRect, pointInRect, pointInCircle, rayRect, rayCircle, polygonVsPolygon, resolveAABB.',
-        code: `// AABB vs AABB
-R.Fizika.rectVsRect(x1, y1, w1, h1, x2, y2, w2, h2);
-
-// Boribory vs Boribory
-R.Fizika.circleVsCircle(cx1, cy1, cr1, cx2, cy2, cr2);
-
-// Boribory vs AABB
-R.Fizika.circleVsRect(cx, cy, cr, rx, ry, rw, rh);
-
-// Raycast vs AABB
-R.Fizika.rayRect(ox, oy, dx, dy, rx, ry, rw, rh);
-
-// Polygone vs Polygone (SAT)
-R.Fizika.polygonVsPolygon(polyA, polyB);
-
-// Famahana collision
-R.Fizika.resolveAABB(entityA, entityB);`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">R.Fizika.rectVsRect(0,0,10,10,5,5,10,10) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">R.Fizika.circleVsCircle(0,0,5,8,0,5) =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">R.Fizika.pointInRect(5,5,0,0,10,10) =</span>
+                    <span class="result" id="demoResult3">...</span>
+                    <button class="btn-demo" onclick="demo3()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => document.getElementById('demoResult1').textContent = R.Fizika.rectVsRect(0, 0, 10, 10, 5, 5, 10, 10);
+            window.demo2 = () => document.getElementById('demoResult2').textContent = R.Fizika.circleVsCircle(0, 0, 5, 8, 0, 5);
+            window.demo3 = () => document.getElementById('demoResult3').textContent = R.Fizika.pointInRect(5, 5, 0, 0, 10, 10);
+        }
     },
 
-    // ============ TILEMAP & PATHFINDING (26-27) ============
+    // ============ 26-30 ============
     {
-        num: 26, name: 'Drafitra (Tilemap)', category: 'gameplay',
+        num: 26, name: 'Drafitra (Tilemap)', category: 'Gameplay',
         desc: 'Tilemap: addLayer, fromTiled, getTile, setTile, isSolidAt, render.',
-        code: `// Mamorona tilemap
-const map = new R.Drafitra({
-    tileSize: 32,
-    width: 20,
-    height: 15
-});
-
-// Mampiditra layer
-map.addLayer('ground', gridData, { solid: true });
-
-// Maka tile
-map.getTile('ground', 5, 3);
-
-// Mametraka tile
-map.setTile('ground', 5, 3, 2);
-
-// Mijery raha solid
-map.isSolidAt(worldX, worldY);
-
-// Rendering
-map.render(renderer, camera, 'tileset');`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">map = new R.Drafitra({tileSize:32,width:5,height:5}); map.addLayer("test", [[0,0],[0,1]]); map.layers.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const map = new R.Drafitra({ tileSize: 32, width: 5, height: 5 });
+                map.addLayer('test', [[0, 0], [0, 1]]);
+                document.getElementById('demoResult1').textContent = map.layers.length;
+            };
+        }
     },
     {
-        num: 27, name: 'Lalana (A*)', category: 'gameplay',
+        num: 27, name: 'Lalana (A*)', category: 'Gameplay',
         desc: 'Pathfinding: find (A*), smooth. Supports diagonal.',
-        code: `// Grid: 0 = azo aleha, 1 = tsy azo aleha
-const grid = [
-    [0, 0, 0, 1, 0],
-    [0, 1, 0, 1, 0],
-    [0, 0, 0, 0, 0]
-];
-
-// Mitady lalana
-const path = R.Lalana.find(grid, 0, 0, 4, 2, { diagonal: true });
-
-// Smoothing
-const smoothPath = R.Lalana.smooth(path, tileSize);`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">grid = [[0,0],[0,0]]; R.Lalana.find(grid, 0,0, 1,1) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const grid = [[0, 0], [0, 0]];
+                const path = R.Lalana.find(grid, 0, 0, 1, 1);
+                document.getElementById('demoResult1').textContent = path ? path.length + ' steps' : 'tsy hita';
+            };
+        }
     },
-
-    // ============ AI (28-29) ============
     {
-        num: 28, name: 'Fivoarana', category: 'gameplay',
+        num: 28, name: 'Fivoarana', category: 'AI',
         desc: 'State machine: add, set, update. Context-based.',
-        code: `// Mamorona state machine
-const sm = new R.Fivoarana();
-
-// Mampiditra state
-sm.add('idle', {
-    enter: (ctx) => { ctx.timer = 0; },
-    update: (ctx, dt) => {
-        ctx.timer += dt;
-        if (ctx.timer > 2) sm.set('walk');
-    }
-});
-
-sm.add('walk', {
-    enter: (ctx) => { /* ... */ },
-    update: (ctx, dt) => { /* ... */ }
-});
-
-// Manomboka
-sm.set('idle');
-
-// Fanavaozana
-sm.update(dt);`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">sm = new R.Fivoarana(); sm.add("idle", {}); sm.current =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const sm = new R.Fivoarana();
+                sm.add('idle', {});
+                sm.set('idle');
+                document.getElementById('demoResult1').textContent = sm.current;
+            };
+        }
     },
     {
-        num: 29, name: 'Fitondrantena (BT)', category: 'gameplay',
+        num: 29, name: 'Fitondrantena (BT)', category: 'AI',
         desc: 'Behavior Tree: Sequence, Selector, Action, Condition, SUCCESS/FAILURE/RUNNING.',
-        code: `// Mamorona behavior tree
-const tree = new R.Fitondrantena.Sequence(
-    new R.Fitondrantena.Condition(ctx => ctx.hp > 0),
-    new R.Fitondrantena.Action(ctx => {
-        console.log('Manao hetsika');
-        return R.Fitondrantena.SUCCESS;
-    })
-);
-
-// Mampandeha
-const result = tree.tick(context);
-
-// Constants
-R.Fitondrantena.SUCCESS; // 1
-R.Fitondrantena.FAILURE; // 2
-R.Fitondrantena.RUNNING; // 3`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">tree = new R.Fitondrantena.Action(() => R.Fitondrantena.SUCCESS); tree.tick({}) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const tree = new R.Fitondrantena.Action(() => R.Fitondrantena.SUCCESS);
+                document.getElementById('demoResult1').textContent = tree.tick({});
+            };
+        }
     },
-
-    // ============ UI (30) ============
     {
-        num: 30, name: 'Fandraisana (UI)', category: 'ui',
+        num: 30, name: 'Fandraisana (UI)', category: 'UI',
         desc: 'UI: Bokotra, Bara (health/progress bar).',
-        code: `// Bokotra
-const btn = new R.Fandraisana.Bokotra(100, 100, 120, 40, 'Tindrio', () => {
-    console.log('Nindriña!');
-});
-btn.update();
-btn.render(renderer);
-
-// Bara (health/progress)
-const bar = new R.Fandraisana.Bara(100, 160, 200, 20, {
-    max: 100,
-    value: 75,
-    bgColor: 0xFF2222FF,
-    fillColor: 0xFF44FF44
-});
-bar.setValue(80);
-bar.render(renderer);`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">bar = new R.Fandraisana.Bara(0,0,100,20,{max:100,value:75}); bar.value =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+                <div class="plugin-demo">
+                    <span class="label">bar.setValue(50); bar.value =</span>
+                    <span class="result" id="demoResult2">...</span>
+                    <button class="btn-demo" onclick="demo2()">▶ Alaivo</button>
+                </div>
+            `;
+            let bar;
+            window.demo1 = () => {
+                bar = new R.Fandraisana.Bara(0, 0, 100, 20, { max: 100, value: 75 });
+                document.getElementById('demoResult1').textContent = bar.value;
+            };
+            window.demo2 = () => {
+                if (!bar) bar = new R.Fandraisana.Bara(0, 0, 100, 20, { max: 100, value: 75 });
+                bar.setValue(50);
+                document.getElementById('demoResult2').textContent = bar.value;
+            };
+        }
     },
 
-    // ============ SAVE & LOCALIZATION (31-32) ============
+    // ============ 31-40 ============
     {
-        num: 31, name: 'Tehirizo (Save)', category: 'util',
+        num: 31, name: 'Tehirizo (Save)', category: 'Util',
         desc: 'Save system: save, load, list, delete, clear. localStorage-based.',
-        code: `// Mamorona save
-const save = new R.Tehirizo('myGame');
-
-// Tehirizina
-save.save(0, { level: 5, score: 1000, items: ['sword'] });
-
-// Mamaky
-const data = save.load(0);
-
-// Lisitry ny slots
-save.list();
-
-// Mamafa
-save.delete(0);
-save.clear(); // Mamafa daholo`
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">save = new R.Tehirizo("test"); save.save(0, {test:"ok"}); save.load(0) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const save = new R.Tehirizo('test');
+                save.save(0, { test: 'ok' });
+                const data = save.load(0);
+                document.getElementById('demoResult1').textContent = data ? data.test : 'tsy misy';
+                save.delete(0);
+            };
+        }
     },
     {
-        num: 32, name: 'Teny (i18n)', category: 'util',
+        num: 32, name: 'Teny (i18n)', category: 'Util',
         desc: 'Localization: add, set, t (translate). Supports {variables}.',
-        code: `// Mampiditra fiteny
-R.Teny.add('mg', {
-    hello: 'Salama {name}!',
-    start: 'Manomboka'
-});
-R.Teny.add('en', {
-    hello: 'Hello {name}!',
-    start: 'Start'
-});
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">R.Teny.add("mg", {hello:"Salama {name}!"}); R.Teny.t("hello", {name:"Jean"}) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                R.Teny.add('mg', { hello: 'Salama {name}!' });
+                R.Teny.set('mg');
+                document.getElementById('demoResult1').textContent = R.Teny.t('hello', { name: 'Jean' });
+            };
+        }
+    },
+    {
+        num: 33, name: 'Toetrandro', category: 'Effect',
+        desc: 'Weather system: setMode (snow/rain/storm), update, render.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">weather = new R.Toetrandro(100,100); weather.setMode("snow"); weather.mode =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const w = new R.Toetrandro(100, 100);
+                w.setMode('snow');
+                document.getElementById('demoResult1').textContent = w.mode;
+            };
+        }
+    },
+    {
+        num: 34, name: 'DebugDrafitra', category: 'Util',
+        desc: 'Debug draw: rect, circle, line, point.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">debug = new R.DebugDrafitra(null); debug.enabled =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const d = new R.DebugDrafitra(null);
+                document.getElementById('demoResult1').textContent = d.enabled;
+            };
+        }
+    },
+    {
+        num: 35, name: 'Antontanisa', category: 'Util',
+        desc: 'Stats monitor: fps, frameTime, entityCount, drawCalls.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">stats = new R.Antontanisa(); stats.update(16); stats.fps =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const s = new R.Antontanisa();
+                s.update(16);
+                document.getElementById('demoResult1').textContent = s.fps;
+            };
+        }
+    },
+    {
+        num: 36, name: 'TsipikaFotoana', category: 'Util',
+        desc: 'Timeline/sequence of events: at, update, reset.',
+        demo: function(display) {
+            let log = [];
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">tl = new R.TsipikaFotoana(); tl.at(100, () => log.push("done")); tl.update(100)</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const tl = new R.TsipikaFotoana();
+                tl.at(100, () => log.push('done'));
+                tl.update(100);
+                document.getElementById('demoResult1').textContent = log.join(', ');
+            };
+        }
+    },
+    {
+        num: 37, name: 'Taolana (IK)', category: 'Gameplay',
+        desc: 'Inverse Kinematics (FABRIK): solve.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">ik = new R.Taolana(0,0,[50,40]); ik.solve(80,0); ik.joints.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const ik = new R.Taolana(0, 0, [50, 40]);
+                ik.solve(80, 0);
+                document.getElementById('demoResult1').textContent = ik.joints.length;
+            };
+        }
+    },
+    {
+        num: 38, name: 'Piolaka', category: 'Math',
+        desc: 'Catmull-Rom spline: evaluate.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">spline = new R.Piolaka([{x:0,y:0},{x:10,y:10}]); spline.evaluate(0.5) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const s = new R.Piolaka([{ x: 0, y: 0 }, { x: 10, y: 10 }]);
+                const p = s.evaluate(0.5);
+                document.getElementById('demoResult1').textContent = `(${p.x.toFixed(1)}, ${p.y.toFixed(1)})`;
+            };
+        }
+    },
+    {
+        num: 39, name: 'Rano', category: 'Gameplay',
+        desc: 'Water simulation: splash, update, getSurfaceY.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">water = new R.Rano(0,0,100,20); water.columns.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const w = new R.Rano(0, 0, 100, 20);
+                document.getElementById('demoResult1').textContent = w.columns.length;
+            };
+        }
+    },
+    {
+        num: 40, name: 'Sarintany (Minimap)', category: 'UI',
+        desc: 'Minimap: track, render.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">minimap = new R.Sarintany({size:100}); minimap.size =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const m = new R.Sarintany({ size: 100 });
+                document.getElementById('demoResult1').textContent = m.size;
+            };
+        }
+    },
 
-// Miova fiteny
-R.Teny.set('mg');
+    // ============ 41-50 ============
+    {
+        num: 41, name: 'Zavona (Fog of War)', category: 'Gameplay',
+        desc: 'Fog of war: reveal, isVisible.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">fog = new R.Zavona(100,100,10); fog.reveal(20,20,2); fog.isVisible(20,20) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const f = new R.Zavona(100, 100, 10);
+                f.reveal(20, 20, 2);
+                document.getElementById('demoResult1').textContent = f.isVisible(20, 20);
+            };
+        }
+    },
+    {
+        num: 42, name: 'MpitantanaEfitra', category: 'Effect',
+        desc: 'Post-processing effects manager: add, apply.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">pp = new R.MpitantanaEfitra(null); pp.effects.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const pp = new R.MpitantanaEfitra(null);
+                document.getElementById('demoResult1').textContent = pp.effects.length;
+            };
+        }
+    },
+    {
+        num: 43, name: 'EfitraTaloha (CRT)', category: 'Effect',
+        desc: 'CRT effect (placeholder).',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">crt = new R.EfitraTaloha(0.5); crt.intensity =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const c = new R.EfitraTaloha(0.5);
+                document.getElementById('demoResult1').textContent = c.intensity;
+            };
+        }
+    },
+    {
+        num: 44, name: 'Famirapiratana (Bloom)', category: 'Effect',
+        desc: 'Bloom effect (placeholder).',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">bloom = new R.Famirapiratana(0.8,1); bloom.threshold =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const b = new R.Famirapiratana(0.8, 1);
+                document.getElementById('demoResult1').textContent = b.threshold;
+            };
+        }
+    },
+    {
+        num: 45, name: 'Hozongozona (Shake)', category: 'Effect',
+        desc: 'Screen shake: trigger, update.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">shake = new R.Hozongozona(); shake.trigger(10,500); shake.intensity =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const s = new R.Hozongozona();
+                s.trigger(10, 500);
+                document.getElementById('demoResult1').textContent = s.intensity;
+            };
+        }
+    },
+    {
+        num: 46, name: 'Entana (Inventory)', category: 'Gameplay',
+        desc: 'Inventory system: add, remove, has.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">inv = new R.Entana(5); inv.add({id:"sword"}); inv.has("sword") =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const inv = new R.Entana(5);
+                inv.add({ id: 'sword' });
+                document.getElementById('demoResult1').textContent = inv.has('sword');
+            };
+        }
+    },
+    {
+        num: 47, name: 'MpitantanaIraka (Quests)', category: 'Gameplay',
+        desc: 'Quest system: add, progress.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">qm = new R.MpitantanaIraka(); qm.add("q1","Test",[{target:3}]); qm.quests.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const qm = new R.MpitantanaIraka();
+                qm.add('q1', 'Test', [{ target: 3 }]);
+                document.getElementById('demoResult1').textContent = qm.quests.length;
+            };
+        }
+    },
+    {
+        num: 48, name: 'MpitantanaResaka (Dialogue)', category: 'Gameplay',
+        desc: 'Dialogue system: addNode, start, update.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">dialog = new R.MpitantanaResaka(); dialog.addNode("start",{text:"Hello"}); dialog.nodes.size =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const d = new R.MpitantanaResaka();
+                d.addNode('start', { text: 'Hello' });
+                document.getElementById('demoResult1').textContent = d.nodes.size;
+            };
+        }
+    },
+    {
+        num: 49, name: 'JoystickVirtoaly', category: 'UI',
+        desc: 'Virtual joystick: update.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">joy = new R.JoystickVirtoaly(100,100,50); joy.radius =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const j = new R.JoystickVirtoaly(100, 100, 50);
+                document.getElementById('demoResult1').textContent = j.radius;
+            };
+        }
+    },
+    {
+        num: 50, name: 'MpitantanaFanampiny', category: 'Util',
+        desc: 'Plugin manager: install, uninstall, get, list.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">pm = new R.MpitantanaFanampiny(); pm.plugins.size =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const pm = new R.MpitantanaFanampiny();
+                document.getElementById('demoResult1').textContent = pm.plugins.size;
+            };
+        }
+    },
 
-// Maka traduksiona
-R.Teny.t('hello', { name: 'Jean' }); // "Salama Jean!"
-R.Teny.t('start'); // "Manomboka"`
+    // ============ 51-60: V4.2.0 VAOVAO ============
+    {
+        num: 51, name: 'RakotraSary (Atlas)', category: 'Util',
+        desc: 'Texture atlas / sprite sheet parser: cut, get, slice.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">atlas = new R.RakotraSary({width:64,height:64}, 32, 32); atlas.frames.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const atlas = new R.RakotraSary({ width: 64, height: 64 }, 32, 32);
+                document.getElementById('demoResult1').textContent = atlas.frames.length;
+            };
+        }
+    },
+    {
+        num: 52, name: 'FizarinaSarimihetsika', category: 'Gameplay',
+        desc: 'Animation state machine: addState, addTransition, setParam, update, getAnim.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">asm = new R.FizarinaSarimihetsika(); asm.addState("idle",{}); asm.current =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const asm = new R.FizarinaSarimihetsika();
+                asm.addState('idle', {});
+                document.getElementById('demoResult1').textContent = asm.current;
+            };
+        }
+    },
+    {
+        num: 53, name: 'Fisononana (Parallax)', category: 'Effect',
+        desc: 'Parallax scrolling layers: addLayer, update, render.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">p = new R.Fisononana(); p.addLayer(()=>{}, 100, 100, 0.5); p.layers.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const p = new R.Fisononana();
+                p.addLayer(() => {}, 100, 100, 0.5);
+                document.getElementById('demoResult1').textContent = p.layers.length;
+            };
+        }
+    },
+    {
+        num: 54, name: 'Manaraka (Camera Follow)', category: 'Core',
+        desc: 'Camera follow with deadzone and lookahead: setTarget, update.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">follow = new R.Manaraka(new R.Kamera(), {x:100,y:100}); follow.target.x =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const f = new R.Manaraka(new R.Kamera(), { x: 100, y: 100 });
+                document.getElementById('demoResult1').textContent = f.target.x;
+            };
+        }
+    },
+    {
+        num: 55, name: 'LalanaDijkstra', category: 'Gameplay',
+        desc: 'Weighted grid pathfinding: find (Dijkstra).',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">dj = new R.LalanaDijkstra([[0,0],[0,0]],2,2); dj.find(0,0,1,1) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const d = new R.LalanaDijkstra([[0, 0], [0, 0]], 2, 2);
+                const path = d.find(0, 0, 1, 1);
+                document.getElementById('demoResult1').textContent = path ? path.length : 'tsy hita';
+            };
+        }
+    },
+    {
+        num: 56, name: 'HazoFitondrantena (BT Builder)', category: 'AI',
+        desc: 'Behavior Tree builder: sequence, selector, action, condition, invert.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">bt = R.HazoFitondrantena.action(() => true); bt({}) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const bt = R.HazoFitondrantena.action(() => true);
+                document.getElementById('demoResult1').textContent = bt({});
+            };
+        }
+    },
+    {
+        num: 57, name: 'MpandefaOnja (Waves)', category: 'Gameplay',
+        desc: 'Enemy wave / spawner manager: addWave, start, update, isFinished.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">wave = new R.MpandefaOnja(); wave.addWave(3,1,()=>{}); wave.waves.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const w = new R.MpandefaOnja();
+                w.addWave(3, 1, () => {});
+                document.getElementById('demoResult1').textContent = w.waves.length;
+            };
+        }
+    },
+    {
+        num: 58, name: 'IsaFahavoazana', category: 'UI',
+        desc: 'Floating damage numbers: spawn, update, render.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">dmg = new R.IsaFahavoazana(); dmg.spawn(0,0,"10"); dmg.popups.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const d = new R.IsaFahavoazana();
+                d.spawn(0, 0, '10');
+                document.getElementById('demoResult1').textContent = d.popups.length;
+            };
+        }
+    },
+    {
+        num: 59, name: 'TsipikaFahasalamana', category: 'UI',
+        desc: 'Health/progress bar: set, update, render.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">hp = new R.TsipikaFahasalamana(0,0,100,20,100); hp.value =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const h = new R.TsipikaFahasalamana(0, 0, 100, 20, 100);
+                document.getElementById('demoResult1').textContent = h.value;
+            };
+        }
+    },
+    {
+        num: 60, name: 'Fahaizana (Abilities)', category: 'Gameplay',
+        desc: 'Ability cooldown manager: register, use, isReady, cooldownLeft, update.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">ab = new R.Fahaizana(); ab.register("skill", 2); ab.isReady("skill") =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const a = new R.Fahaizana();
+                a.register('skill', 2);
+                document.getElementById('demoResult1').textContent = a.isReady('skill');
+            };
+        }
+    },
 
-    // Ny plugins 33-100 dia tohizana...
+    // ============ 61-70 ============
+    {
+        num: 61, name: 'Kombo (Combos)', category: 'Gameplay',
+        desc: 'Input buffer / combo detector: addCombo, press.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">combo = new R.Kombo(); combo.addCombo("test",["A","B"],()=>{}); combo.combos.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const c = new R.Kombo();
+                c.addCombo('test', ['A', 'B'], () => {});
+                document.getElementById('demoResult1').textContent = c.combos.length;
+            };
+        }
+    },
+    {
+        num: 62, name: 'MpanovaHafainganan', category: 'Util',
+        desc: 'Time scale / slow-motion: set, tween, apply.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">ts = new R.MpanovaHafainganan(); ts.set(0.5); ts.scale =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const t = new R.MpanovaHafainganan();
+                t.set(0.5);
+                document.getElementById('demoResult1').textContent = t.scale;
+            };
+        }
+    },
+    {
+        num: 63, name: 'Balafomanga (Bullets)', category: 'Gameplay',
+        desc: 'Bullet pool: fire, update, render.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">bullets = new R.Balafomanga(10); bullets.fire(0,0,1,1); bullets.active.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const b = new R.Balafomanga(10);
+                b.fire(0, 0, 1, 1);
+                document.getElementById('demoResult1').textContent = b.active.length;
+            };
+        }
+    },
+    {
+        num: 64, name: 'Taratra (Raycast)', category: 'Gameplay',
+        desc: '2D raycasting / line of sight: cast, lineOfSight.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">R.Taratra.lineOfSight(0,0,10,10, [{x:5,y:5,w:2,h:2}]) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const result = R.Taratra.lineOfSight(0, 0, 10, 10, [{ x: 5, y: 5, w: 2, h: 2 }]);
+                document.getElementById('demoResult1').textContent = result;
+            };
+        }
+    },
+    {
+        num: 65, name: 'Fitondrana (Steering)', category: 'AI',
+        desc: 'Steering behaviors: seek, flee, wander, arrive.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">R.Fitondrana.seek({x:0,y:0}, {x:0,y:0}, {x:10,y:10}, 5, 2) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const s = R.Fitondrana.seek({ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 10, y: 10 }, 5, 2);
+                document.getElementById('demoResult1').textContent = `(${s.x.toFixed(2)}, ${s.y.toFixed(2)})`;
+            };
+        }
+    },
+    {
+        num: 66, name: 'Vorona (Boids)', category: 'AI',
+        desc: 'Flocking / boids simulation: add, update.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">boids = new R.Vorona(); boids.add(0,0); boids.boids.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const b = new R.Vorona();
+                b.add(0, 0);
+                document.getElementById('demoResult1').textContent = b.boids.length;
+            };
+        }
+    },
+    {
+        num: 67, name: 'Isometrika', category: 'Math',
+        desc: 'Isometric coordinate conversion: toScreen, toGrid.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">iso = new R.Isometrika(64,32); iso.toScreen(5,3) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const i = new R.Isometrika(64, 32);
+                const p = i.toScreen(5, 3);
+                document.getElementById('demoResult1').textContent = `(${p.x}, ${p.y})`;
+            };
+        }
+    },
+    {
+        num: 68, name: 'AutoTile', category: 'Gameplay',
+        desc: 'Automatic tile edge/corner resolver: resolve.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">at = new R.AutoTile(); at.resolve([[0,0],[0,1]], 2, 2, 1, 1) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const a = new R.AutoTile();
+                const result = a.resolve([[0, 0], [0, 1]], 2, 2, 1, 1);
+                document.getElementById('demoResult1').textContent = result;
+            };
+        }
+    },
+    {
+        num: 69, name: 'MaripahatanterahanaSystem', category: 'Gameplay',
+        desc: 'Achievements: register, check, onUnlock, getAll.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">ach = new R.MaripahatanterahanaSystem(); ach.register("test","Test",()=>true); ach.getAll().length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const a = new R.MaripahatanterahanaSystem();
+                a.register('test', 'Test', () => true);
+                document.getElementById('demoResult1').textContent = a.getAll().length;
+            };
+        }
+    },
+    {
+        num: 70, name: 'TarehimarikaLoka (Leaderboard)', category: 'Util',
+        desc: 'Local leaderboard: submit, top.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">lb = new R.TarehimarikaLoka("test",5); lb.submit("Jean",100); lb.top().length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const l = new R.TarehimarikaLoka('test', 5);
+                l.submit('Jean', 100);
+                document.getElementById('demoResult1').textContent = l.top().length;
+            };
+        }
+    },
+
+    // ============ 71-80 ============
+    {
+        num: 71, name: 'FitehirizanaMaro', category: 'Util',
+        desc: 'Multi-slot save manager: save, load, delete, listSlots.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">sm = new R.FitehirizanaMaro("test",3); sm.slotCount =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const s = new R.FitehirizanaMaro('test', 3);
+                document.getElementById('demoResult1').textContent = s.slotCount;
+            };
+        }
+    },
+    {
+        num: 72, name: 'Kirakira (Settings)', category: 'Util',
+        desc: 'Settings/config manager: get, set, reset, save, load.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">settings = new R.Kirakira({vol:1}); settings.get("vol") =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const s = new R.Kirakira({ vol: 1 });
+                document.getElementById('demoResult1').textContent = s.get('vol');
+            };
+        }
+    },
+    {
+        num: 73, name: 'FifindraSehatra (Transition)', category: 'UI',
+        desc: 'Scene transition effects: start, update, render (fade).',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">trans = new R.FifindraSehatra(); trans.start(); trans.active =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const t = new R.FifindraSehatra();
+                t.start();
+                document.getElementById('demoResult1').textContent = t.active;
+            };
+        }
+    },
+    {
+        num: 74, name: 'TsipikaFampidirana', category: 'UI',
+        desc: 'Loading progress bar: update, render.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">pb = new R.TsipikaFampidirana({_total:10,_loaded:5}); pb.update(); pb.progress =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const p = new R.TsipikaFampidirana({ _total: 10, _loaded: 5 });
+                p.update();
+                document.getElementById('demoResult1').textContent = p.progress;
+            };
+        }
+    },
+    {
+        num: 75, name: 'Fampahafantarana (Toasts)', category: 'UI',
+        desc: 'Toast notification queue: push, update, render.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">toast = new R.Fampahafantarana(); toast.push("Hello"); toast.queue.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const t = new R.Fampahafantarana();
+                t.push('Hello');
+                document.getElementById('demoResult1').textContent = t.queue.length;
+            };
+        }
+    },
+    {
+        num: 76, name: 'Efijoro (Modal)', category: 'UI',
+        desc: 'Modal dialog box: open, close, handleClick, render.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">modal = new R.Efijoro(0,0,100,100); modal.open("Test","Body"); modal.visible =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const m = new R.Efijoro(0, 0, 100, 100);
+                m.open('Test', 'Body');
+                document.getElementById('demoResult1').textContent = m.visible;
+            };
+        }
+    },
+    {
+        num: 77, name: 'Bokotra (Button)', category: 'UI',
+        desc: 'Button widget with hover/press states: update, click, render.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">btn = new R.Bokotra(0,0,100,30,"Test",()=>{}); btn.state =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const b = new R.Bokotra(0, 0, 100, 30, 'Test', () => {});
+                document.getElementById('demoResult1').textContent = b.state;
+            };
+        }
+    },
+    {
+        num: 78, name: 'Sikaray (Grid Layout)', category: 'UI',
+        desc: 'Grid layout UI container: add, _layout.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">grid = new R.Sikaray(0,0,2,50,50); grid.items.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const g = new R.Sikaray(0, 0, 2, 50, 50);
+                document.getElementById('demoResult1').textContent = g.items.length;
+            };
+        }
+    },
+    {
+        num: 79, name: 'SoratraBitmap', category: 'UI',
+        desc: 'Bitmap font renderer: draw, measure.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">font = new R.SoratraBitmap({}, {}, 8, 8); font.charW =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const f = new R.SoratraBitmap({}, {}, 8, 8);
+                document.getElementById('demoResult1').textContent = f.charW;
+            };
+        }
+    },
+    {
+        num: 80, name: 'SoratraMiloko', category: 'UI',
+        desc: 'Rich text parser [color=RRGGBB]...[/color]: parse.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">R.SoratraMiloko.parse("[color=FF0000]Hello[/color]").length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const result = R.SoratraMiloko.parse('[color=FF0000]Hello[/color]');
+                document.getElementById('demoResult1').textContent = result.length;
+            };
+        }
+    },
+
+    // ============ 81-90 ============
+    {
+        num: 81, name: 'Horohoro (Vibration)', category: 'Util',
+        desc: 'Gamepad vibration wrapper: vibrate.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">R.Horohoro.vibrate(0, 0.5, 0.5, 100) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                try {
+                    const result = R.Horohoro.vibrate(0, 0.5, 0.5, 100);
+                    document.getElementById('demoResult1').textContent = result;
+                } catch(e) {
+                    document.getElementById('demoResult1').textContent = 'tsy misy gamepad';
+                }
+            };
+        }
+    },
+    {
+        num: 82, name: 'Fihetsika (Gestures)', category: 'UI',
+        desc: 'Touch gesture recognizer (swipe, pinch, tap).',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">gesture = new R.Fihetsika(); gesture._touches.size =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const g = new R.Fihetsika();
+                document.getElementById('demoResult1').textContent = g._touches.size;
+            };
+        }
+    },
+    {
+        num: 83, name: 'FisehoanaIndray (Replay)', category: 'Util',
+        desc: 'Input replay recorder/player: startRecording, stopRecording, record, startPlayback, nextFrame, toJSON, fromJSON.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">replay = new R.FisehoanaIndray(); replay.startRecording(); replay.recording =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const r = new R.FisehoanaIndray();
+                r.startRecording();
+                document.getElementById('demoResult1').textContent = r.recording;
+            };
+        }
+    },
+    {
+        num: 84, name: 'Aloka (Trail)', category: 'Effect',
+        desc: 'Motion trail / ghost effect: update, render.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">trail = new R.Aloka(8, 0.03); trail.maxGhosts =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const t = new R.Aloka(8, 0.03);
+                document.getElementById('demoResult1').textContent = t.maxGhosts;
+            };
+        }
+    },
+    {
+        num: 85, name: 'AndroSyAlina', category: 'Effect',
+        desc: 'Day-night cycle manager: update, getPhase, getTint.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">dn = new R.AndroSyAlina(120); dn.getPhase() =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const d = new R.AndroSyAlina(120);
+                document.getElementById('demoResult1').textContent = d.getPhase();
+            };
+        }
+    },
+    {
+        num: 86, name: 'FamoronanaSehatra', category: 'Gameplay',
+        desc: 'Procedural room-based level generator: generate.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">gen = new R.FamoronanaSehatra(10,10,1); gen.generate(3); gen.rooms.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const g = new R.FamoronanaSehatra(10, 10, 1);
+                g.generate(3);
+                document.getElementById('demoResult1').textContent = g.rooms.length;
+            };
+        }
+    },
+    {
+        num: 87, name: 'TanyFbm', category: 'Gameplay',
+        desc: 'Terrain height/biome generator via noise: heightAt, biomeAt.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">terrain = new R.TanyFbm(1); terrain.heightAt(10,10) =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const t = new R.TanyFbm(1);
+                document.getElementById('demoResult1').textContent = t.heightAt(10, 10).toFixed(4);
+            };
+        }
+    },
+    {
+        num: 88, name: 'Vola (Currency)', category: 'Gameplay',
+        desc: 'Currency/economy tracker: add, spend, onChange.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">wallet = new R.Vola(100); wallet.add(50); wallet.amount =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const w = new R.Vola(100);
+                w.add(50);
+                document.getElementById('demoResult1').textContent = w.amount;
+            };
+        }
+    },
+    {
+        num: 89, name: 'Fivarotana (Shop)', category: 'Gameplay',
+        desc: 'Shop/trade system: stock, buy, sell.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">shop = new R.Fivarotana(new R.Vola(100)); shop.stock("sword","Sabatra",10); shop.items.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const s = new R.Fivarotana(new R.Vola(100));
+                s.stock('sword', 'Sabatra', 10);
+                document.getElementById('demoResult1').textContent = s.items.length;
+            };
+        }
+    },
+    {
+        num: 90, name: 'Safidy (Choices)', category: 'Gameplay',
+        desc: 'Branching dialogue choice manager: addChoices, getChoices, choose.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">choice = new R.Safidy(new R.MpitantanaResaka()); choice.addChoices("start",[{text:"OK"}]); choice.getChoices("start").length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const c = new R.Safidy(new R.MpitantanaResaka());
+                c.addChoices('start', [{ text: 'OK' }]);
+                document.getElementById('demoResult1').textContent = c.getChoices('start').length;
+            };
+        }
+    },
+
+    // ============ 91-100 ============
+    {
+        num: 91, name: 'Horonantsary (Cutscene)', category: 'Gameplay',
+        desc: 'Cutscene sequencer: addWait, addAction, play, update.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">cut = new R.Horonantsary(); cut.addWait(1); cut.steps.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const c = new R.Horonantsary();
+                c.addWait(1);
+                document.getElementById('demoResult1').textContent = c.steps.length;
+            };
+        }
+    },
+    {
+        num: 92, name: 'Rohy (WebSocket)', category: 'Net',
+        desc: 'Basic WebSocket networking: connect, on, send.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">socket = new R.Rohy("ws://localhost:8080"); socket.url =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const s = new R.Rohy('ws://localhost:8080');
+                document.getElementById('demoResult1').textContent = s.url;
+            };
+        }
+    },
+    {
+        num: 93, name: 'Marika (Tags)', category: 'Util',
+        desc: 'Entity tagging/grouping registry: tag, untag, getGroup, hasTag.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">tags = new R.Marika(); tags.tag("entity","group"); tags.getGroup("group").length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const t = new R.Marika();
+                t.tag('entity', 'group');
+                document.getElementById('demoResult1').textContent = t.getGroup('group').length;
+            };
+        }
+    },
+    {
+        num: 94, name: 'SokajyHalina (Layers)', category: 'Util',
+        desc: 'Depth/layer sort manager: add, clear, renderAll.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">layers = new R.SokajyHalina(); layers.add("back",{}); layers.layers.size =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const l = new R.SokajyHalina();
+                l.add('back', {});
+                document.getElementById('demoResult1').textContent = l.layers.size;
+            };
+        }
+    },
+    {
+        num: 95, name: 'Vovonana (Hitboxes)', category: 'Gameplay',
+        desc: 'Hitbox/hurtbox combat resolver: addHitbox, addHurtbox, resolve, clearFrame, resetHitPairs.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">combat = new R.Vovonana(); combat.addHitbox("a",0,0,10,10,1); combat.hitboxes.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const c = new R.Vovonana();
+                c.addHitbox('a', 0, 0, 10, 10, 1);
+                document.getElementById('demoResult1').textContent = c.hitboxes.length;
+            };
+        }
+    },
+    {
+        num: 96, name: 'Fanosehana (Knockback)', category: 'Gameplay',
+        desc: 'Knockback/impulse resolver: apply, update.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">vel = {x:0,y:0}; R.Fanosehana.apply(vel,0,0,10,10,5); vel.x =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const v = { x: 0, y: 0 };
+                R.Fanosehana.apply(v, 0, 0, 10, 10, 5);
+                document.getElementById('demoResult1').textContent = v.x.toFixed(2);
+            };
+        }
+    },
+    {
+        num: 97, name: 'AlokaEfijoro (Fade/Vignette)', category: 'Effect',
+        desc: 'Screen fade and vignette overlay: fadeTo, update, render.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">overlay = new R.AlokaEfijoro(); overlay.fadeTo(0.5); overlay.fadeAlpha =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const o = new R.AlokaEfijoro();
+                o.fadeTo(0.5);
+                o.update(0.25);
+                document.getElementById('demoResult1').textContent = o.fadeAlpha.toFixed(2);
+            };
+        }
+    },
+    {
+        num: 98, name: 'FitaovanaFanampinyExamples', category: 'Util',
+        desc: 'Ready-made example plugins: fpsCounter, autoSave.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">R.FitaovanaFanampinyExamples.fpsCounter.name =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                document.getElementById('demoResult1').textContent = R.FitaovanaFanampinyExamples.fpsCounter.name;
+            };
+        }
+    },
+    {
+        num: 99, name: 'MpitantanaSokajy (Jobs)', category: 'Util',
+        desc: 'Simple job/task scheduler: schedule, update, cancel.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">scheduler = new R.MpitantanaSokajy(); scheduler.schedule(1,()=>{}); scheduler.tasks.length =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const s = new R.MpitantanaSokajy();
+                s.schedule(1, () => {});
+                document.getElementById('demoResult1').textContent = s.tasks.length;
+            };
+        }
+    },
+    {
+        num: 100, name: 'MpitantanaFanampinyLehibe', category: 'Util',
+        desc: 'Extended plugin manager with hooks: addHook, runHook, installAll.',
+        demo: function(display) {
+            display.innerHTML = `
+                <div class="plugin-demo">
+                    <span class="label">pm = new R.MpitantanaFanampinyLehibe(); pm.addHook("test",()=>{}); pm.hooks.size =</span>
+                    <span class="result" id="demoResult1">...</span>
+                    <button class="btn-demo" onclick="demo1()">▶ Alaivo</button>
+                </div>
+            `;
+            window.demo1 = () => {
+                const p = new R.MpitantanaFanampinyLehibe();
+                p.addHook('test', () => {});
+                document.getElementById('demoResult1').textContent = p.hooks.size;
+            };
+        }
     }
 ];
 
 // ============================================================
-// FANORINANA NY HTML
+// FANORINANA NY NAVIGATION
 // ============================================================
-const container = document.getElementById('container');
+const nav = document.getElementById('navButtons');
+let currentIndex = 0;
 
-function renderPlugins(filter = 'all', search = '') {
-    container.innerHTML = '';
-    const filtered = pluginsData.filter(p => {
-        const matchFilter = filter === 'all' || p.category === filter;
-        const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-                           p.desc.toLowerCase().includes(search.toLowerCase());
-        return matchFilter && matchSearch;
+// Boutons de navigation
+const prevBtn = document.createElement('button');
+prevBtn.textContent = '◄';
+prevBtn.style.background = '#1a2a44';
+prevBtn.style.borderColor = '#4488cc';
+prevBtn.style.padding = '4px 16px';
+prevBtn.style.fontSize = '16px';
+nav.appendChild(prevBtn);
+
+// Boutons pour chaque plugin
+pluginsData.forEach((p, i) => {
+    const btn = document.createElement('button');
+    btn.textContent = p.num;
+    btn.dataset.index = i;
+    if (i === 0) btn.classList.add('active');
+    btn.addEventListener('click', () => showPlugin(i));
+    nav.appendChild(btn);
+});
+
+// Bouton suivant
+const nextBtn = document.createElement('button');
+nextBtn.textContent = '►';
+nextBtn.style.background = '#1a2a44';
+nextBtn.style.borderColor = '#4488cc';
+nextBtn.style.padding = '4px 16px';
+nextBtn.style.fontSize = '16px';
+nav.appendChild(nextBtn);
+
+// ============================================================
+// FAMPIASANA
+// ============================================================
+const pluginContent = document.getElementById('pluginContent');
+const currentNum = document.getElementById('currentNum');
+const totalNum = document.getElementById('totalNum');
+
+totalNum.textContent = pluginsData.length;
+
+function showPlugin(index) {
+    currentIndex = index;
+    const data = pluginsData[index];
+    currentNum.textContent = data.num;
+
+    // Mamaritra ny boutons
+    const btns = nav.querySelectorAll('button[data-index]');
+    btns.forEach((b, i) => {
+        b.classList.toggle('active', i === index);
     });
 
-    if (filtered.length === 0) {
-        container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#446688;">Tsy misy plugin mifanandrify</div>';
-        return;
+    // Asehoy ny demo
+    pluginContent.innerHTML = `
+        <div class="plugin-header">
+            <span class="name">${data.name}</span>
+            <span>
+                <span class="badge">${data.category || 'Plugin'}</span>
+                <span class="num">#${data.num}</span>
+            </span>
+        </div>
+        <div class="plugin-desc">${data.desc}</div>
+    `;
+
+    // Demo container
+    const demoContainer = document.createElement('div');
+    demoContainer.id = 'demoContainer';
+    pluginContent.appendChild(demoContainer);
+
+    // Miantso ny demo function
+    if (data.demo) {
+        data.demo(demoContainer);
+    } else {
+        demoContainer.innerHTML = `
+            <div class="plugin-demo">
+                <span class="label">✅ Plugin ${data.name} (${data.num})</span>
+                <span class="result">Vita</span>
+            </div>
+        `;
     }
 
-    filtered.forEach(p => {
-        const div = document.createElement('div');
-        div.className = 'plugin';
-        div.innerHTML = `
-            <span class="num">#${p.num}</span>
-            <div class="name">${p.name}</div>
-            <div class="desc">${p.desc}</div>
-            <div class="code">${p.code}</div>
-            <span class="badge ${p.category}">${p.category}</span>
-        `;
-        container.appendChild(div);
-    });
+    // Code example
+    if (data.code) {
+        const codeDiv = document.createElement('div');
+        codeDiv.className = 'plugin-code';
+        codeDiv.innerHTML = data.code;
+        pluginContent.appendChild(codeDiv);
+    }
 }
 
-// ============================================================
-// FILTERS
-// ============================================================
-const filterButtons = document.querySelectorAll('.filters button');
-const searchInput = document.getElementById('searchInput');
-
-let currentFilter = 'all';
-
-filterButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-        filterButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentFilter = btn.dataset.filter;
-        renderPlugins(currentFilter, searchInput.value);
-    });
+// Navigation
+prevBtn.addEventListener('click', () => {
+    const newIndex = (currentIndex - 1 + pluginsData.length) % pluginsData.length;
+    showPlugin(newIndex);
 });
 
-searchInput.addEventListener('input', () => {
-    renderPlugins(currentFilter, searchInput.value);
+nextBtn.addEventListener('click', () => {
+    const newIndex = (currentIndex + 1) % pluginsData.length;
+    showPlugin(newIndex);
+});
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') {
+        const newIndex = (currentIndex - 1 + pluginsData.length) % pluginsData.length;
+        showPlugin(newIndex);
+    } else if (e.key === 'ArrowRight') {
+        const newIndex = (currentIndex + 1) % pluginsData.length;
+        showPlugin(newIndex);
+    }
 });
 
 // ============================================================
 // FANOMBOKANA
 // ============================================================
-renderPlugins('all', '');
+showPlugin(0);
 
 console.log('✅ Rakitrakatra V4.2.0 loaded!');
 console.log('📦 Total plugins:', pluginsData.length);
-console.log('💡 Ampiasao ny R. (ohatra: R.Z, R.Vektora2, R.Lalao...)');
+console.log('💡 Ampiasao ny ◄ ► na tsindrio ny isa');
 </script>
 
 </body>
