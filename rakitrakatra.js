@@ -3757,8 +3757,9 @@
         render(renderer) {
             for (const p of this.popups) {
                 const alpha = Z.clamp(p.life / p.maxLife, 0, 1);
-                const a = Math.floor(alpha * 255) << 24;
-                renderer.drawText && renderer.drawText(p.text, p.x, p.y, (a | (p.color & 0xFFFFFF)));
+                const a = Math.floor(alpha * 255);
+                const color = (p.color & 0xFFFFFF00) | a;
+                renderer.drawText && renderer.drawText(p.text, p.x, p.y, color);
             }
         }
     }
@@ -4179,8 +4180,8 @@
             const half = this.duration / 2;
             const t = Z.clamp(this.timer / half, 0, 1);
             const alpha = this.phase === 'out' ? t : 1 - t;
-            const a = Math.floor(alpha * 255) << 24;
-            renderer.drawRect(0, 0, width, height, a | 0x000000);
+            const a = Math.floor(alpha * 255);
+            renderer.drawRect(0, 0, width, height, a);
         }
     }
 
@@ -4448,8 +4449,8 @@
         }
         render(drawFn) {
             for (const g of this.ghosts) {
-                const alpha = Math.floor(Z.clamp(g.life, 0, 1) * 120) << 24;
-                drawFn(g.x, g.y, g.frame, alpha | 0xFFFFFF);
+                const alpha = Math.floor(Z.clamp(g.life, 0, 1) * 120);
+                drawFn(g.x, g.y, g.frame, 0xFFFFFF00 | alpha);
             }
         }
     }
@@ -4475,7 +4476,7 @@
             const brightness = 0.4 + 0.6 * Math.sin(t * PI2 - HALF_PI) * 0.5 + 0.3;
             const b = Z.clamp(brightness, 0.15, 1);
             const v = Math.floor(b * 255);
-            return (255 << 24) | (v << 16) | (v << 8) | v;
+            return (v << 24) | (v << 16) | (v << 8) | 255;
         }
     }
 
@@ -4769,12 +4770,12 @@
         }
         render(renderer, width, height) {
             if (this.fadeAlpha > 0) {
-                const a = Math.floor(Z.clamp(this.fadeAlpha, 0, 1) * 255) << 24;
-                renderer.drawRect(0, 0, width, height, a | 0x000000);
+                const a = Math.floor(Z.clamp(this.fadeAlpha, 0, 1) * 255);
+                renderer.drawRect(0, 0, width, height, a);
             }
             if (this.vignetteStrength > 0) {
                 const border = 40 * this.vignetteStrength;
-                const c = (Math.floor(180 * this.vignetteStrength) << 24) | 0x000000;
+                const c = Math.floor(180 * this.vignetteStrength);
                 renderer.drawRect(0, 0, width, border, c);
                 renderer.drawRect(0, height - border, width, border, c);
                 renderer.drawRect(0, 0, border, height, c);
