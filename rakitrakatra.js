@@ -1584,6 +1584,211 @@ class FanambaraKely extends Hetsika {
 }
 
 // ============================================================
+// 86. SORATRASDF — SDF Text Rendering (WebGL shader-based)
+//     Tsy BitmapText toy ny Phaser: scalable, glow/outline native,
+//     texture kely (256x256 grayscale ~5-10KB), zero pixelation.
+// ============================================================
+class SoratraSDF {
+    /**
+     * @param {Mpampiseho} renderer - Ny renderer WebGL
+     * @param {object} fontJson - Font data JSON ({glyphs, lineHeight, size, spread})
+     * @param {string} textureKey - Key-n'ny SDF atlas texture (grayscale PNG)
+     */
+    constructor(renderer, fontJson, textureKey) {
+        this.renderer = renderer;
+        this.glyphs = fontJson.glyphs || {};
+        this.lineHeight = fontJson.lineHeight || 40;
+        this.baseSize = fontJson.size || 32;
+        this.spread = fontJson.spread || 4;
+        this.textureKey = textureKey;
+
+        // Compile SDF shader program (mitokana amin'ny default quad shader)
+        this._program = null;
+        this._uniforms = {};
+        this._initProgram();
+    }
+
+    _initProgram() {
+        const gl = this.renderer.gl;
+        const isV2 = this.renderer.isWebGL2;
+
+        // Vertex shader mitovy amin'ny default (reuse layout/attributes)
+        const vsSource = isV2
+            ? '#version 300 es\nprecision highp float;\nlayout(location=0) in vec2 a_position;\nlayout(location=1) in vec2 a_texCoord;\nlayout(location=2) in vec4 a_color;\nuniform vec2 u_resolution;\nuniform mat3 u_matrix;\nout vec2 v_texCoord;\nout vec4 v_color;\nvoid main(){\nvec3 pos=u_matrix*vec3(a_position,1.0);\nvec2 clip=(pos.xy/u_resolution)*2.0-1.0;\ngl_Position=vec4(clip*vec2(1,-1),0,1);\nv_texCoord=a_texCoord;\nv_color=a_color;\n}'
+            : 'precision highp float;\nattribute vec2 a_position;\nattribute vec2 a_texCoord;\nattribute vec4 a_color;\nuniform vec2 u_resolution;\nuniform mat3 u_matrix;\nvarying vec2 v_texCoord;\nvarying vec4 v_color;\nvoid main(){\nvec3 pos=u_matrix*vec3(a_position,1.0);\nvec2 clip=(pos.xy/u_resolution)*2.0-1.0;\ngl_Position=vec4(clip*vec2(1,-1),0,1);\nv_texCoord=a_texCoord;\nv_color=a_color;\n}';
+
+        // SDF Fragment Shader — smoothstep edge + glow + outline
+        const fsSource = isV2
+            ? '#version 300 es\nprecision highp float;\nin vec2 v_texCoord;\nin vec4 v_color;\nuniform sampler2D u_texture;\nuniform float u_threshold;\nuniform float u_spread;\nuniform float u_glow;\nuniform float u_outlineWidth;\nuniform vec4 u_outlineColor;\nuniform vec4 u_glowColor;\nout vec4 fragColor;\nvoid main(){\nfloat dist=texture(u_texture,v_texCoord).a;\nfloat alpha=smoothstep(u_threshold-u_spread,u_threshold+u_spread,dist);\nif(u_outlineWidth>0.0){float oa=smoothstep(u_threshold-u_spread-u_outlineWidth,u_threshold-u_spread+u_outlineWidth,dist);alpha=max(alpha,oa*u_outlineColor.a);}\nif(u_glow>0.0){float ga=smoothstep(u_threshold-u_spread-u_glow,u_threshold-u_spread,dist);alpha=max(alpha,ga*u_glowColor.a*0.5);}\nfragColor=v_color*alpha;\nif(fragColor.a<0.01)discard;\n}'
+            : 'precision highp float;\nvarying vec2 v_texCoord;\nvarying vec4 v_color;\nuniform sampler2D u_texture;\nuniform float u_threshold;\nuniform float u_spread;\nuniform float u_glow;\nuniform float u_outlineWidth;\nuniform vec4 u_outlineColor;\nuniform vec4 u_glowColor;\nvoid main(){\nfloat dist=texture2D(u_texture,v_texCoord).a;\nfloat alpha=smoothstep(u_threshold-u_spread,u_threshold+u_spread,dist);\nif(u_outlineWidth>0.0){float oa=smoothstep(u_threshold-u_spread-u_outlineWidth,u_threshold-u_spread+u_outlineWidth,dist);alpha=max(alpha,oa*u_outlineColor.a);}\nif(u_glow>0.0){float ga=smoothstep(u_threshold-u_spread-u_glow,u_threshold-u_spread,dist);alpha=max(alpha,ga*u_glowColor.a*0.5);}\ngl_FragColor=v_color*alpha;\nif(gl_FragColor.a<0.01)discard;\n}';
+
+        const vs = this.renderer._compileShader(gl.VERTEX_SHADER, vsSource);
+        const fs = this.renderer._compileShader(gl.FRAGMENT_SHADER, fsSource);
+
+        if (!vs || !fs) {
+            console.error('SoratraSDF: shader compilation failed');
+            return;
+        }
+
+        this._program = gl.createProgram();
+        gl.attachShader(this._program, vs);
+        gl.attachShader(this._program, fs);
+        gl.linkProgram(this._program);
+
+        if (!gl.getProgramParameter(this._program, gl.LINK_STATUS)) {
+            console.error('SoratraSDF: program link error:', gl.getProgramInfoLog(this._program));
+            return;
+        }
+
+        // Cache uniforms
+        this._uniforms = {
+            resolution: gl.getUniformLocation(this._program, 'u_resolution'),
+            matrix: gl.getUniformLocation(this._program, 'u_matrix'),
+            texture: gl.getUniformLocation(this._program, 'u_texture'),
+            threshold: gl.getUniformLocation(this._program, 'u_threshold'),
+            spread: gl.getUniformLocation(this._program, 'u_spread'),
+            glow: gl.getUniformLocation(this._program, 'u_glow'),
+            outlineWidth: gl.getUniformLocation(this._program, 'u_outlineWidth'),
+            outlineColor: gl.getUniformLocation(this._program, 'u_outlineColor'),
+            glowColor: gl.getUniformLocation(this._program, 'u_glowColor')
+        };
+    }
+
+   
+    render(text, x, y, size, color, opts = {}) {
+        if (!this._program || !text) return;
+
+        const gl = this.renderer.gl;
+        const scale = size / this.baseSize;
+        const spreadNorm = this.spread / size;
+
+        // Measure for alignment
+        let cursorX = x;
+        if (opts.align === 'center' || opts.align === 'right') {
+            const m = this.measure(text, size);
+            if (opts.align === 'center') cursorX -= m.width / 2;
+            else cursorX -= m.width;
+        }
+
+        // Flush any pending default-shader batch before switching program
+        this.renderer.flush();
+
+        // Bind SDF program
+        gl.useProgram(this._program);
+        gl.uniform2f(this._uniforms.resolution, this.renderer.width, this.renderer.height);
+
+        // Camera matrix (reuse from renderer state)
+        const camMatrix = new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]);
+        gl.uniformMatrix3fv(this._uniforms.matrix, false, camMatrix);
+
+        // Bind SDF texture
+        const tex = this.renderer.getTexture(this.textureKey);
+        if (!tex) { console.warn('SoratraSDF: texture "' + this.textureKey + '" not found'); return; }
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, tex.gl);
+        gl.uniform1i(this._uniforms.texture, 0);
+
+        // SDF uniforms
+        gl.uniform1f(this._uniforms.threshold, 0.5);
+        gl.uniform1f(this._uniforms.spread, spreadNorm);
+        gl.uniform1f(this._uniforms.glow, opts.glow || 0);
+        gl.uniform1f(this._uniforms.outlineWidth, opts.outlineWidth || 0);
+
+        // Outline color (packed → normalized vec4)
+        const oc = opts.outlineColor || 0x000000FF;
+        gl.uniform4f(this._uniforms.outlineColor,
+            ((oc >>> 24) & 0xFF) / 255,
+            ((oc >>> 16) & 0xFF) / 255,
+            ((oc >>> 8) & 0xFF) / 255,
+            (oc & 0xFF) / 255
+        );
+
+        // Glow color
+        const gc = opts.glowColor || color;
+        gl.uniform4f(this._uniforms.glowColor,
+            ((gc >>> 24) & 0xFF) / 255,
+            ((gc >>> 16) & 0xFF) / 255,
+            ((gc >>> 8) & 0xFF) / 255,
+            (gc & 0xFF) / 255
+        );
+
+        // Color uniform via vertex attribute (reuse existing VBO setup)
+        const r = ((color >>> 24) & 0xFF) / 255;
+        const g = ((color >>> 16) & 0xFF) / 255;
+        const b = ((color >>> 8) & 0xFF) / 255;
+        const a = (color & 0xFF) / 255;
+
+        // Draw each glyph as individual quad (small batch, acceptable for text)
+        const VS = 8;
+        const tempData = new Float32Array(4 * VS);
+        const texW = tex.width || 256;
+        const texH = tex.height || 256;
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.renderer.vbo);
+
+        for (let i = 0; i < text.length; i++) {
+            const ch = text[i];
+            const glyph = this.glyphs[ch];
+            if (!glyph) {
+                cursorX += (this.glyphs[' '] ? this.glyphs[' '].advance : 10) * scale;
+                continue;
+            }
+
+            const gx = cursorX + glyph.bearingX * scale;
+            const gy = y - glyph.bearingY * scale;
+            const gw = glyph.w * scale;
+            const gh = glyph.h * scale;
+
+            const u0 = glyph.x / texW;
+            const v0 = glyph.y / texH;
+            const u1 = (glyph.x + glyph.w) / texW;
+            const v1 = (glyph.y + glyph.h) / texH;
+
+            // Top-left
+            tempData[0] = gx;      tempData[1] = gy;
+            tempData[2] = u0;      tempData[3] = v0;
+            tempData[4] = r;       tempData[5] = g;       tempData[6] = b;       tempData[7] = a;
+            // Top-right
+            tempData[8] = gx + gw; tempData[9] = gy;
+            tempData[10] = u1;     tempData[11] = v0;
+            tempData[12] = r;      tempData[13] = g;      tempData[14] = b;      tempData[15] = a;
+            // Bottom-right
+            tempData[16] = gx + gw; tempData[17] = gy + gh;
+            tempData[18] = u1;      tempData[19] = v1;
+            tempData[20] = r;       tempData[21] = g;      tempData[22] = b;      tempData[23] = a;
+            // Bottom-left
+            tempData[24] = gx;      tempData[25] = gy + gh;
+            tempData[26] = u0;      tempData[27] = v1;
+            tempData[28] = r;       tempData[29] = g;      tempData[30] = b;      tempData[31] = a;
+
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, tempData);
+            gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+
+            cursorX += glyph.advance * scale;
+        }
+
+        // Restore default program for subsequent rendering
+        gl.useProgram(this.renderer.program);
+    }
+
+    /**
+     * Mandrefy ny haben'ny soratra (tsy manoratra)
+     * @param {string} text
+     * @param {number} size
+     * @returns {{width: number, height: number}}
+     */
+    measure(text, size) {
+        const scale = size / this.baseSize;
+        let width = 0;
+        for (let i = 0; i < text.length; i++) {
+            const g = this.glyphs[text[i]];
+            width += (g ? g.advance : (this.glyphs[' '] ? this.glyphs[' '].advance : 10)) * scale;
+        }
+        return { width: width, height: this.lineHeight * scale };
+    }
+}
+
+// ============================================================
 // EXPORT
 // ============================================================
 const RakitrakatraV4 = {
