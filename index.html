@@ -293,7 +293,7 @@ const PLUGINS = [
           ctx.fillStyle='#00ff88';ctx.font='bold 14px monospace';ctx.fillText(wp.name,w/2-80,h/2-10);
           ctx.fillStyle=ammoLeft>wp.max*0.3?'#00ff88':'#ff4444';
           ctx.fillRect(w/2-80,h/2+5,160*(ammoLeft/wp.max),12);
-          ctx.fillStyle='#fff';ctx.font='10px monospace';ctx.fillText(\`\${ammoLeft}/\${wp.max}\`,w/2-80,h/2+28);
+          ctx.fillStyle='#fff';ctx.font='10px monospace';ctx.fillText(ammoLeft + '/' + wp.max, w/2 - 80, h/2 + 28);
       }
     },
     { id: 'AndroAlina', name: 'AndroAlina', cat: 'A', desc: 'Day/Night cycle ✅ FIXED',
@@ -315,7 +315,7 @@ const PLUGINS = [
           // Overlay
           ctx.fillStyle=\`rgba(5,5,25,\${tint.a})\`;ctx.fillRect(0,0,w,h);
           ctx.fillStyle='#fff';ctx.font='12px monospace';
-          ctx.fillText(\`Phase: \${(p*100).toFixed(0)}% | Night: \${R.AndroAlina.isNight()}\`,10,h-10);
+          ctx.fillText('Phase: ' + (p * 100).toFixed(0) + '% | Night: ' + R.AndroAlina.isNight(), 10, h - 10);
       }
     },
     { id: 'BokotraVirtoaly', name: 'BokotraVirtoaly', cat: 'A', desc: 'Custom virtual buttons ABXY',
@@ -350,7 +350,7 @@ const PLUGINS = [
           ctx.globalCompositeOperation='destination-out';
           ctx.beginPath();ctx.arc(w/2,h/2,zone.radius,0,Math.PI*2);ctx.fill();
           ctx.globalCompositeOperation='source-over';
-          ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText(\`Radius: \${zone.radius.toFixed(0)} | Progress: \${(zone.progress()*100).toFixed(0)}%\`,10,h-10);
+          ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText('Radius: ' + zone.radius.toFixed(0) + ' | Progress: ' + (zone.progress() * 100).toFixed(0) + '%', 10, h - 10);
       }
     },
     { id: 'EndrikaBala', name: 'EndrikaBala', cat: 'B', desc: 'Bullet hell patterns',
@@ -368,7 +368,7 @@ const PLUGINS = [
               const bx=w/2+Math.cos(b.angle)*dist, by=h/2+Math.sin(b.angle)*dist;
               if(dist<150){ctx.fillStyle='#ffff44';ctx.beginPath();ctx.arc(bx,by,3,0,Math.PI*2);ctx.fill();}
           });
-          ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText(\`Pattern: \${pat}\`,10,h-10);
+          ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText('Pattern: ' + pat, 10, h - 10);
       }
     },
     { id: 'Fisintonana', name: 'Fisintonana', cat: 'B', desc: 'Dash + i-frames',
@@ -382,8 +382,7 @@ const PLUGINS = [
           ctx.fillStyle=dash.isInvincible?'rgba(255,255,255,0.5)':'#00ff88';
           ctx.fillRect(px-10,h/2-10,20,20);
           if(dash.isInvincible){ctx.strokeStyle='#fff';ctx.setLineDash([4,4]);ctx.strokeRect(px-12,h/2-12,24,24);ctx.setLineDash([]);}
-          ctx.fillStyle='#888';ctx.font='11px monospace';ctx.fillText(\`iFrames: \${dash.isInvincible} | CD: \${dash._cd.toFixed(2)}s\`,10,h-10);
-      }
+          ctx.fillStyle='#888';ctx.font='11px monospace';ctx.fillText('iFrames: ' + dash.isInvincible + ' | CD: ' + dash._cd.toFixed(2) + 's', 10, h - 10);
     },
     { id: 'IsaMitohy', name: 'IsaMitohy', cat: 'B', desc: 'Combo counter & multiplier',
       usage: `const combo = new R.IsaMitohy(1.5);\n\n// On kill/hit\nconst score = combo.add(100);\nconsole.log(combo.combo);      // hit count\nconsole.log(combo.multiplier); // 1.0, 1.5, 2.0...\n\ncombo.update(dt); // decay timer\ncombo.reset();`,
@@ -393,9 +392,9 @@ const PLUGINS = [
           for(let i=0;i<hits;i++) combo.add(100);
           combo.update(0);
           ctx.fillStyle='#00ff88';ctx.font='bold 40px sans-serif';ctx.textAlign='center';
-          ctx.fillText(\`\${combo.combo} HITS\`,w/2,h/2-20);
+          ctx.fillText(combo.combo + ' HITS', w / 2, h / 2 - 20);
           ctx.fillStyle='#ffff44';ctx.font='bold 24px sans-serif';
-          ctx.fillText(\`x\${combo.multiplier.toFixed(1)}\`,w/2,h/2+20);
+          ctx.fillText('x' + combo.multiplier.toFixed(1), w / 2, h / 2 + 20);
           ctx.textAlign='left';
       }
     },
@@ -407,7 +406,7 @@ const PLUGINS = [
           for(let i=0;i<Math.min(Math.floor(t*2),15);i++) feed.addKill(names[i%5],names[(i+2)%5]);
           const rank=feed.ranking();
           ctx.fillStyle='#000a';ctx.fillRect(w/2-100,20,200,rank.length*22+10);
-          rank.forEach((r,i)=>{ctx.fillStyle=i===0?'#ffff44':'#ccc';ctx.font='12px monospace';ctx.fillText(\`#\${i+1} \${r.name}: \${r.score}\`,w/2-80,40+i*22);});
+          rank.forEach((r,i)=>{ctx.fillStyle=i===0?'#ffff44':'#ccc';ctx.font='12px monospace';ctx.fillText('#' + (i + 1) + ' ' + r.name + ': ' + r.score, w / 2 - 80, 40 + i * 22);});
       }
     },
     
@@ -477,7 +476,7 @@ const PLUGINS = [
           ctx.stroke();
           const px=idx/frames*w,py=h/2+Math.sin(idx*0.2)*50;
           ctx.fillStyle='#00ff88';ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.fill();
-          ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText(\`Frame: \${idx}/\${frames}\`,10,h-10);
+          ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText('Frame: ' + idx + '/' + frames, 10, h - 10);
       }
     },
     { id: 'Ekipa', name: 'Ekipa', cat: 'D', desc: 'Team/Clan system',
@@ -503,7 +502,7 @@ const PLUGINS = [
           ctx.beginPath();ctx.arc(sx,sy,30,0,Math.PI*2);ctx.strokeStyle='#ff444466';ctx.stroke();
           ctx.beginPath();ctx.arc(sx,sy,8+vol*15,0,Math.PI*2);ctx.fillStyle=\`rgba(255,68,68,\${vol})\`;ctx.fill();
           ctx.fillStyle='#00ff88';ctx.fillRect(lx-5,ly-5,10,10);
-          ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText(\`Volume: \${(vol*100).toFixed(0)}%\`,10,h-10);
+          ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText('Volume: ' + (vol * 100).toFixed(0) + '%', 10, h - 10);
       }
     },
     
@@ -592,7 +591,7 @@ const PLUGINS = [
           ctx.fillStyle=pct>0.7?'#ff4444':pct>0.3?'#ffff44':'#44ff44';
           ctx.fillRect(w/2-100,h/2-15,200*pct,30);
           ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.textAlign='center';
-          ctx.fillText(\`Stress: \${dir.stress.toFixed(0)}%\`,w/2,h/2+5);
+          ctx.fillText('Stress: ' + dir.stress.toFixed(0) + '%', w / 2, h / 2 + 5);
           ctx.fillText(pct<0.3?'⚠️ SPAWN REQUEST':'😌 Calm',w/2,h/2+35);
           ctx.textAlign='left';
       }
