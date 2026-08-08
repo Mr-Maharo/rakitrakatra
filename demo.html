@@ -3,37 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>ADY GOAVANA: ROVA — Battle Royale 2D</title>
+<title>ADY GOAVANA: Ny Famerenana — Zelda-like 2D</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#000;overflow:hidden;touch-action:none;font-family:'Segoe UI',system-ui,sans-serif}
 canvas{display:block;width:100vw;height:100vh;image-rendering:pixelated}
 #ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;color:#fff;text-shadow:1px 1px 2px #000}
-.hud-top{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:flex-start}
-.hp-wrap{position:relative;width:220px}
-.hp-bar{width:100%;height:18px;background:#333;border-radius:3px;overflow:hidden;border:1px solid #555}
-.hp-fill{height:100%;background:linear-gradient(90deg,#ff4444,#ff6644);transition:width 0.15s}
-.hp-text{position:absolute;top:0;left:8px;font-size:11px;line-height:18px;font-weight:bold}
-.armor-bar{width:100%;height:8px;background:#222;border-radius:2px;overflow:hidden;margin-top:3px}
-.armor-fill{height:100%;background:#4488ff;transition:width 0.15s}
-.info-right{text-align:right}
-.alive-count{font-size:28px;font-weight:bold;color:#ffff44}
-.wave-timer{font-size:14px;color:#aaa;margin-top:2px}
-.zone-msg{font-size:12px;color:#ff6644;margin-top:2px}
-.kill-feed{position:absolute;top:60px;right:10px;text-align:right;font-size:11px;color:#ccc;max-height:120px;overflow:hidden}
-.kill-entry{margin-bottom:2px;opacity:0.9}
-.combo-display{position:absolute;top:50px;left:50%;transform:translateX(-50%);text-align:center;opacity:0;transition:opacity 0.3s}
-.combo-count{font-size:32px;font-weight:bold;color:#ffff44}
-.combo-mult{font-size:16px;color:#ff8844}
-.msg-center{position:absolute;top:35%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0;transition:opacity 0.5s}
-.msg-title{font-size:52px;font-weight:bold;color:#ff4444;margin-bottom:6px}
-.msg-sub{font-size:20px;color:#ddd}
-.minimap-wrap{position:absolute;bottom:10px;left:10px;border:2px solid #555;border-radius:4px;background:rgba(0,0,0,0.7)}
-.weapon-slots{position:absolute;bottom:10px;right:10px;display:flex;gap:4px}
-.weapon-slot{width:50px;height:50px;background:rgba(0,0,0,0.6);border:2px solid #444;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;text-align:center;color:#aaa}
-.weapon-slot.active{border-color:#00ff88;color:#00ff88}
-.controls-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-size:11px;color:#666}
-.loot-popup{position:absolute;top:60%;left:50%;transform:translate(-50%,-50%);font-size:14px;color:#ffff44;font-weight:bold;opacity:0;transition:opacity 0.3s}
+.hud-top{position:absolute;top:10px;left:10px;display:flex;gap:12px;align-items:center}
+.hp-hearts{display:flex;gap:2px}
+.heart{width:20px;height:20px;background:#ff4444;clip-path:polygon(50% 0%,100% 35%,82% 100%,50% 80%,18% 100%,0% 35%)}
+.heart.empty{background:#442222}
+.rupee-count{font-size:16px;color:#44ff44;font-weight:bold}
+.key-count{font-size:14px;color:#ffff44;margin-left:8px}
+.floor-label{position:absolute;top:10px;right:10px;font-size:14px;color:#aaa}
+.msg-center{position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0;transition:opacity 0.5s}
+.msg-title{font-size:36px;font-weight:bold;color:#ffff44;margin-bottom:6px}
+.msg-sub{font-size:16px;color:#ddd}
+.dialog-box{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:80%;max-width:600px;background:rgba(0,0,20,0.9);border:2px solid #ffff44;border-radius:6px;padding:12px 16px;font-size:14px;line-height:1.5;color:#fff;display:none}
+.dialog-name{color:#ffff44;font-weight:bold;margin-bottom:4px;font-size:12px}
+.controls-hint{position:absolute;bottom:10px;left:10px;font-size:11px;color:#555}
+.minimap-wrap{position:absolute;top:10px;left:50%;transform:translateX(-50%);border:2px solid #555;border-radius:4px;background:rgba(0,0,0,0.8)}
 @media(hover:none)and(pointer:coarse){.controls-hint{display:none}}
 </style>
 </head>
@@ -41,30 +30,21 @@ canvas{display:block;width:100vw;height:100vh;image-rendering:pixelated}
 <canvas id="gameCanvas"></canvas>
 <div id="ui">
 <div class="hud-top">
-<div class="hp-wrap">
-<div class="hp-bar"><div class="hp-fill" id="hpFill" style="width:100%"></div></div>
-<div class="hp-text" id="hpText">100/100</div>
-<div class="armor-bar"><div class="armor-fill" id="armorFill" style="width:0%"></div></div>
+<div class="hp-hearts" id="hpHearts"></div>
+<div class="rupee-count" id="rupeeCount">💎 0</div>
+<div class="key-count" id="keyCount">🔑 0</div>
 </div>
-<div class="info-right">
-<div class="alive-count" id="aliveCount">51</div>
-<div class="wave-timer" id="zoneTimer">Zone: 24:00</div>
-<div class="zone-msg" id="zoneMsg"></div>
-</div>
-</div>
-<div class="kill-feed" id="killFeed"></div>
-<div class="combo-display" id="comboDisplay">
-<div class="combo-count" id="comboCount"></div>
-<div class="combo-mult" id="comboMult"></div>
-</div>
+<div class="floor-label" id="floorLabel">Rihana 1</div>
 <div class="msg-center" id="msgCenter">
 <div class="msg-title" id="msgTitle"></div>
 <div class="msg-sub" id="msgSub"></div>
 </div>
-<canvas id="minimapCanvas" class="minimap-wrap" width="160" height="160"></canvas>
-<div class="weapon-slots" id="weaponSlots"></div>
-<div class="loot-popup" id="lootPopup"></div>
-<div class="controls-hint">ZQSD/WASD: Mihetsika | SPACE: Dash | CLICK: Mitifitra | E: Mitady loot</div>
+<div class="dialog-box" id="dialogBox">
+<div class="dialog-name" id="dialogName"></div>
+<div id="dialogText"></div>
+</div>
+<canvas id="minimapCanvas" class="minimap-wrap" width="120" height="120"></canvas>
+<div class="controls-hint">ZQSD/WASD: Mihetsika | SPACE: Manafika | E: Miresaka/Manokatra | SHIFT: Dash</div>
 </div>
 
 <script src="rakitrakatra.js"></script>
@@ -75,52 +55,35 @@ canvas{display:block;width:100vw;height:100vh;image-rendering:pixelated}
 // ============================================================
 // CONFIG
 // ============================================================
-var MAP_W = 8000, MAP_H = 8000;
 var TILE = 32;
-var COLS = MAP_W / TILE, ROWS = MAP_H / TILE;
-var MAX_PLAYERS = 51;
-var MATCH_TIME = 24 * 60; // 24 min in seconds
-var PLAYER_SPEED = 220;
-var DASH_DIST = 160;
-var BOT_COUNT = 50; // 1 human + 50 bots
+var ROOM_W = 15, ROOM_H = 11; // tiles per room
+var MAP_ROOMS_X = 8, MAP_ROOMS_Y = 6; // dungeon grid size
+var MAP_W = MAP_ROOMS_X * ROOM_W * TILE;
+var MAP_H = MAP_ROOMS_Y * ROOM_H * TILE;
+var PLAYER_SPEED = 160;
+var DASH_SPEED = 400;
+var DASH_DUR = 0.15;
+var DASH_CD = 0.6;
+var ATK_RANGE = 36;
+var ATK_CD = 0.35;
+var ATK_DMG = 2;
+var MAX_HP = 6; // hearts (each = 2 hits)
 
-// Zone phases (radius in pixels, duration in seconds, damage/s)
-var ZONE_PHASES = [
-    { radius: 3800, duration: 180, dmg: 0,   msg: 'Safidio ny toerana!' },
-    { radius: 2800, duration: 150, dmg: 1,   msg: 'Ny rova dia mihena!' },
-    { radius: 1800, duration: 120, dmg: 2,   msg: 'Mialà ny ivelany!' },
-    { radius: 1000, duration: 90,  dmg: 4,   msg: 'Faribolana farany!' },
-    { radius: 400,  duration: 60,  dmg: 8,   msg: 'ADY FARANY!' },
-    { radius: 50,   duration: 30,  dmg: 15,  msg: 'FARANY TANTERAKA!' }
-];
+// Tile types
+var T_FLOOR = 0, T_WALL = 1, T_DOOR = 2, T_LOCKED = 3, T_CHEST = 4, T_NPC = 5, T_STAIRS = 6, T_POT = 7, T_SWITCH = 8, T_PLATE = 9;
 
-// Weapons
-var WEAPONS = {
-    pistol:  { name:'Pistol',  dmg:12, cd:0.3,  ammo:12, max:12, reload:1.2, spread:0.05, speed:600, color:0xFFCC44FF },
-    rifle:   { name:'Rifle',   dmg:8,  cd:0.1,  ammo:30, max:30, reload:2.0, spread:0.08, speed:700, color:0xFF4444FF },
-    shotgun: { name:'Shotgun', dmg:6,  cd:0.8,  ammo:6,  max:6,  reload:2.5, spread:0.3,  speed:500, pellets:5, color:0xFF8844FF },
-    sniper:  { name:'Sniper',  dmg:45, cd:1.5,  ammo:5,  max:5,  reload:3.0, spread:0.01, speed:900, color:0x44FFFF44 }
-};
-
-// Loot table
-var LOOT_TABLE = new R.Anjara();
-LOOT_TABLE.add({type:'weapon',id:'pistol'},  30, 'common');
-LOOT_TABLE.add({type:'weapon',id:'rifle'},   20, 'uncommon');
-LOOT_TABLE.add({type:'weapon',id:'shotgun'}, 12, 'rare');
-LOOT_TABLE.add({type:'weapon',id:'sniper'},   5, 'epic');
-LOOT_TABLE.add({type:'heal',amount:30},      25, 'common');
-LOOT_TABLE.add({type:'armor',amount:50},     15, 'uncommon');
-LOOT_TABLE.add({type:'ammo',amount:15},      30, 'common');
-
-// Biome colors
-var BIOME_COLORS = {
-    rano:        0x1a3366FF,
-    fasika:      0xccaa55FF,
-    ahitra:      0x448833FF,
-    ala:         0x225522FF,
-    'oram-panala': 0x888899FF
-};
-var BIOME_SOLID = { rano: true, fasika: false, ahitra: false, ala: false, 'oram-panala': false };
+// Colors
+var TILE_COLORS = {};
+TILE_COLORS[T_FLOOR] = 0x2a2a3aFF;
+TILE_COLORS[T_WALL] = 0x554433FF;
+TILE_COLORS[T_DOOR] = 0x886644FF;
+TILE_COLORS[T_LOCKED] = 0xaa4444FF;
+TILE_COLORS[T_CHEST] = 0xffaa22FF;
+TILE_COLORS[T_NPC] = 0x44aaffFF;
+TILE_COLORS[T_STAIRS] = 0xffff44FF;
+TILE_COLORS[T_POT] = 0xcc8844FF;
+TILE_COLORS[T_SWITCH] = 0x88ff88FF;
+TILE_COLORS[T_PLATE] = 0x666688FF;
 
 // ============================================================
 // GAME STATE
@@ -130,463 +93,482 @@ var game = new R.Lalao(window.innerWidth, window.innerHeight, { canvas: canvas, 
 var ecs = game.ecs;
 var camera = game.camera;
 var renderer = game.renderer;
+var particles = game.particles;
 
 // Tags
-var TAG_PLAYER = 1, TAG_BOT = 2, TAG_BULLET = 3, TAG_LOOT = 4, TAG_TREE = 5, TAG_ROCK = 6;
+var TAG_PLAYER = 1, TAG_ENEMY = 2, TAG_BULLET = 3, TAG_ITEM = 4, TAG_SOLID = 5, TAG_TRIGGER = 6;
 
 // Systems
-var combat = new R.FitaovanaVoa(128);
-var zone = new R.FaribolanaMihena(MAP_W/2, MAP_H/2, ZONE_PHASES[0].radius, ZONE_PHASES[0].radius, ZONE_PHASES[0].duration, 0);
-var combo = new R.IsaMitohy(2.0);
-var killFeed = new R.TantaraFandresena(8, 10);
-var spawner = new R.MpamorontsatsaVahiny({ total: BOT_COUNT, maxConcurrent: BOT_COUNT, spawnInterval: [0.1, 0.3] });
-var director = new R.MpitarikaAI({ maxStress: 100, decayRate: 3 });
-var particles = game.particles;
-var minimapCanvas = document.getElementById('minimapCanvas');
-var mmCtx = minimapCanvas.getContext('2d');
-
-// Map data
-var biomeGrid = [];
-var treePositions = [];
-var rockPositions = [];
+var combat = new R.FitaovanaVoa(64);
+var combo = new R.IsaMitohy(2.5);
+var dash = new R.Fisintonana(DASH_SPEED * DASH_DUR, DASH_DUR, 0.1, DASH_CD);
+var dialogue = new R.Fanoratana('', 25);
+var achievements = new R.ZavaBita(game.save, 7);
+achievements.define('first_kill', 'Fandresena Voalohany', 'Namono fahavalo voalohany');
+achievements.define('floor_3', 'Mpizaha Dehibe', 'Tong@ rihana faha-3');
+achievements.define('all_chests', 'Mpanangona', 'Nanokatra trano rehetra');
 
 // Player state
 var playerId = -1;
-var playerWeapon = 'pistol';
-var playerAmmo = { pistol: 12, rifle: 0, shotgun: 0, sniper: 0 };
-var playerWeaponsOwned = ['pistol'];
-var playerArmor = 0;
+var playerHP = MAX_HP;
+var playerRupees = 0;
+var playerKeys = 0;
+var playerFloor = 1;
+var atkCd = 0;
+var facingDir = { x: 0, y: 1 }; // default facing down
 
-// Match state
-var matchTime = MATCH_TIME;
-var zonePhaseIdx = 0;
-var zoneTimer = 0;
-var aliveCount = MAX_PLAYERS;
-var gameOver = false;
-var gameWon = false;
+// Dungeon state
+var tileGrid = [];
+var rooms = [];
+var currentRoom = { rx: 0, ry: 0 };
+var chestsOpened = 0;
+var totalChests = 0;
+var dialogActive = false;
+var dialogCallback = null;
 
-// Bot AI state arrays (SoA for performance)
-var botStates = {}; // id -> { state, timer, targetId, weapon, moveDir }
+// Minimap
+var mmCanvas = document.getElementById('minimapCanvas');
+var mmCtx = mmCanvas.getContext('2d');
+var visitedRooms = {};
 
 // ============================================================
-// MAP GENERATION
+// DUNGEON GENERATION (Procedural)
 // ============================================================
-function generateMap() {
-    var seed = Math.random() * 10000;
-    biomeGrid = [];
-    treePositions = [];
-    rockPositions = [];
+function generateDungeon(floor) {
+    var seed = floor * 1337 + 42;
+    var rng = new R.Kisendrasendra(seed);
+    tileGrid = [];
+    rooms = [];
+    totalChests = 0;
+    chestsOpened = 0;
 
-    for (var y = 0; y < ROWS; y++) {
+    // Init full wall grid
+    var totalW = MAP_ROOMS_X * ROOM_W;
+    var totalH = MAP_ROOMS_Y * ROOM_H;
+    for (var y = 0; y < totalH; y++) {
         var row = [];
-        for (var x = 0; x < COLS; x++) {
-            var biome = R.KarazanTany.biomeAt(x * TILE, y * TILE, seed, 0.003);
-            row.push(biome);
+        for (var x = 0; x < totalW; x++) row.push(T_WALL);
+        tileGrid.push(row);
+    }
 
-            // Trees in forest biome
-            if (biome === 'ala' && Math.random() < 0.15) {
-                treePositions.push({ x: x * TILE + TILE/2, y: y * TILE + TILE/2, w: 24, h: 24 });
-            }
-            // Rocks in grass/sand
-            if ((biome === 'ahitra' || biome === 'fasika') && Math.random() < 0.03) {
-                rockPositions.push({ x: x * TILE + TILE/2, y: y * TILE + TILE/2, w: 20, h: 16 });
+    // Carve rooms
+    var roomList = [];
+    for (var ry = 0; ry < MAP_ROOMS_Y; ry++) {
+        for (var rx = 0; rx < MAP_ROOMS_X; rx++) {
+            // 70% chance of room existing
+            if (rng.next() < 0.7 || (rx === 0 && ry === 0)) {
+                var ox = rx * ROOM_W + 1;
+                var oy = ry * ROOM_H + 1;
+                var rw = ROOM_W - 2;
+                var rh = ROOM_H - 2;
+                for (var dy = 0; dy < rh; dy++) {
+                    for (var dx = 0; dx < rw; dx++) {
+                        tileGrid[oy + dy][ox + dx] = T_FLOOR;
+                    }
+                }
+                roomList.push({ rx: rx, ry: ry, ox: ox, oy: oy, rw: rw, rh: rh });
             }
         }
-        biomeGrid.push(row);
     }
 
-    // Register trees/rocks as ECS entities for collision
-    for (var i = 0; i < treePositions.length; i++) {
-        var t = treePositions[i];
-        var id = ecs.create();
-        ecs.x[id] = t.x - t.w/2; ecs.y[id] = t.y - t.h/2;
-        ecs.w[id] = t.w; ecs.h[id] = t.h;
-        ecs.isSolid[id] = 1;
-        ecs.setTag(id, TAG_TREE);
+    // Connect rooms with corridors
+    for (var i = 1; i < roomList.length; i++) {
+        var a = roomList[i - 1], b = roomList[i];
+        var ax = a.rx * ROOM_W + Math.floor(ROOM_W / 2);
+        var ay = a.ry * ROOM_H + Math.floor(ROOM_H / 2);
+        var bx = b.rx * ROOM_W + Math.floor(ROOM_W / 2);
+        var by = b.ry * ROOM_H + Math.floor(ROOM_H / 2);
+        // Horizontal then vertical
+        var cx = ax;
+        while (cx !== bx) { tileGrid[ay][cx] = T_FLOOR; cx += cx < bx ? 1 : -1; }
+        var cy = ay;
+        while (cy !== by) { tileGrid[cy][bx] = T_FLOOR; cy += cy < by ? 1 : -1; }
     }
-    for (var i = 0; i < rockPositions.length; i++) {
-        var r = rockPositions[i];
-        var id = ecs.create();
-        ecs.x[id] = r.x - r.w/2; ecs.y[id] = r.y - r.h/2;
-        ecs.w[id] = r.w; ecs.h[id] = r.h;
-        ecs.isSolid[id] = 1;
-        ecs.setTag(id, TAG_ROCK);
+
+    // Place doors between rooms
+    for (var i = 0; i < roomList.length; i++) {
+        var rm = roomList[i];
+        var edges = [
+            { x: rm.ox + Math.floor(rm.rw/2), y: rm.oy - 1 },
+            { x: rm.ox + Math.floor(rm.rw/2), y: rm.oy + rm.rh },
+            { x: rm.ox - 1, y: rm.oy + Math.floor(rm.rh/2) },
+            { x: rm.ox + rm.rw, y: rm.oy + Math.floor(rm.rh/2) }
+        ];
+        for (var e = 0; e < edges.length; e++) {
+            var ex = edges[e].x, ey = edges[e].y;
+            if (ex >= 0 && ey >= 0 && ex < totalW && ey < totalH && tileGrid[ey][ex] === T_WALL) {
+                // Check if adjacent to floor on other side
+                var adj = [
+                    { x: ex, y: ey - 1 }, { x: ex, y: ey + 1 },
+                    { x: ex - 1, y: ey }, { x: ex + 1, y: ey }
+                ];
+                var floorCount = 0;
+                for (var a = 0; a < adj.length; a++) {
+                    var ax2 = adj[a].x, ay2 = adj[a].y;
+                    if (ax2 >= 0 && ay2 >= 0 && ax2 < totalW && ay2 < totalH && tileGrid[ay2][ax2] === T_FLOOR) floorCount++;
+                }
+                if (floorCount >= 2) tileGrid[ey][ex] = T_DOOR;
+            }
+        }
     }
+
+    // Populate rooms
+    for (var i = 0; i < roomList.length; i++) {
+        var rm = roomList[i];
+        var isStart = rm.rx === 0 && rm.ry === 0;
+
+        // Chests (20% per room, not in start)
+        if (!isStart && rng.next() < 0.25) {
+            var cx = rm.ox + rng.int(1, rm.rw - 2);
+            var cy = rm.oy + rng.int(1, rm.rh - 2);
+            if (tileGrid[cy][cx] === T_FLOOR) {
+                tileGrid[cy][cx] = T_CHEST;
+                totalChests++;
+            }
+        }
+
+        // Pots (30% per room)
+        if (rng.next() < 0.3) {
+            var px = rm.ox + rng.int(0, rm.rw - 1);
+            var py = rm.oy + rng.int(0, rm.rh - 1);
+            if (tileGrid[py][px] === T_FLOOR) tileGrid[py][px] = T_POT;
+        }
+
+        // NPC in some rooms
+        if (!isStart && rng.next() < 0.15) {
+            var nx = rm.ox + Math.floor(rm.rw / 2);
+            var ny = rm.oy + Math.floor(rm.rh / 2);
+            if (tileGrid[ny][nx] === T_FLOOR) tileGrid[ny][nx] = T_NPC;
+        }
+
+        // Stairs in last room
+        if (i === roomList.length - 1) {
+            var sx = rm.ox + Math.floor(rm.rw / 2);
+            var sy = rm.oy + Math.floor(rm.rh / 2);
+            tileGrid[sy][sx] = T_STAIRS;
+        }
+
+        rooms.push(rm);
+    }
+
+    return roomList;
 }
 
 // ============================================================
-// ENTITY CREATION
+// ENTITY SPAWNING
 // ============================================================
-function createPlayer() {
+function spawnPlayer() {
+    if (playerId >= 0 && ecs.isAlive(playerId)) ecs.destroy(playerId);
     var id = ecs.create();
-    ecs.x[id] = MAP_W/2 + (Math.random()-0.5)*400;
-    ecs.y[id] = MAP_H/2 + (Math.random()-0.5)*400;
+    ecs.x[id] = ROOM_W * TILE / 2 - 10;
+    ecs.y[id] = ROOM_H * TILE / 2 - 10;
     ecs.w[id] = 20; ecs.h[id] = 20;
-    ecs.hp[id] = 100; ecs.maxHp[id] = 100;
+    ecs.hp[id] = playerHP; ecs.maxHp[id] = MAX_HP;
     ecs.team[id] = 0;
-    ecs.mass[id] = 1;
-    ecs.friction[id] = 0.85;
+    ecs.friction[id] = 0.8;
     ecs.setTag(id, TAG_PLAYER);
-    return id;
+    playerId = id;
+    camera.setBounds(0, 0, MAP_W, MAP_H);
+    camera.follow({ x: ecs.x[id], y: ecs.y[id], w: 20, h: 20 }, 0.1);
+    camera.setDeadzone(40, 40, 80, 80);
 }
 
-function createBot() {
-    var id = ecs.create();
-    // Spawn away from center
-    var angle = Math.random() * Math.PI * 2;
-    var dist = 1500 + Math.random() * 2000;
-    ecs.x[id] = MAP_W/2 + Math.cos(angle) * dist;
-    ecs.y[id] = MAP_H/2 + Math.sin(angle) * dist;
-    ecs.x[id] = R.Z.clamp(ecs.x[id], 100, MAP_W - 100);
-    ecs.y[id] = R.Z.clamp(ecs.y[id], 100, MAP_H - 100);
-    ecs.w[id] = 20; ecs.h[id] = 20;
-    ecs.hp[id] = 100; ecs.maxHp[id] = 100;
-    ecs.team[id] = 1; // bots are team 1
-    ecs.mass[id] = 1;
-    ecs.friction[id] = 0.85;
-    ecs.aiState[id] = 0; // 0=loot, 1=fight, 2=flee
-    ecs.setTag(id, TAG_BOT);
+function spawnEnemiesForRoom(rx, ry) {
+    // Clear old enemies
+    ecs.query(TAG_ENEMY, function(id) { ecs.destroy(id); });
 
-    botStates[id] = {
-        state: 'wander',
-        timer: 0,
-        targetId: -1,
-        weapon: 'pistol',
-        moveDir: { x: (Math.random()-0.5), y: (Math.random()-0.5) },
-        shootCd: 0,
-        dashCd: 0
-    };
-    return id;
-}
+    var count = Math.min(2 + playerFloor, 8);
+    var rm = null;
+    for (var i = 0; i < rooms.length; i++) {
+        if (rooms[i].rx === rx && rooms[i].ry === ry) { rm = rooms[i]; break; }
+    }
+    if (!rm) return;
 
-function spawnLoot(x, y) {
-    var drop = LOOT_TABLE.roll();
-    if (!drop) return;
-    var id = ecs.create();
-    ecs.x[id] = x - 8; ecs.y[id] = y - 8;
-    ecs.w[id] = 16; ecs.h[id] = 16;
-    ecs.tag[id] = TAG_LOOT;
-    ecs.lifetime[id] = 120; // despawn after 2 min
-    ecs._lootData = drop.item; // store loot info on entity
-}
-
-function fireBullet(ownerId, weaponKey, dirX, dirY) {
-    var wp = WEAPONS[weaponKey];
-    var pellets = wp.pellets || 1;
-    for (var p = 0; p < pellets; p++) {
-        var spread = (Math.random() - 0.5) * wp.spread;
-        var angle = Math.atan2(dirY, dirX) + spread;
+    var rng = new R.Kisendrasendra(rx * 100 + ry * 7 + playerFloor * 31);
+    for (var i = 0; i < count; i++) {
         var id = ecs.create();
-        ecs.x[id] = ecs.x[ownerId] + ecs.w[ownerId]/2;
-        ecs.y[id] = ecs.y[ownerId] + ecs.h[ownerId]/2;
-        ecs.w[id] = 6; ecs.h[id] = 6;
-        ecs.vx[id] = Math.cos(angle) * wp.speed;
-        ecs.vy[id] = Math.sin(angle) * wp.speed;
-        ecs.damage[id] = wp.dmg;
-        ecs.team[id] = ecs.team[ownerId];
-        ecs.lifetime[id] = 2.0;
-        ecs.color[id] = wp.color;
-        ecs.setTag(id, TAG_BULLET);
+        ecs.x[id] = (rm.ox + rng.int(1, rm.rw - 2)) * TILE;
+        ecs.y[id] = (rm.oy + rng.int(1, rm.rh - 2)) * TILE;
+        ecs.w[id] = 18; ecs.h[id] = 18;
+        ecs.hp[id] = 2 + playerFloor; ecs.maxHp[id] = 2 + playerFloor;
+        ecs.team[id] = 1;
+        ecs.damage[id] = 1;
+        ecs.aiState[id] = 0; // 0=idle, 1=chase, 2=attack
+        ecs.aiTimer[id] = rng.range(0.5, 2);
+        ecs.friction[id] = 0.85;
+        ecs.setTag(id, TAG_ENEMY);
+    }
+}
+
+function spawnSolidTiles() {
+    // Clear old solids
+    ecs.query(TAG_SOLID, function(id) { ecs.destroy(id); });
+    ecs.query(TAG_TRIGGER, function(id) { ecs.destroy(id); });
+
+    var totalW = MAP_ROOMS_X * ROOM_W;
+    var totalH = MAP_ROOMS_Y * ROOM_H;
+    for (var y = 0; y < totalH; y++) {
+        for (var x = 0; x < totalW; x++) {
+            var t = tileGrid[y][x];
+            if (t === T_WALL) {
+                var id = ecs.create();
+                ecs.x[id] = x * TILE; ecs.y[id] = y * TILE;
+                ecs.w[id] = TILE; ecs.h[id] = TILE;
+                ecs.isSolid[id] = 1;
+                ecs.setTag(id, TAG_SOLID);
+            } else if (t === T_CHEST || t === T_NPC || t === T_STAIRS || t === T_POT || t === T_SWITCH) {
+                var id = ecs.create();
+                ecs.x[id] = x * TILE + 4; ecs.y[id] = y * TILE + 4;
+                ecs.w[id] = 24; ecs.h[id] = 24;
+                ecs.tag[id] = TAG_TRIGGER;
+                ecs._tileType = t;
+                ecs._tileX = x; ecs._tileY = y;
+            }
+        }
     }
 }
 
 // ============================================================
 // SCENE
 // ============================================================
-class BRScene extends R.Sehatra {
+class ZeldaScene extends R.Sehatra {
     create() {
-        generateMap();
-        playerId = createPlayer();
-        camera.setBounds(0, 0, MAP_W, MAP_H);
-        camera.follow({ x: ecs.x[playerId], y: ecs.y[playerId], w: 20, h: 20 }, 0.12);
-        camera.setDeadzone(50, 50, 100, 100);
+        this._generateFloor();
+        this._showMessage('ADY GOAVANA: Ny Famerenana', 'Rihana ' + playerFloor + ' — Tadidio ny lalana!', 2500);
+        dialogue.setText('');
+        dialogActive = false;
+    }
 
-        // Spawn bots
-        for (var i = 0; i < BOT_COUNT; i++) createBot();
-
-        // Scatter loot across map
-        for (var i = 0; i < 300; i++) {
-            var lx = 200 + Math.random() * (MAP_W - 400);
-            var ly = 200 + Math.random() * (MAP_H - 400);
-            spawnLoot(lx, ly);
-        }
-
-        // Initial zone setup
-        zoneTimer = ZONE_PHASES[0].duration;
-        this._showMessage('ADY GOAVANA: ROVA', '51 mpilalao — 24 minitra — Velona iray ihany!', 3000);
-
-        // Director callback
-        director.onSpawnRequest = function(stress) {
-            // Could spawn extra bots or events based on stress
-        };
-
-        this._comboTimer = 0;
-        this._lootPopupTimer = 0;
+    _generateFloor() {
+        generateDungeon(playerFloor);
+        spawnSolidTiles();
+        spawnPlayer();
+        spawnEnemiesForRoom(0, 0);
+        currentRoom = { rx: 0, ry: 0 };
+        visitedRooms = {};
+        visitedRooms['0,0'] = true;
     }
 
     update(dt, dtMs) {
-        if (gameOver) return;
-
-        // Match timer
-        matchTime -= dt;
-        if (matchTime <= 0) { matchTime = 0; this._endGame(false); return; }
-
-        // Zone progression
-        zoneTimer -= dt;
-        if (zoneTimer <= 0 && zonePhaseIdx < ZONE_PHASES.length - 1) {
-            zonePhaseIdx++;
-            var phase = ZONE_PHASES[zonePhaseIdx];
-            zone = new R.FaribolanaMihena(MAP_W/2, MAP_H/2, zone.radius, phase.radius, phase.duration, phase.dmg);
-            zoneTimer = phase.duration;
-            this._showMessage(phase.msg, '', 2000);
+        if (dialogActive) {
+            dialogue.update(dt);
+            if (R.Fanindry.justPressed('e') || R.Fanindry.justPressed(' ')) {
+                if (dialogue.done) {
+                    dialogActive = false;
+                    document.getElementById('dialogBox').style.display = 'none';
+                    if (dialogCallback) { dialogCallback(); dialogCallback = null; }
+                } else {
+                    dialogue.skip();
+                }
+            }
+            return;
         }
-        zone.update(dt);
 
         // Player movement
         if (playerId >= 0 && ecs.isAlive(playerId)) {
             var axis = R.Fanindry.axis();
-            var spd = PLAYER_SPEED * dt;
-            var nx = ecs.x[playerId] + axis.x * spd;
-            var ny = ecs.y[playerId] + axis.y * spd;
+            if (axis.x !== 0 || axis.y !== 0) facingDir = { x: axis.x, y: axis.y };
 
-            // Solid collision
-            if (!this._isSolid(nx, ecs.y[playerId], ecs.w[playerId], ecs.h[playerId])) ecs.x[playerId] = nx;
-            if (!this._isSolid(ecs.x[playerId], ny, ecs.w[playerId], ecs.h[playerId])) ecs.y[playerId] = ny;
+            // Dash
+            var moveSpeed = PLAYER_SPEED;
+            if (R.Fanindry.justPressed('shift')) {
+                dash.start(axis.x || facingDir.x, axis.y || facingDir.y);
+            }
+            var dashMove = dash.update(dt);
+            if (dashMove.dx !== 0 || dashMove.dy !== 0) {
+                moveSpeed = 0; // dash overrides normal movement
+                var nx = ecs.x[playerId] + dashMove.dx;
+                var ny = ecs.y[playerId] + dashMove.dy;
+                if (!this._isSolid(nx, ecs.y[playerId], ecs.w[playerId], ecs.h[playerId])) ecs.x[playerId] = nx;
+                if (!this._isSolid(ecs.x[playerId], ny, ecs.w[playerId], ecs.h[playerId])) ecs.y[playerId] = ny;
+                particles.emit(ecs.x[playerId]+10, ecs.y[playerId]+10, { count: 3, speedMin: 20, speedMax: 60, lifeMin: 0.1, lifeMax: 0.2, sizeStart: 3, color: 0x00FF8866 });
+            } else {
+                var spd = moveSpeed * dt;
+                var nx = ecs.x[playerId] + axis.x * spd;
+                var ny = ecs.y[playerId] + axis.y * spd;
+                if (!this._isSolid(nx, ecs.y[playerId], ecs.w[playerId], ecs.h[playerId])) ecs.x[playerId] = nx;
+                if (!this._isSolid(ecs.x[playerId], ny, ecs.w[playerId], ecs.h[playerId])) ecs.y[playerId] = ny;
+            }
 
-            // Clamp to map
+            // Clamp
             ecs.x[playerId] = R.Z.clamp(ecs.x[playerId], 0, MAP_W - ecs.w[playerId]);
             ecs.y[playerId] = R.Z.clamp(ecs.y[playerId], 0, MAP_H - ecs.h[playerId]);
 
-            // Shooting
-            if (R.Fanindry.mouseJustDown(0)) {
-                var wp = WEAPONS[playerWeapon];
-                if (playerAmmo[playerWeapon] > 0) {
-                    var mx = R.Fanindry.mouse.worldX;
-                    var my = R.Fanindry.mouse.worldY;
-                    var dx = mx - (ecs.x[playerId] + ecs.w[playerId]/2);
-                    var dy = my - (ecs.y[playerId] + ecs.h[playerId]/2);
-                    fireBullet(playerId, playerWeapon, dx, dy);
-                    playerAmmo[playerWeapon]--;
-                    Feo.mamorona('laser', { volume: 0.15 });
-                }
+            // Attack
+            atkCd -= dt;
+            if (R.Fanindry.justPressed(' ') && atkCd <= 0) {
+                atkCd = ATK_CD;
+                this._playerAttack();
             }
 
-            // Dash
-            if (R.Fanindry.justPressed(' ')) {
-                var a = R.Fanindry.axis();
-                if (a.x !== 0 || a.y !== 0) {
-                    ecs.vx[playerId] = (a.x || 0) * DASH_DIST / 0.18;
-                    ecs.vy[playerId] = (a.y || 0) * DASH_DIST / 0.18;
-                    particles.emit(ecs.x[playerId]+10, ecs.y[playerId]+10, { count: 8, speedMin: 30, speedMax: 80, lifeMin: 0.2, lifeMax: 0.4, sizeStart: 4, color: 0x00FF8888 });
-                }
-            }
-
-            // Loot pickup
+            // Interact
             if (R.Fanindry.justPressed('e')) {
-                this._tryPickupLoot();
+                this._interact();
             }
 
             // Camera follow
             camera.target = { x: ecs.x[playerId], y: ecs.y[playerId], w: ecs.w[playerId], h: ecs.h[playerId] };
 
-            // Zone damage
-            var pcx = ecs.x[playerId] + ecs.w[playerId]/2;
-            var pcy = ecs.y[playerId] + ecs.h[playerId]/2;
-            var zdmg = zone.damageIfOutside(pcx, pcy, dt);
-            if (zdmg > 0) {
-                this._damageEntity(playerId, zdmg);
-            }
+            // Room transition check
+            this._checkRoomTransition();
         }
 
-        // Update bots
-        this._updateBots(dt);
+        // Enemy AI
+        this._updateEnemies(dt);
 
-        // Update bullets
-        ecs.query(TAG_BULLET, function(id) {
-            ecs.x[id] += ecs.vx[id] * dt;
-            ecs.y[id] += ecs.vy[id] * dt;
-            ecs.age[id] += dt;
-            if (ecs.age[id] >= ecs.lifetime[id]) { ecs.destroy(id); return; }
-            // Out of map
-            if (ecs.x[id] < 0 || ecs.x[id] > MAP_W || ecs.y[id] < 0 || ecs.y[id] > MAP_H) { ecs.destroy(id); return; }
-        });
-
-        // Combat system
+        // Combat
         var self = this;
         combat.clear();
-
-        // Register hurtboxes for players/bots
-        ecs.queryMask(function(id) { return ecs.tag[id] === TAG_PLAYER || ecs.tag[id] === TAG_BOT; }, function(id) {
+        ecs.queryMask(function(id) { return ecs.tag[id] === TAG_PLAYER || ecs.tag[id] === TAG_ENEMY; }, function(id) {
             combat.addHurtbox({ id: id }, { x: ecs.x[id], y: ecs.y[id], w: ecs.w[id], h: ecs.h[id] }, ecs.team[id]);
         });
-
-        // Register hitboxes for bullets
         ecs.query(TAG_BULLET, function(id) {
             combat.addHitbox({ id: id }, { x: ecs.x[id], y: ecs.y[id], w: ecs.w[id], h: ecs.h[id] }, ecs.damage[id], ecs.team[id]);
         });
-
         combat.update(function(hit, hurt) {
             var bulletId = hit.owner.id;
             var targetId = hurt.owner.id;
             if (!ecs.isAlive(targetId) || !ecs.isAlive(bulletId)) return;
-
             self._damageEntity(targetId, hit.damage);
             ecs.destroy(bulletId);
-
-            // Particles on hit
             particles.emit(ecs.x[targetId]+ecs.w[targetId]/2, ecs.y[targetId]+ecs.h[targetId]/2, {
-                count: 5, speedMin: 40, speedMax: 120, lifeMin: 0.15, lifeMax: 0.3, sizeStart: 3, color: 0xFF444488
+                count: 6, speedMin: 40, speedMax: 120, lifeMin: 0.15, lifeMax: 0.3, sizeStart: 4, color: 0xFF444488
             });
-
-            // Combo if player killed
-            if (targetId !== playerId && playerId >= 0 && ecs.team[bulletId] === 0) {
-                var pts = combo.add(100);
-                self._showCombo();
+            if (targetId !== playerId) {
+                combo.add(50);
+                camera.shake(3, 80);
+                R.Feo.mamorona('hit', { volume: 0.12 });
+            } else {
+                camera.shake(5, 120);
+                R.Feo.mamorona('explode', { volume: 0.15 });
             }
         });
 
-        // Loot lifetime
-        ecs.query(TAG_LOOT, function(id) {
+        // Bullets update
+        ecs.query(TAG_BULLET, function(id) {
+            ecs.x[id] += ecs.vx[id] * dt;
+            ecs.y[id] += ecs.vy[id] * dt;
             ecs.age[id] += dt;
             if (ecs.age[id] >= ecs.lifetime[id]) ecs.destroy(id);
         });
 
         // Particles
         particles.update(dt);
-
-        // Director
-        director.addStress(aliveCount > 20 ? 2 : 5);
-        director.update(dt);
-
-        // Combo decay
         combo.update(dt);
-        if (this._comboTimer > 0) {
-            this._comboTimer -= dt;
-            if (this._comboTimer <= 0) document.getElementById('comboDisplay').style.opacity = '0';
-        }
 
-        // Check win condition
-        if (aliveCount <= 1 && ecs.isAlive(playerId)) {
-            this._endGame(true);
-        } else if (!ecs.isAlive(playerId)) {
-            this._endGame(false);
-        }
-
-        // Update HUD
+        // HUD
         this._updateHUD();
     }
 
     render(renderer, camera, alpha) {
-        // Draw visible biome tiles only
+        // Draw visible tiles only
         var bounds = camera.getBounds();
-        var x0 = Math.max(0, Math.floor(bounds.x / TILE));
-        var y0 = Math.max(0, Math.floor(bounds.y / TILE));
-        var x1 = Math.min(COLS, Math.ceil(bounds.right / TILE) + 1);
-        var y1 = Math.min(ROWS, Math.ceil(bounds.bottom / TILE) + 1);
+        var tx0 = Math.max(0, Math.floor(bounds.x / TILE));
+        var ty0 = Math.max(0, Math.floor(bounds.y / TILE));
+        var tx1 = Math.min(MAP_ROOMS_X * ROOM_W, Math.ceil(bounds.right / TILE) + 1);
+        var ty1 = Math.min(MAP_ROOMS_Y * ROOM_H, Math.ceil(bounds.bottom / TILE) + 1);
 
-        for (var y = y0; y < y1; y++) {
-            for (var x = x0; x < x1; x++) {
-                var biome = biomeGrid[y] && biomeGrid[y][x];
-                var col = BIOME_COLORS[biome] || 0x333333FF;
+        for (var y = ty0; y < ty1; y++) {
+            for (var x = tx0; x < tx1; x++) {
+                if (!tileGrid[y] || tileGrid[y][x] === undefined) continue;
+                var t = tileGrid[y][x];
+                var col = TILE_COLORS[t] || 0x111111FF;
                 renderer.drawRect(x * TILE, y * TILE, TILE, TILE, col);
+                // Wall top highlight
+                if (t === T_WALL && y > 0 && tileGrid[y-1] && tileGrid[y-1][x] !== T_WALL) {
+                    renderer.drawRect(x * TILE, y * TILE, TILE, 4, 0x776655FF);
+                }
             }
         }
 
-        // Draw trees
-        ecs.query(TAG_TREE, function(id) {
-            renderer.drawRect(ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id], 0x1a4411FF);
-            renderer.drawRect(ecs.x[id]+4, ecs.y[id]-8, ecs.w[id]-8, 12, 0x226622FF);
-        });
-
-        // Draw rocks
-        ecs.query(TAG_ROCK, function(id) {
-            renderer.drawRect(ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id], 0x666666FF);
-        });
-
-        // Draw loot
-        ecs.query(TAG_LOOT, function(id) {
-            var pulse = 0.7 + Math.sin(performance.now() * 0.005 + id) * 0.3;
-            var c = ecs._lootData ? (ecs._lootData.type === 'weapon' ? 0xFFFF44FF : ecs._lootData.type === 'heal' ? 0x44FF44FF : 0x4488FFFF) : 0xFFFFFFFF;
-            renderer.drawRect(ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id], c);
-        });
-
-        // Draw entities (players/bots) sorted by Y
+        // Entities sorted by Y
         var entities = [];
-        ecs.queryMask(function(id) { return ecs.tag[id] === TAG_PLAYER || ecs.tag[id] === TAG_BOT; }, function(id) {
+        ecs.queryMask(function(id) { return ecs.tag[id] === TAG_PLAYER || ecs.tag[id] === TAG_ENEMY; }, function(id) {
             entities.push(id);
         });
         entities.sort(function(a, b) { return ecs.y[a] - ecs.y[b]; });
 
         for (var i = 0; i < entities.length; i++) {
             var id = entities[i];
-            var isPlayer = id === playerId;
-            var col = isPlayer ? 0x00FF88FF : 0xFF4444FF;
+            var isP = id === playerId;
+            // Shadow
+            renderer.drawRect(ecs.x[id]+2, ecs.y[id]+ecs.h[id]-4, ecs.w[id]-4, 6, 0x00000044);
+            // Body
+            var col = isP ? 0x00CC66FF : 0xCC4444FF;
+            if (isP && dash.isInvincible) col = 0xFFFFFF88;
             renderer.drawRect(ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id], col);
-            // HP bar above
-            var hpPct = ecs.hp[id] / ecs.maxHp[id];
-            renderer.drawRect(ecs.x[id]-2, ecs.y[id]-8, ecs.w[id]+4, 4, 0x333333FF);
-            renderer.drawRect(ecs.x[id]-2, ecs.y[id]-8, (ecs.w[id]+4)*hpPct, 4, isPlayer ? 0x00FF88FF : 0xFF4444FF);
+            // Eyes
+            var ex = ecs.x[id] + ecs.w[id]/2 + facingDir.x * 4;
+            var ey = ecs.y[id] + 6 + facingDir.y * 2;
+            renderer.drawRect(ex-3, ey, 2, 2, 0xFFFFFFFF);
+            renderer.drawRect(ex+1, ey, 2, 2, 0xFFFFFFFF);
+            // HP bar for enemies
+            if (!isP) {
+                var hpPct = ecs.hp[id] / ecs.maxHp[id];
+                renderer.drawRect(ecs.x[id]-2, ecs.y[id]-6, ecs.w[id]+4, 3, 0x333333FF);
+                renderer.drawRect(ecs.x[id]-2, ecs.y[id]-6, (ecs.w[id]+4)*hpPct, 3, 0xFF4444FF);
+            }
         }
 
-        // Draw bullets
+        // Bullets
         ecs.query(TAG_BULLET, function(id) {
-            renderer.drawRect(ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id], ecs.color[id] || 0xFFFF00FF);
+            renderer.drawRect(ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id], ecs.team[id] === 0 ? 0x00FF88FF : 0xFF4444FF);
         });
 
-        // Draw zone circle
-        var zr = zone.radius;
-        var zcx = zone.cx, zcy = zone.cy;
-        // Draw zone border as ring of rects
-        var segments = 64;
-        for (var i = 0; i < segments; i++) {
-            var a1 = (i / segments) * Math.PI * 2;
-            var a2 = ((i + 1) / segments) * Math.PI * 2;
-            var x1 = zcx + Math.cos(a1) * zr;
-            var y1 = zcy + Math.sin(a1) * zr;
-            var x2 = zcx + Math.cos(a2) * zr;
-            var y2 = zcy + Math.sin(a2) * zr;
-            renderer.drawRect((x1+x2)/2-2, (y1+y2)/2-2, 4, 4, 0xFF444488);
-        }
+        // Trigger items overlay
+        ecs.query(TAG_TRIGGER, function(id) {
+            var t = ecs._tileType;
+            var col = TILE_COLORS[t] || 0xFFFFFFFF;
+            renderer.drawRect(ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id], col);
+            // Chest sparkle
+            if (t === T_CHEST) {
+                var pulse = 0.6 + Math.sin(performance.now() * 0.004 + id) * 0.4;
+                renderer.drawRect(ecs.x[id]+8, ecs.y[id]+2, 8, 4, (Math.floor(pulse*255)<<24)|0xFFFF44);
+            }
+        });
 
         // Particles
         particles.render(renderer);
 
-        // Day/night tint
-        R.AndroAlina.update(dt);
+        // Day/night tint based on floor
+        R.AndroAlina.setTime(0.75 + playerFloor * 0.03);
+        R.AndroAlina.update(0);
         var tint = R.AndroAlina.tint();
         if (tint.a > 0.01) {
             renderer.drawRect(bounds.x, bounds.y, bounds.w, bounds.h,
-                (Math.floor(tint.a * 180) << 24) | (Math.floor(tint.b * 255) << 16) | (Math.floor(tint.g * 255) << 8) | Math.floor(tint.r * 255));
+                (Math.floor(tint.a * 150) << 24) | (Math.floor(tint.b * 255) << 16) | (Math.floor(tint.g * 255) << 8) | Math.floor(tint.r * 255));
         }
     }
 
     renderUI(renderer) {
-        // Minimap
         this._renderMinimap();
     }
 
-    // ---- HELPERS ----
-    _isSolid(x, y, w, h) {
-        var cx = Math.floor((x + w/2) / TILE);
-        var cy = Math.floor((y + h/2) / TILE);
-        if (cx < 0 || cy < 0 || cx >= COLS || cy >= ROWS) return true;
-        if (BIOME_SOLID[biomeGrid[cy][cx]]) return true;
-        // Check tree/rock entities
-        var solid = false;
-        ecs.queryMask(function(id) { return ecs.isSolid[id] === 1; }, function(id) {
-            if (R.Fizika.rectVsRect(x, y, w, h, ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id])) solid = true;
+    // ---- COMBAT ----
+    _playerAttack() {
+        var px = ecs.x[playerId] + ecs.w[playerId]/2;
+        var py = ecs.y[playerId] + ecs.h[playerId]/2;
+        // Create attack hitbox as short-lived bullet
+        var id = ecs.create();
+        ecs.x[id] = px + facingDir.x * 16 - 8;
+        ecs.y[id] = py + facingDir.y * 16 - 8;
+        ecs.w[id] = 16; ecs.h[id] = 16;
+        ecs.vx[id] = 0; ecs.vy[id] = 0;
+        ecs.damage[id] = ATK_DMG;
+        ecs.team[id] = 0;
+        ecs.lifetime[id] = 0.1;
+        ecs.age[id] = 0;
+        ecs.setTag(id, TAG_BULLET);
+
+        // Sword swing particles
+        particles.emit(px + facingDir.x * 20, py + facingDir.y * 20, {
+            count: 5, speedMin: 30, speedMax: 80, lifeMin: 0.1, lifeMax: 0.2, sizeStart: 3, color: 0xFFFF8866
         });
-        return solid;
+        R.Feo.mamorona('step', { volume: 0.08 });
     }
 
     _damageEntity(id, amount) {
         if (!ecs.isAlive(id)) return;
-        // Armor absorbs 50%
-        if (id === playerId && playerArmor > 0) {
-            var absorbed = Math.min(playerArmor, amount * 0.5);
-            playerArmor -= absorbed;
-            amount -= absorbed;
-        }
         ecs.hp[id] -= amount;
         if (ecs.hp[id] <= 0) {
             ecs.hp[id] = 0;
@@ -596,212 +578,186 @@ class BRScene extends R.Sehatra {
 
     _killEntity(id) {
         var wasPlayer = id === playerId;
-        var killerTeam = -1;
-
-        // Find who killed (last bullet that hit)
-        // Simplified: just track in kill feed
-        var name = wasPlayer ? 'Ianao' : ('Bot-' + id);
-        killFeed.addKill('???', name);
-
-        // Death particles
         particles.emit(ecs.x[id]+ecs.w[id]/2, ecs.y[id]+ecs.h[id]/2, {
-            count: 20, speedMin: 50, speedMax: 200, lifeMin: 0.3, lifeMax: 0.8,
-            sizeStart: 6, sizeEnd: 0, color: wasPlayer ? 0x00FF88FF : 0xFF4444FF
+            count: 15, speedMin: 50, speedMax: 180, lifeMin: 0.3, lifeMax: 0.6, sizeStart: 5, sizeEnd: 0,
+            color: wasPlayer ? 0x00CC66FF : 0xCC4444FF
         });
 
-        // Drop loot
-        spawnLoot(ecs.x[id] + ecs.w[id]/2, ecs.y[id] + ecs.h[id]/2);
+        if (!wasPlayer) {
+            // Drop rupee
+            var dropId = ecs.create();
+            dropId = ecs.create();
+            ecs.x[dropId] = ecs.x[id] + 4; ecs.y[dropId] = ecs.y[id] + 4;
+            ecs.w[dropId] = 12; ecs.h[dropId] = 12;
+            ecs.tag[dropId] = TAG_ITEM;
+            ecs._itemType = 'rupee';
+            ecs.lifetime[dropId] = 15;
+            ecs.age[dropId] = 0;
+
+            achievements.unlock('first_kill');
+        }
 
         ecs.destroy(id);
-        aliveCount--;
 
         if (wasPlayer) {
-            // Spectate or game over handled in update
-        }
-
-        // Screen juice if player got a kill
-        if (!wasPlayer && playerId >= 0) {
-            camera.shake(4, 100);
-            Feo.mamorona('hit', { volume: 0.2 });
+            this._showMessage('MATY!', 'Tsindrio SPACE hamerenana...', 999999);
+            R.Feo.mamorona('error', { volume: 0.2 });
         }
     }
 
-    _updateBots(dt) {
+    // ---- ENEMY AI ----
+    _updateEnemies(dt) {
         var self = this;
-        ecs.query(TAG_BOT, function(id) {
-            var bs = botStates[id];
-            if (!bs) return;
+        ecs.query(TAG_ENEMY, function(id) {
+            if (!ecs.isAlive(id)) return;
+            var ex = ecs.x[id] + ecs.w[id]/2;
+            var ey = ecs.y[id] + ecs.h[id]/2;
+            var px = playerId >= 0 && ecs.isAlive(playerId) ? ecs.x[playerId] + ecs.w[playerId]/2 : -9999;
+            var py = playerId >= 0 && ecs.isAlive(playerId) ? ecs.y[playerId] + ecs.h[playerId]/2 : -9999;
+            var dist = R.Z.dist(ex, ey, px, py);
 
-            bs.timer -= dt;
-            bs.shootCd -= dt;
-            bs.dashCd -= dt;
+            ecs.aiTimer[id] -= dt;
 
-            var bx = ecs.x[id] + ecs.w[id]/2;
-            var by = ecs.y[id] + ecs.h[id]/2;
+            if (dist < 200) {
+                // Chase
+                var dx = px - ex, dy = py - ey;
+                var len = Math.hypot(dx, dy) || 1;
+                var spd = (80 + playerFloor * 10) * dt;
+                var nx = ecs.x[id] + (dx/len) * spd;
+                var ny = ecs.y[id] + (dy/len) * spd;
+                if (!self._isSolid(nx, ecs.y[id], ecs.w[id], ecs.h[id])) ecs.x[id] = nx;
+                if (!self._isSolid(ecs.x[id], ny, ecs.w[id], ecs.h[id])) ecs.y[id] = ny;
 
-            // Zone damage
-            var zdmg = zone.damageIfOutside(bx, by, dt);
-            if (zdmg > 0) self._damageEntity(id, zdmg);
-
-            // State machine
-            if (bs.state === 'wander') {
-                // Move toward zone center with some randomness
-                var dx = zone.cx - bx;
-                var dy = zone.cy - by;
-                var dist = Math.hypot(dx, dy);
-                if (dist > 100) {
-                    var spd = PLAYER_SPEED * 0.7 * dt;
-                    var nx = ecs.x[id] + (dx/dist) * spd + (Math.random()-0.5) * 20 * dt;
-                    var ny = ecs.y[id] + (dy/dist) * spd + (Math.random()-0.5) * 20 * dt;
-                    if (!self._isSolid(nx, ecs.y[id], ecs.w[id], ecs.h[id])) ecs.x[id] = nx;
-                    if (!self._isSolid(ecs.x[id], ny, ecs.w[id], ecs.h[id])) ecs.y[id] = ny;
+                // Attack when close
+                if (dist < 30 && ecs.aiTimer[id] <= 0) {
+                    ecs.aiTimer[id] = 1.0 + Math.random() * 0.5;
+                    // Fire projectile
+                    var bid = ecs.create();
+                    ecs.x[bid] = ex - 4; ecs.y[bid] = ey - 4;
+                    ecs.w[bid] = 8; ecs.h[bid] = 8;
+                    ecs.vx[bid] = (dx/len) * 200;
+                    ecs.vy[bid] = (dy/len) * 200;
+                    ecs.damage[bid] = ecs.damage[id];
+                    ecs.team[bid] = 1;
+                    ecs.lifetime[bid] = 2;
+                    ecs.age[bid] = 0;
+                    ecs.setTag(bid, TAG_BULLET);
                 }
-
-                // Look for nearby enemies
-                var targets = R.Radar.scan(bx, by, 400, []);
-                ecs.queryMask(function(tid) { return (ecs.tag[tid] === TAG_PLAYER || ecs.tag[tid] === TAG_BOT) && ecs.team[tid] !== ecs.team[id] && ecs.isAlive(tid); }, function(tid) {
-                    var d = R.Z.dist(bx, by, ecs.x[tid]+ecs.w[tid]/2, ecs.y[tid]+ecs.h[tid]/2);
-                    if (d < 400) {
-                        bs.state = 'fight';
-                        bs.targetId = tid;
-                        bs.timer = 5;
-                    }
-                });
-
-                if (bs.timer <= 0) {
-                    bs.timer = 2 + Math.random() * 3;
-                    bs.moveDir = { x: (Math.random()-0.5), y: (Math.random()-0.5) };
+            } else {
+                // Wander
+                if (ecs.aiTimer[id] <= 0) {
+                    ecs.aiTimer[id] = 1 + Math.random() * 2;
+                    ecs._wanderX = (Math.random() - 0.5) * 60;
+                    ecs._wanderY = (Math.random() - 0.5) * 60;
                 }
-            }
-            else if (bs.state === 'fight') {
-                if (!ecs.isAlive(bs.targetId)) {
-                    bs.state = 'wander';
-                    bs.timer = 2;
-                    return;
-                }
-
-                var tx = ecs.x[bs.targetId] + ecs.w[bs.targetId]/2;
-                var ty = ecs.y[bs.targetId] + ecs.h[bs.targetId]/2;
-                var dx = tx - bx, dy = ty - by;
-                var dist = Math.hypot(dx, dy);
-
-                // Move toward target
-                if (dist > 150) {
-                    var spd = PLAYER_SPEED * 0.8 * dt;
-                    var nx = ecs.x[id] + (dx/dist) * spd;
-                    var ny = ecs.y[id] + (dy/dist) * spd;
-                    if (!self._isSolid(nx, ecs.y[id], ecs.w[id], ecs.h[id])) ecs.x[id] = nx;
-                    if (!self._isSolid(ecs.x[id], ny, ecs.w[id], ecs.h[id])) ecs.y[id] = ny;
-                }
-
-                // Shoot
-                if (bs.shootCd <= 0 && dist < 350) {
-                    fireBullet(id, bs.weapon, dx, dy);
-                    bs.shootCd = WEAPONS[bs.weapon].cd * (1.5 + Math.random());
-                }
-
-                if (bs.timer <= 0) {
-                    bs.state = 'wander';
-                    bs.timer = 3;
-                }
-            }
-
-            // Clamp to map
-            ecs.x[id] = R.Z.clamp(ecs.x[id], 0, MAP_W - ecs.w[id]);
-            ecs.y[id] = R.Z.clamp(ecs.y[id], 0, MAP_H - ecs.h[id]);
-        });
-    }
-
-    _tryPickupLoot() {
-        if (playerId < 0 || !ecs.isAlive(playerId)) return;
-        var px = ecs.x[playerId], py = ecs.y[playerId], pw = ecs.w[playerId], ph = ecs.h[playerId];
-        var self = this;
-        ecs.query(TAG_LOOT, function(id) {
-            if (R.Fizika.rectVsRect(px-10, py-10, pw+20, ph+20, ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id])) {
-                var loot = ecs._lootData;
-                if (!loot) return;
-                if (loot.type === 'weapon') {
-                    if (playerWeaponsOwned.indexOf(loot.id) === -1) {
-                        playerWeaponsOwned.push(loot.id);
-                        playerWeapon = loot.id;
-                        playerAmmo[loot.id] = WEAPONS[loot.id].ammo;
-                    } else {
-                        playerAmmo[loot.id] = Math.min(playerAmmo[loot.id] + WEAPONS[loot.id].ammo, WEAPONS[loot.id].max * 2);
-                    }
-                    self._showLootPopup('+' + WEAPONS[loot.id].name);
-                } else if (loot.type === 'heal') {
-                    ecs.hp[playerId] = Math.min(ecs.hp[playerId] + loot.amount, ecs.maxHp[playerId]);
-                    self._showLootPopup('+' + loot.amount + ' HP');
-                } else if (loot.type === 'armor') {
-                    playerArmor = Math.min(playerArmor + loot.amount, 100);
-                    self._showLootPopup('+' + loot.amount + ' Armor');
-                } else if (loot.type === 'ammo') {
-                    for (var w in playerAmmo) { if (playerWeaponsOwned.indexOf(w) >= 0) playerAmmo[w] += loot.amount; }
-                    self._showLootPopup('+' + loot.amount + ' Ammo');
-                }
-                ecs.destroy(id);
-                Feo.mamorona('pickup', { volume: 0.15 });
+                var wx = ecs._wanderX || 0, wy = ecs._wanderY || 0;
+                var nx = ecs.x[id] + wx * dt;
+                var ny = ecs.y[id] + wy * dt;
+                if (!self._isSolid(nx, ecs.y[id], ecs.w[id], ecs.h[id])) ecs.x[id] = nx;
+                if (!self._isSolid(ecs.x[id], ny, ecs.w[id], ecs.h[id])) ecs.y[id] = ny;
             }
         });
-    }
 
-    _updateHUD() {
+        // Item pickup
         if (playerId >= 0 && ecs.isAlive(playerId)) {
-            var hpPct = (ecs.hp[playerId] / ecs.maxHp[playerId] * 100).toFixed(0);
-            document.getElementById('hpFill').style.width = hpPct + '%';
-            document.getElementById('hpText').textContent = Math.ceil(ecs.hp[playerId]) + '/' + ecs.maxHp[playerId];
-            document.getElementById('armorFill').style.width = playerArmor + '%';
+            ecs.query(TAG_ITEM, function(id) {
+                if (R.Fizika.rectVsRect(ecs.x[playerId]-4, ecs.y[playerId]-4, ecs.w[playerId]+8, ecs.h[playerId]+8, ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id])) {
+                    if (ecs._itemType === 'rupee') {
+                        playerRupees += 5;
+                        R.Feo.mamorona('coin', { volume: 0.1 });
+                    }
+                    ecs.destroy(id);
+                }
+            });
         }
-        document.getElementById('aliveCount').textContent = aliveCount;
-        var mins = Math.floor(matchTime / 60);
-        var secs = Math.floor(matchTime % 60);
-        document.getElementById('zoneTimer').textContent = 'Zone: ' + mins + ':' + (secs < 10 ? '0' : '') + secs;
-        document.getElementById('zoneMsg').textContent = ZONE_PHASES[zonePhaseIdx].msg;
-
-        // Kill feed
-        var feedEl = document.getElementById('killFeed');
-        var feedHtml = '';
-        for (var i = 0; i < killFeed.feed.length; i++) {
-            var entry = killFeed.feed[i];
-            feedHtml += '<div class="kill-entry">' + entry.killer + ' ✕ ' + entry.victim + '</div>';
-        }
-        feedEl.innerHTML = feedHtml;
-
-        // Weapon slots
-        var slotsEl = document.getElementById('weaponSlots');
-        var slotsHtml = '';
-        for (var i = 0; i < playerWeaponsOwned.length; i++) {
-            var w = playerWeaponsOwned[i];
-            var active = w === playerWeapon ? ' active' : '';
-            slotsHtml += '<div class="weapon-slot' + active + '">' + WEAPONS[w].name + '<br>' + (playerAmmo[w] || 0) + '</div>';
-        }
-        slotsEl.innerHTML = slotsHtml;
     }
 
-    _renderMinimap() {
-        var mw = minimapCanvas.width, mh = minimapCanvas.height;
-        mmCtx.fillStyle = '#111';
-        mmCtx.fillRect(0, 0, mw, mh);
+    // ---- INTERACTION ----
+    _interact() {
+        if (playerId < 0 || !ecs.isAlive(playerId)) return;
+        var px = ecs.x[playerId] + ecs.w[playerId]/2;
+        var py = ecs.y[playerId] + ecs.h[playerId]/2;
+        var self = this;
 
-        var sx = mw / MAP_W, sy = mh / MAP_H;
+        ecs.query(TAG_TRIGGER, function(id) {
+            if (!R.Fizika.rectVsRect(px-20, py-20, 40, 40, ecs.x[id], ecs.y[id], ecs.w[id], ecs.h[id])) return;
+            var t = ecs._tileType;
+            var tx = ecs._tileX, ty = ecs._tileY;
 
-        // Zone circle
-        mmCtx.strokeStyle = '#ff4444';
-        mmCtx.lineWidth = 1;
-        mmCtx.beginPath();
-        mmCtx.arc(zone.cx * sx, zone.cy * sy, zone.radius * sx, 0, Math.PI * 2);
-        mmCtx.stroke();
-
-        // Entities
-        ecs.queryMask(function(id) { return ecs.tag[id] === TAG_PLAYER || ecs.tag[id] === TAG_BOT; }, function(id) {
-            mmCtx.fillStyle = id === playerId ? '#00ff88' : '#ff4444';
-            mmCtx.fillRect(ecs.x[id] * sx, ecs.y[id] * sy, 3, 3);
+            if (t === T_CHEST) {
+                tileGrid[ty][tx] = T_FLOOR;
+                ecs.destroy(id);
+                chestsOpened++;
+                playerRupees += 20;
+                if (Math.random() < 0.3) playerKeys++;
+                R.Feo.mamorona('power', { volume: 0.15 });
+                particles.emit(ecs.x[id]+12, ecs.y[id]+12, { count: 12, speedMin: 40, speedMax: 100, lifeMin: 0.3, lifeMax: 0.5, sizeStart: 4, color: 0xFFFF4488 });
+                self._showDialog('Trano', 'Nahita vola sy zavatra sarobidy!');
+                if (chestsOpened >= totalChests && totalChests > 0) achievements.unlock('all_chests');
+                spawnSolidTiles(); // refresh triggers
+            } else if (t === T_NPC) {
+                var msgs = [
+                    'Tandremo ny aloka ao amin\'ny rihana ambany...',
+                    'Ny lakile dia miafina ao anaty trano.',
+                    'Faly aho mahita anao velona!',
+                    'Ny fahavalo dia mihamahery isaky ny rihana.',
+                    'Misaotra anao ny namonjy ahy!'
+                ];
+                var msg = msgs[Math.floor(Math.random() * msgs.length)];
+                self._showDialog('Olona', msg);
+            } else if (t === T_STAIRS) {
+                playerFloor++;
+                if (playerFloor >= 3) achievements.unlock('floor_3');
+                self._showMessage('Rihana ' + playerFloor, 'Miditra ao amin\'ny haizina lalina kokoa...', 2000);
+                R.Feo.mamorona('select', { volume: 0.15 });
+                self._generateFloor();
+            } else if (t === T_POT) {
+                tileGrid[ty][tx] = T_FLOOR;
+                ecs.destroy(id);
+                R.Feo.mamorona('hit', { volume: 0.08 });
+                particles.emit(ecs.x[id]+12, ecs.y[id]+12, { count: 6, speedMin: 30, speedMax: 80, lifeMin: 0.2, lifeMax: 0.4, sizeStart: 3, color: 0xCC884488 });
+                // Chance to drop rupee
+                if (Math.random() < 0.4) {
+                    var rid = ecs.create();
+                    ecs.x[rid] = ecs.x[id]+4; ecs.y[rid] = ecs.y[id]+4;
+                    ecs.w[rid] = 12; ecs.h[rid] = 12;
+                    ecs.tag[rid] = TAG_ITEM;
+                    ecs._itemType = 'rupee';
+                    ecs.lifetime[rid] = 15; ecs.age[rid] = 0;
+                }
+                spawnSolidTiles();
+            }
         });
+    }
 
-        // Camera viewport
-        var cb = camera.getBounds();
-        mmCtx.strokeStyle = '#ffffff44';
-        mmCtx.strokeRect(cb.x * sx, cb.y * sy, cb.w * sx, cb.h * sy);
+    // ---- ROOM TRANSITION ----
+    _checkRoomTransition() {
+        if (playerId < 0 || !ecs.isAlive(playerId)) return;
+        var prx = Math.floor((ecs.x[playerId] + ecs.w[playerId]/2) / (ROOM_W * TILE));
+        var pry = Math.floor((ecs.y[playerId] + ecs.h[playerId]/2) / (ROOM_H * TILE));
+        if (prx !== currentRoom.rx || pry !== currentRoom.ry) {
+            currentRoom = { rx: prx, ry: pry };
+            visitedRooms[prx + ',' + pry] = true;
+            spawnEnemiesForRoom(prx, pry);
+        }
+    }
+
+    // ---- HELPERS ----
+    _isSolid(x, y, w, h) {
+        var corners = [
+            { x: x, y: y },
+            { x: x + w - 1, y: y },
+            { x: x, y: y + h - 1 },
+            { x: x + w - 1, y: y + h - 1 }
+        ];
+        for (var i = 0; i < corners.length; i++) {
+            var tx = Math.floor(corners[i].x / TILE);
+            var ty = Math.floor(corners[i].y / TILE);
+            if (tx < 0 || ty < 0 || tx >= MAP_ROOMS_X * ROOM_W || ty >= MAP_ROOMS_Y * ROOM_H) return true;
+            var t = tileGrid[ty][tx];
+            if (t === T_WALL || t === T_LOCKED) return true;
+        }
+        return false;
     }
 
     _showMessage(title, sub, duration) {
@@ -812,40 +768,68 @@ class BRScene extends R.Sehatra {
         setTimeout(function() { el.style.opacity = '0'; }, duration || 2000);
     }
 
-    _showCombo() {
-        var el = document.getElementById('comboDisplay');
-        document.getElementById('comboCount').textContent = combo.combo + ' HITS';
-        document.getElementById('comboMult').textContent = 'x' + combo.multiplier.toFixed(1);
-        el.style.opacity = '1';
-        this._comboTimer = 2;
+    _showDialog(name, text) {
+        dialogActive = true;
+        dialogue.setText(text);
+        document.getElementById('dialogBox').style.display = 'block';
+        document.getElementById('dialogName').textContent = name;
+        document.getElementById('dialogText').textContent = '';
+        R.Feo.mamorona('select', { volume: 0.08 });
+        // Typewriter update handled in main update loop
+        var self = this;
+        var typeInterval = setInterval(function() {
+            if (!dialogActive) { clearInterval(typeInterval); return; }
+            document.getElementById('dialogText').textContent = dialogue.visible;
+            if (dialogue.done) clearInterval(typeInterval);
+        }, 40);
     }
 
-    _showLootPopup(text) {
-        var el = document.getElementById('lootPopup');
-        el.textContent = text;
-        el.style.opacity = '1';
-        clearTimeout(this._lootPopupTimeout);
-        this._lootPopupTimeout = setTimeout(function() { el.style.opacity = '0'; }, 1000);
+    _updateHUD() {
+        // Hearts
+        var heartsEl = document.getElementById('hpHearts');
+        var heartsHtml = '';
+        var fullHearts = Math.ceil(playerHP / 2);
+        for (var i = 0; i < Math.ceil(MAX_HP / 2); i++) {
+            heartsHtml += '<div class="heart' + (i < fullHearts ? '' : ' empty') + '"></div>';
+        }
+        heartsEl.innerHTML = heartsHtml;
+
+        document.getElementById('rupeeCount').textContent = '💎 ' + playerRupees;
+        document.getElementById('keyCount').textContent = '🔑 ' + playerKeys;
+        document.getElementById('floorLabel').textContent = 'Rihana ' + playerFloor;
+
+        // Game over restart
+        if (playerId < 0 || !ecs.isAlive(playerId)) {
+            if (R.Fanindry.justPressed(' ')) {
+                playerHP = MAX_HP;
+                playerFloor = 1;
+                playerRupees = 0;
+                playerKeys = 0;
+                this.create();
+            }
+        }
     }
 
-    _endGame(won) {
-        gameOver = true;
-        gameWon = won;
-        var title = won ? 'FANDRESENA!' : 'MATY!';
-        var sub = won ? 'Ianao no velona farany!' : 'Isa: ' + combo.best + ' | Fotoana: ' + Math.floor(MATCH_TIME - matchTime) + 's';
-        this._showMessage(title, sub, 999999);
-        if (won) Feo.mamorona('power', { volume: 0.3 });
-        else Feo.mamorona('explode', { volume: 0.3 });
+    _renderMinimap() {
+        var mw = mmCanvas.width, mh = mmCanvas.height;
+        mmCtx.fillStyle = '#111';
+        mmCtx.fillRect(0, 0, mw, mh);
+        var cw = mw / MAP_ROOMS_X, ch = mh / MAP_ROOMS_Y;
+        for (var key in visitedRooms) {
+            var parts = key.split(',');
+            var rx = parseInt(parts[0]), ry = parseInt(parts[1]);
+            mmCtx.fillStyle = rx === currentRoom.rx && ry === currentRoom.ry ? '#00ff88' : '#445566';
+            mmCtx.fillRect(rx * cw + 1, ry * ch + 1, cw - 2, ch - 2);
+        }
     }
 }
 
 // ============================================================
 // START
 // ============================================================
-game.addScene('br', BRScene);
-game.start('br');
+game.addScene('zelda', ZeldaScene);
+game.start('zelda');
 
-// Resize handler
 window.addEventListener('resize', function() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
