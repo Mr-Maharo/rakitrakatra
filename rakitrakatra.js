@@ -1,16 +1,54 @@
 /**
  * ═══════════════════════════════════════════════════════════
- * RAKITRAKATRA V4.2.0 
- * Moteur lalao 2D matihanina - WebGL 2 + Vondrona
+ * RAKITRAKATRA V4.2.0 "ADY GOAVANA"
+ * Moteur lalao 2D matihanina - WebGL 2 + Vondrona (ECS)
  * © 2026 MIT Licence
+ *
+ * FANAMARIHANA VIRAY (v4.2.0): manomboka izao dia ity dikany
+ * 100% TENY GASY ity ihany no tohanana sy havaozina — nafoina
+ * ny dikany anglisy (rakitrakatra.js / .min.js), tsy hovaozina
+ * intsony izy ireo. 2D fotsiny ihany koa ny fifantohan'ity
+ * moteur ity — tsy misy drafitra 3D voakasa.
  *
  * Architecture:
  * - WebGL2 Renderer — batched quad rendering, voalahatra araka
- *   ny texture @ flush() mba hampihenana ny draw call (TSY GPU
- *   hardware instancing marina — jereo CHANGELOG v4.0.1)
- * - Entity Component System (SoA), sparse-set + free-list ID
+ *   ny texture @ flush() mba hampihenana ny draw call
+ * - Vondrona (ECS, SoA), sparse-set + free-list ID
  * - Spatial Hash Grid
- * - 100+ Systems & Plugins (nampiana 50 plugin vaovao tamin'ny v4.2.0)
+ * - 85 Systems & Plugins (v4.0.1: 50 → v4.2.0: +35)
+ *
+ * CHANGELOG v4.2.0:
+ *  - Nampidirina module 35 vaovao (jereo ny fizarana "V4.2.0 —
+ *    MODULE VAOVAO" ao anaty kaody): FitaovanaVoa, FitahirizanaBaiko,
+ *    Fiadiana, AndroAlina, BokotraVirtoaly, FaribolanaMihena,
+ *    EndrikaBala, Fisintonana, IsaMitohy, TantaraFandresena,
+ *    FanampianaKendrena, Fijerena, KarazanTany, DrafitraSimba,
+ *    Radar, FotsakaTsyMifarana, MpamorontsatsaVahiny, Anjara,
+ *    Vavahady, Firaketana, FiarovanaFitaka, Ekipa, Fihetsehampo,
+ *    FeoAkaiky, Akanjo, VonoVono, Fanoratana, ZavaBita,
+ *    FivarotanaMock, FitsingerinaIsanAndro, MpampianatraMatoatoa,
+ *    SarintanyMafana, MpametakaMody, MpitarikaAI, FanambaraKely.
+ *  - Tehirizo: nampiana saveCompressed()/loadCompressed() (LZW).
+ *  - Tsy voakasika: Rollback Netcode, Lobby Matchmaking marina
+ *    (mila tena rafitra réseau), Inventory Tetris feno (grid +
+ *    rotation), Ragdoll 2D, Water buoyancy — mila fanaraha-maso
+ *    manokana sy fitsapana WebGL amin'ny hoavy.
+ *
+ * CHANGELOG v4.0.1 (audit fixes):
+ *  - Vondrona: nesorina ny compact() nandoto ny index ivelany;
+ *    free-list + generation handle (ABA-safe) solon'ny izany.
+ *  - Vondrona: create() namerina daholo ny sata ho 0/default.
+ *  - Vondrona: nesorina ny fillDefaults() aman-droa.
+ *  - Vondrona: nampiana query(tag, fn) mampiasa cache voatahiry.
+ *  - Mpampiseho: flush() manalahatra ny quad araka ny texture.
+ *  - Dobo: used ho WeakSet (tsy misakana GC raha adino avereno()).
+ *  - Fanindry: mouse/touch listeners afindra ho @ canvas.
+ *  - Lalao._loop: MAX_STEPS hisorohana spiral of death; alpha
+ *    interpolation azo ampiasain'ny Sehatra.render(r,c,alpha).
+ *  - Mpampiditra: ny 'feo' load dia mandika sy mampiditra @ Feo.
+ *  - Z.shuffle: clone alohan'ny fanovana.
+ *  - Lalao: { responsive: true } ho an'ny ResizeObserver.
+ * ═══════════════════════════════════════════════════════════
  */
 (function(global) {
     'use strict';
@@ -2805,6 +2843,77 @@
         clear() {
             for (let i = 0; i < 8; i++) this.delete(i);
         }
+
+        // ---- famenoana: compress LZW tsotra ho an'ny save lehibe kokoa
+        // ("Save Cloud + Tehirizo compress" araka ny hevitra plugin #8) ----
+        _lzwCompress(str) {
+            const dict = {};
+            const data = (str + '').split('');
+            const out = [];
+            let phrase = data[0];
+            let code = 256;
+            for (let i = 1; i < data.length; i++) {
+                const next = data[i];
+                if (dict[phrase + next] !== undefined) {
+                    phrase += next;
+                } else {
+                    out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
+                    dict[phrase + next] = code++;
+                    phrase = next;
+                }
+            }
+            out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
+            // manodidina ho String.fromCharCode(code) mba ho JSON-safe amin'ny alalan'ny btoa
+            return out.map(c => String.fromCharCode(c)).join('');
+        }
+        _lzwDecompress(compressed) {
+            const dict = {};
+            const data = compressed.split('');
+            let currChar = data[0];
+            let oldPhrase = currChar;
+            const out = [currChar];
+            let code = 256;
+            let phrase;
+            for (let i = 1; i < data.length; i++) {
+                const currCode = data[i].charCodeAt(0);
+                if (currCode < 256) phrase = data[i];
+                else phrase = dict[currCode] !== undefined ? dict[currCode] : (oldPhrase + currChar);
+                out.push(phrase);
+                currChar = phrase.charAt(0);
+                dict[code++] = oldPhrase + currChar;
+                oldPhrase = phrase;
+            }
+            return out.join('');
+        }
+
+        saveCompressed(slot, data) {
+            try {
+                const json = JSON.stringify(data);
+                const compressed = this._lzwCompress(json);
+                const b64 = (typeof btoa !== 'undefined') ? btoa(compressed) : Buffer.from(compressed, 'binary').toString('base64');
+                localStorage.setItem(this._slotKey(slot), JSON.stringify({
+                    c: b64, timestamp: Date.now(), version: '4.2', compressed: true
+                }));
+                return true;
+            } catch (e) {
+                console.error('saveCompressed failed:', e);
+                return false;
+            }
+        }
+        loadCompressed(slot) {
+            try {
+                const v = localStorage.getItem(this._slotKey(slot));
+                if (!v) return null;
+                const p = JSON.parse(v);
+                if (!p.compressed) return p.data || null;
+                const compressed = (typeof atob !== 'undefined') ? atob(p.c) : Buffer.from(p.c, 'base64').toString('binary');
+                const json = this._lzwDecompress(compressed);
+                return JSON.parse(json);
+            } catch (e) {
+                console.error('loadCompressed failed:', e);
+                return null;
+            }
+        }
     }
 
     // ============================================================
@@ -3496,1357 +3605,6 @@
         list() { return Array.from(this.plugins.keys()); }
     }
 
-    /* ============================================================
-       51-100. FANITARANA V4.2.0 - 50 PLUGIN VAOVAO
-       ============================================================ */
-
-    /* 51. Rakotra Sary - Texture Atlas / Sprite Sheet parser */
-    class RakotraSary {
-        constructor(image, frameW, frameH, margin = 0, spacing = 0) {
-            this.image = image;
-            this.frameW = frameW;
-            this.frameH = frameH;
-            this.margin = margin;
-            this.spacing = spacing;
-            this.frames = [];
-            this._cut();
-        }
-        _cut() {
-            const cols = Math.floor((this.image.width - this.margin * 2 + this.spacing) / (this.frameW + this.spacing));
-            const rows = Math.floor((this.image.height - this.margin * 2 + this.spacing) / (this.frameH + this.spacing));
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    this.frames.push({
-                        x: this.margin + c * (this.frameW + this.spacing),
-                        y: this.margin + r * (this.frameH + this.spacing),
-                        w: this.frameW, h: this.frameH
-                    });
-                }
-            }
-        }
-        get(index) { return this.frames[index]; }
-        slice(from, to) { return this.frames.slice(from, to); }
-    }
-
-    /* 52. FizarinaSarimihetsika - Animation State Machine */
-    class FizarinaSarimihetsika {
-        constructor() {
-            this.states = new Map();
-            this.transitions = new Map();
-            this.current = null;
-            this.params = {};
-        }
-        addState(name, anim) {
-            this.states.set(name, anim);
-            if (!this.current) this.current = name;
-            return this;
-        }
-        addTransition(from, to, condition) {
-            if (!this.transitions.has(from)) this.transitions.set(from, []);
-            this.transitions.get(from).push({ to, condition });
-            return this;
-        }
-        setParam(key, value) { this.params[key] = value; }
-        update(dt) {
-            const list = this.transitions.get(this.current) || [];
-            for (const t of list) {
-                if (t.condition(this.params)) {
-                    this.current = t.to;
-                    break;
-                }
-            }
-            const anim = this.states.get(this.current);
-            if (anim && anim.update) anim.update(dt);
-        }
-        getAnim() { return this.states.get(this.current); }
-    }
-
-    /* 53. Fisononana - Parallax scrolling layers */
-    class Fisononana {
-        constructor() {
-            this.layers = [];
-        }
-        addLayer(drawFn, tileW, tileH, factor = 0.5, tileX = true, tileY = false) {
-            const layer = { drawFn, tileW, tileH, factor, tileX, tileY, offsetX: 0, offsetY: 0 };
-            this.layers.push(layer);
-            return layer;
-        }
-        update(camX, camY) {
-            for (const l of this.layers) {
-                l.offsetX = camX * l.factor;
-                l.offsetY = camY * l.factor;
-            }
-        }
-        render(renderer, viewW, viewH) {
-            for (const l of this.layers) {
-                const w = l.tileW || viewW;
-                const h = l.tileH || viewH;
-                const startX = l.tileX ? -((l.offsetX % w) + w) % w : -l.offsetX;
-                const startY = l.tileY ? -((l.offsetY % h) + h) % h : -l.offsetY;
-                const countX = l.tileX ? Math.ceil(viewW / w) + 2 : 1;
-                const countY = l.tileY ? Math.ceil(viewH / h) + 2 : 1;
-                for (let iy = 0; iy < countY; iy++) {
-                    for (let ix = 0; ix < countX; ix++) {
-                        l.drawFn(renderer, startX + ix * w, startY + iy * h);
-                    }
-                }
-            }
-        }
-    }
-
-    /* 54. Manaraka - Camera follow with deadzone and lookahead */
-    class Manaraka {
-        constructor(camera, target) {
-            this.camera = camera;
-            this.target = target;
-            this.deadzoneW = 80;
-            this.deadzoneH = 60;
-            this.smooth = 0.15;
-            this.lookahead = 0;
-            this._vx = 0; this._vy = 0;
-            this._px = target ? target.x : 0;
-            this._py = target ? target.y : 0;
-        }
-        setTarget(target) { this.target = target; }
-        update(dt) {
-            if (!this.target) return;
-            this._vx = this.target.x - this._px;
-            this._vy = this.target.y - this._py;
-            this._px = this.target.x;
-            this._py = this.target.y;
-            const dx = this.target.x - this.camera.x;
-            const dy = this.target.y - this.camera.y;
-            let moveX = 0, moveY = 0;
-            if (Math.abs(dx) > this.deadzoneW) moveX = dx - Z.sign(dx) * this.deadzoneW;
-            if (Math.abs(dy) > this.deadzoneH) moveY = dy - Z.sign(dy) * this.deadzoneH;
-            const aheadX = this._vx * this.lookahead;
-            const aheadY = this._vy * this.lookahead;
-            this.camera.x = Z.lerp(this.camera.x, this.camera.x + moveX + aheadX, this.smooth);
-            this.camera.y = Z.lerp(this.camera.y, this.camera.y + moveY + aheadY, this.smooth);
-        }
-    }
-
-    /* 55. LalanaDijkstra - Weighted grid pathfinding */
-    class LalanaDijkstra {
-        constructor(grid, cols, rows, costFn) {
-            this.grid = grid;
-            this.cols = cols;
-            this.rows = rows;
-            this.costFn = costFn || (() => 1);
-        }
-        find(sx, sy, tx, ty) {
-            const key = (x, y) => y * this.cols + x;
-            const dist = new Map();
-            const prev = new Map();
-            const visited = new Set();
-            const start = key(sx, sy);
-            dist.set(start, 0);
-            const queue = [{ k: start, d: 0, x: sx, y: sy }];
-            while (queue.length) {
-                queue.sort((a, b) => a.d - b.d);
-                const cur = queue.shift();
-                if (visited.has(cur.k)) continue;
-                visited.add(cur.k);
-                if (cur.x === tx && cur.y === ty) break;
-                const neighbors = [[1,0],[-1,0],[0,1],[0,-1]];
-                for (const [dx, dy] of neighbors) {
-                    const nx = cur.x + dx, ny = cur.y + dy;
-                    if (nx < 0 || ny < 0 || nx >= this.cols || ny >= this.rows) continue;
-                    if (this.grid[ny * this.cols + nx] === 1) continue;
-                    const nk = key(nx, ny);
-                    const nd = cur.d + this.costFn(nx, ny);
-                    if (!dist.has(nk) || nd < dist.get(nk)) {
-                        dist.set(nk, nd);
-                        prev.set(nk, cur.k);
-                        queue.push({ k: nk, d: nd, x: nx, y: ny });
-                    }
-                }
-            }
-            const path = [];
-            let curKey = key(tx, ty);
-            if (!prev.has(curKey) && !(sx === tx && sy === ty)) return null;
-            while (curKey !== undefined) {
-                path.unshift({ x: curKey % this.cols, y: Math.floor(curKey / this.cols) });
-                curKey = prev.get(curKey);
-            }
-            return path;
-        }
-    }
-
-    /* 56. HazoFitondrantena - Behavior Tree builder */
-    class HazoFitondrantena {
-        static sequence(...nodes) {
-            return (ctx) => {
-                for (const n of nodes) {
-                    if (n(ctx) !== 'lavorary') return 'tsy_lavorary';
-                }
-                return 'lavorary';
-            };
-        }
-        static selector(...nodes) {
-            return (ctx) => {
-                for (const n of nodes) {
-                    if (n(ctx) === 'lavorary') return 'lavorary';
-                }
-                return 'tsy_lavorary';
-            };
-        }
-        static action(fn) {
-            return (ctx) => fn(ctx) ? 'lavorary' : 'tsy_lavorary';
-        }
-        static condition(fn) {
-            return (ctx) => fn(ctx) ? 'lavorary' : 'tsy_lavorary';
-        }
-        static invert(node) {
-            return (ctx) => node(ctx) === 'lavorary' ? 'tsy_lavorary' : 'lavorary';
-        }
-    }
-
-    /* 57. MpandefaOnja - Enemy wave / spawner manager */
-    class MpandefaOnja {
-        constructor() {
-            this.waves = [];
-            this.index = 0;
-            this.timer = 0;
-            this.active = false;
-        }
-        addWave(count, interval, spawnFn, delayAfter = 0) {
-            this.waves.push({ count, interval, spawnFn, delayAfter, spawned: 0, timer: 0, done: false });
-            return this;
-        }
-        start() { this.active = true; this.index = 0; }
-        update(dt) {
-            if (!this.active || this.index >= this.waves.length) return;
-            const w = this.waves[this.index];
-            w.timer += dt;
-            if (w.spawned < w.count && w.timer >= w.interval) {
-                w.timer = 0;
-                w.spawnFn(w.spawned);
-                w.spawned++;
-            }
-            if (w.spawned >= w.count && !w.done) {
-                w.done = true;
-                w.timer = 0;
-            }
-            if (w.done && w.timer >= w.delayAfter) {
-                this.index++;
-            } else if (w.done) {
-                w.timer += dt;
-            }
-        }
-        isFinished() { return this.index >= this.waves.length; }
-    }
-
-    /* 58. IsaFahavoazana - Floating damage number popups */
-    class IsaFahavoazana {
-        constructor() {
-            this.popups = [];
-        }
-        spawn(x, y, text, color = 0xFFFFFFFF, life = 0.8) {
-            this.popups.push({ x, y, text, color, life, maxLife: life, vy: -40 });
-        }
-        update(dt) {
-            for (let i = this.popups.length - 1; i >= 0; i--) {
-                const p = this.popups[i];
-                p.y += p.vy * dt;
-                p.vy += 60 * dt;
-                p.life -= dt;
-                if (p.life <= 0) this.popups.splice(i, 1);
-            }
-        }
-        render(renderer) {
-            for (const p of this.popups) {
-                const alpha = Z.clamp(p.life / p.maxLife, 0, 1);
-                const a = Math.floor(alpha * 255);
-                const color = (p.color & 0xFFFFFF00) | a;
-                renderer.drawText && renderer.drawText(p.text, p.x, p.y, color);
-            }
-        }
-    }
-
-    /* 59. TsipikaFahasalamana - Health / progress bar widget */
-    class TsipikaFahasalamana {
-        constructor(x, y, w, h, max = 100) {
-            this.x = x; this.y = y; this.w = w; this.h = h;
-            this.max = max;
-            this.value = max;
-            this.displayValue = max;
-            this.smooth = 0.1;
-            this.bgColor = 0x333333FF;
-            this.fillColor = 0x22CC44FF;
-            this.lowColor = 0xCC2222FF;
-            this.lowThreshold = 0.3;
-        }
-        set(v) { this.value = Z.clamp(v, 0, this.max); }
-        update(dt) {
-            this.displayValue = Z.lerp(this.displayValue, this.value, this.smooth);
-        }
-        render(renderer) {
-            renderer.drawRect(this.x, this.y, this.w, this.h, this.bgColor);
-            const ratio = this.displayValue / this.max;
-            const color = ratio <= this.lowThreshold ? this.lowColor : this.fillColor;
-            renderer.drawRect(this.x, this.y, this.w * Z.clamp(ratio, 0, 1), this.h, color);
-        }
-    }
-
-    /* 60. Fahaizana - Ability cooldown manager */
-    class Fahaizana {
-        constructor() {
-            this.abilities = new Map();
-        }
-        register(name, cooldown) {
-            this.abilities.set(name, { cooldown, timer: 0, ready: true });
-        }
-        use(name) {
-            const a = this.abilities.get(name);
-            if (!a || !a.ready) return false;
-            a.ready = false;
-            a.timer = a.cooldown;
-            return true;
-        }
-        isReady(name) {
-            const a = this.abilities.get(name);
-            return a ? a.ready : false;
-        }
-        cooldownLeft(name) {
-            const a = this.abilities.get(name);
-            return a ? a.timer : 0;
-        }
-        update(dt) {
-            for (const a of this.abilities.values()) {
-                if (!a.ready) {
-                    a.timer -= dt;
-                    if (a.timer <= 0) { a.timer = 0; a.ready = true; }
-                }
-            }
-        }
-    }
-
-    /* 61. Kombo - Input buffer / combo detector */
-    class Kombo {
-        constructor(windowMs = 500) {
-            this.window = windowMs;
-            this.buffer = [];
-            this.combos = [];
-        }
-        addCombo(name, sequence, callback) {
-            this.combos.push({ name, sequence, callback });
-        }
-        press(inputName) {
-            const now = performance.now();
-            this.buffer.push({ input: inputName, t: now });
-            this.buffer = this.buffer.filter(b => now - b.t <= this.window);
-            for (const c of this.combos) {
-                const seq = this.buffer.slice(-c.sequence.length).map(b => b.input);
-                if (seq.length === c.sequence.length && seq.every((v, i) => v === c.sequence[i])) {
-                    c.callback();
-                    this.buffer = [];
-                    break;
-                }
-            }
-        }
-    }
-
-    /* 62. MpanovaHafainganan - Time scale / slow-motion manager */
-    class MpanovaHafainganan {
-        constructor() {
-            this.scale = 1;
-            this.targetScale = 1;
-            this.smooth = 1;
-            this._duration = 0;
-            this._timer = 0;
-        }
-        set(scale) { this.targetScale = scale; this.smooth = 1; }
-        tween(scale, duration) {
-            this.targetScale = scale;
-            this._duration = duration;
-            this._timer = 0;
-            this.smooth = 0;
-        }
-        update(dt) {
-            if (this.smooth < 1 && this._duration > 0) {
-                this._timer += dt;
-                this.smooth = Z.clamp(this._timer / this._duration, 0, 1);
-            }
-            this.scale = Z.lerp(this.scale, this.targetScale, this.smooth >= 1 ? 1 : 0.2);
-        }
-        apply(dt) { return dt * this.scale; }
-    }
-
-    /* 63. Balafomanga - Bullet pool wrapper */
-    class Balafomanga {
-        constructor(max = 200) {
-            this.pool = new Dobo(
-                () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 0, active: false, damage: 0, tag: '' }),
-                (obj, x, y, vx, vy, life, damage, tag) => {
-                    obj.x = x; obj.y = y; obj.vx = vx; obj.vy = vy;
-                    obj.life = life; obj.active = true; obj.damage = damage; obj.tag = tag;
-                },
-                max
-            );
-            this.active = [];
-        }
-        fire(x, y, vx, vy, life = 2, damage = 1, tag = 'bala') {
-            const b = this.pool.alaina(x, y, vx, vy, life, damage, tag);
-            this.active.push(b);
-            return b;
-        }
-        update(dt) {
-            for (let i = this.active.length - 1; i >= 0; i--) {
-                const b = this.active[i];
-                b.x += b.vx * dt;
-                b.y += b.vy * dt;
-                b.life -= dt;
-                if (b.life <= 0) {
-                    b.active = false;
-                    this.pool.avereno(b);
-                    this.active.splice(i, 1);
-                }
-            }
-        }
-        render(renderer, color = 0xFFFF00FF, size = 4) {
-            for (const b of this.active) {
-                renderer.drawRect(b.x - size / 2, b.y - size / 2, size, size, color);
-            }
-        }
-    }
-
-    /* 64. Taratra - 2D raycasting / line of sight */
-    class Taratra {
-        static cast(x1, y1, x2, y2, colliders) {
-            let closest = null;
-            let closestDist = Infinity;
-            for (const c of colliders) {
-                const hit = Taratra._rayVsRect(x1, y1, x2, y2, c.x, c.y, c.w, c.h);
-                if (hit) {
-                    const d = Z.distSq(x1, y1, hit.x, hit.y);
-                    if (d < closestDist) { closestDist = d; closest = { ...hit, target: c }; }
-                }
-            }
-            return closest;
-        }
-        static _rayVsRect(x1, y1, x2, y2, rx, ry, rw, rh) {
-            const dx = x2 - x1, dy = y2 - y1;
-            let tmin = 0, tmax = 1;
-            const edges = [
-                [-dx, x1 - rx], [dx, rx + rw - x1],
-                [-dy, y1 - ry], [dy, ry + rh - y1]
-            ];
-            for (const [p, q] of edges) {
-                if (p === 0) { if (q < 0) return null; continue; }
-                const r = q / p;
-                if (p < 0) { if (r > tmax) return null; if (r > tmin) tmin = r; }
-                else { if (r < tmin) return null; if (r < tmax) tmax = r; }
-            }
-            return { x: x1 + dx * tmin, y: y1 + dy * tmin, t: tmin };
-        }
-        static lineOfSight(x1, y1, x2, y2, blockers) {
-            return Taratra.cast(x1, y1, x2, y2, blockers) === null;
-        }
-    }
-
-    /* 65. Fitondrana - Steering behaviors (seek, flee, wander) */
-    class Fitondrana {
-        static seek(pos, vel, target, maxSpeed, maxForce) {
-            const dx = target.x - pos.x, dy = target.y - pos.y;
-            const len = Math.hypot(dx, dy) || 1;
-            const desiredX = (dx / len) * maxSpeed;
-            const desiredY = (dy / len) * maxSpeed;
-            let fx = desiredX - vel.x, fy = desiredY - vel.y;
-            const flen = Math.hypot(fx, fy);
-            if (flen > maxForce) { fx = (fx / flen) * maxForce; fy = (fy / flen) * maxForce; }
-            return { x: fx, y: fy };
-        }
-        static flee(pos, vel, target, maxSpeed, maxForce) {
-            const s = Fitondrana.seek(pos, vel, target, maxSpeed, maxForce);
-            return { x: -s.x, y: -s.y };
-        }
-        static wander(vel, state, maxSpeed, jitter = 0.3) {
-            state.angle = (state.angle || 0) + (Math.random() - 0.5) * jitter;
-            return { x: Math.cos(state.angle) * maxSpeed, y: Math.sin(state.angle) * maxSpeed };
-        }
-        static arrive(pos, vel, target, maxSpeed, maxForce, slowRadius = 100) {
-            const dx = target.x - pos.x, dy = target.y - pos.y;
-            const dist = Math.hypot(dx, dy) || 1;
-            const speed = dist < slowRadius ? maxSpeed * (dist / slowRadius) : maxSpeed;
-            const desiredX = (dx / dist) * speed, desiredY = (dy / dist) * speed;
-            let fx = desiredX - vel.x, fy = desiredY - vel.y;
-            const flen = Math.hypot(fx, fy);
-            if (flen > maxForce) { fx = (fx / flen) * maxForce; fy = (fy / flen) * maxForce; }
-            return { x: fx, y: fy };
-        }
-    }
-
-    /* 66. Vorona - Flocking / boids simulation */
-    class Vorona {
-        constructor(maxSpeed = 100, radius = 50) {
-            this.boids = [];
-            this.maxSpeed = maxSpeed;
-            this.radius = radius;
-        }
-        add(x, y) {
-            const b = { x, y, vx: Z.rand(-1, 1), vy: Z.rand(-1, 1) };
-            this.boids.push(b);
-            return b;
-        }
-        update(dt) {
-            for (const b of this.boids) {
-                let alx = 0, aly = 0, cnt = 0;
-                let cohX = 0, cohY = 0;
-                let sepX = 0, sepY = 0;
-                for (const o of this.boids) {
-                    if (o === b) continue;
-                    const d = Z.dist(b.x, b.y, o.x, o.y);
-                    if (d < this.radius && d > 0) {
-                        alx += o.vx; aly += o.vy;
-                        cohX += o.x; cohY += o.y;
-                        sepX += (b.x - o.x) / d; sepY += (b.y - o.y) / d;
-                        cnt++;
-                    }
-                }
-                if (cnt > 0) {
-                    alx /= cnt; aly /= cnt;
-                    cohX = (cohX / cnt) - b.x; cohY = (cohY / cnt) - b.y;
-                    b.vx += (alx * 0.05 + cohX * 0.01 + sepX * 0.1) * dt * 60;
-                    b.vy += (aly * 0.05 + cohY * 0.01 + sepY * 0.1) * dt * 60;
-                }
-                const speed = Math.hypot(b.vx, b.vy) || 1;
-                if (speed > this.maxSpeed) { b.vx = (b.vx / speed) * this.maxSpeed; b.vy = (b.vy / speed) * this.maxSpeed; }
-                b.x += b.vx * dt; b.y += b.vy * dt;
-            }
-        }
-    }
-
-    /* 67. Isometrika - Isometric coordinate conversion */
-    class Isometrika {
-        constructor(tileW = 64, tileH = 32) {
-            this.tileW = tileW;
-            this.tileH = tileH;
-        }
-        toScreen(x, y) {
-            return {
-                x: (x - y) * (this.tileW / 2),
-                y: (x + y) * (this.tileH / 2)
-            };
-        }
-        toGrid(sx, sy) {
-            const x = (sx / (this.tileW / 2) + sy / (this.tileH / 2)) / 2;
-            const y = (sy / (this.tileH / 2) - sx / (this.tileW / 2)) / 2;
-            return { x: Math.floor(x), y: Math.floor(y) };
-        }
-    }
-
-    /* 68. AutoTile - Automatic tile edge/corner resolver */
-    class AutoTile {
-        constructor(rules) {
-            this.rules = rules || {};
-        }
-        resolve(grid, cols, rows, x, y) {
-            const at = (gx, gy) => (gx < 0 || gy < 0 || gx >= cols || gy >= rows) ? 0 : grid[gy * cols + gx];
-            const n = at(x, y - 1), s = at(x, y + 1), w = at(x - 1, y), e = at(x + 1, y);
-            const mask = (n ? 1 : 0) | (e ? 2 : 0) | (s ? 4 : 0) | (w ? 8 : 0);
-            return this.rules[mask] !== undefined ? this.rules[mask] : mask;
-        }
-    }
-
-    /* 69. MaripahatanterahanaSystem - Achievements */
-    class MaripahatanterahanaSystem {
-        constructor() {
-            this.achievements = new Map();
-            this.listeners = [];
-        }
-        register(id, title, description, condition) {
-            this.achievements.set(id, { id, title, description, condition, unlocked: false });
-        }
-        check(state) {
-            for (const a of this.achievements.values()) {
-                if (!a.unlocked && a.condition(state)) {
-                    a.unlocked = true;
-                    for (const fn of this.listeners) fn(a);
-                }
-            }
-        }
-        onUnlock(fn) { this.listeners.push(fn); }
-        getAll() { return Array.from(this.achievements.values()); }
-    }
-
-    /* 70. TarehimarikaLoka - Local leaderboard */
-    class TarehimarikaLoka {
-        constructor(key = 'tarehimarika', maxEntries = 10) {
-            this.key = key;
-            this.maxEntries = maxEntries;
-            this.scores = this._load();
-        }
-        _load() {
-            try {
-                const raw = localStorage.getItem(this.key);
-                return raw ? JSON.parse(raw) : [];
-            } catch (e) { return []; }
-        }
-        _save() {
-            try { localStorage.setItem(this.key, JSON.stringify(this.scores)); } catch (e) {}
-        }
-        submit(name, score) {
-            this.scores.push({ name, score, date: Date.now() });
-            this.scores.sort((a, b) => b.score - a.score);
-            this.scores = this.scores.slice(0, this.maxEntries);
-            this._save();
-            return this.scores.findIndex(s => s.name === name && s.score === score);
-        }
-        top(n = 10) { return this.scores.slice(0, n); }
-    }
-
-    /* 71. FitehirizanaMaro - Multi-slot save manager */
-    class FitehirizanaMaro {
-        constructor(gameKey = 'lalao', slotCount = 3) {
-            this.gameKey = gameKey;
-            this.slotCount = slotCount;
-        }
-        save(slot, data) {
-            try {
-                localStorage.setItem(`${this.gameKey}_slot${slot}`, JSON.stringify({ data, date: Date.now() }));
-                return true;
-            } catch (e) { return false; }
-        }
-        load(slot) {
-            try {
-                const raw = localStorage.getItem(`${this.gameKey}_slot${slot}`);
-                return raw ? JSON.parse(raw) : null;
-            } catch (e) { return null; }
-        }
-        delete(slot) {
-            localStorage.removeItem(`${this.gameKey}_slot${slot}`);
-        }
-        listSlots() {
-            const out = [];
-            for (let i = 0; i < this.slotCount; i++) out.push(this.load(i));
-            return out;
-        }
-    }
-
-    /* 72. Kirakira - Settings / configuration manager */
-    class Kirakira {
-        constructor(defaults = {}) {
-            this.defaults = defaults;
-            this.settings = { ...defaults };
-        }
-        get(key) { return this.settings[key]; }
-        set(key, value) { this.settings[key] = value; }
-        reset() { this.settings = { ...this.defaults }; }
-        save(storageKey = 'kirakira') {
-            try { localStorage.setItem(storageKey, JSON.stringify(this.settings)); } catch (e) {}
-        }
-        load(storageKey = 'kirakira') {
-            try {
-                const raw = localStorage.getItem(storageKey);
-                if (raw) this.settings = { ...this.defaults, ...JSON.parse(raw) };
-            } catch (e) {}
-        }
-    }
-
-    /* 73. FifindraSehatra - Scene transition effects */
-    class FifindraSehatra {
-        constructor() {
-            this.type = 'fade';
-            this.duration = 0.5;
-            this.timer = 0;
-            this.active = false;
-            this.phase = 'none';
-            this.onMid = null;
-        }
-        start(type = 'fade', duration = 0.5, onMid = null) {
-            this.type = type;
-            this.duration = duration;
-            this.timer = 0;
-            this.active = true;
-            this.phase = 'out';
-            this.onMid = onMid;
-        }
-        update(dt) {
-            if (!this.active) return;
-            this.timer += dt;
-            const half = this.duration / 2;
-            if (this.phase === 'out' && this.timer >= half) {
-                this.phase = 'in';
-                this.timer = 0;
-                if (this.onMid) this.onMid();
-            } else if (this.phase === 'in' && this.timer >= half) {
-                this.active = false;
-                this.phase = 'none';
-            }
-        }
-        render(renderer, width, height) {
-            if (!this.active) return;
-            const half = this.duration / 2;
-            const t = Z.clamp(this.timer / half, 0, 1);
-            const alpha = this.phase === 'out' ? t : 1 - t;
-            const a = Math.floor(alpha * 255);
-            renderer.drawRect(0, 0, width, height, a);
-        }
-    }
-
-    /* 74. TsipikaFampidirana - Loading progress bar */
-    class TsipikaFampidirana {
-        constructor(loader) {
-            this.loader = loader;
-            this.progress = 0;
-        }
-        update() {
-            if (this.loader && this.loader._total > 0) {
-                this.progress = this.loader._loaded / this.loader._total;
-            }
-        }
-        render(renderer, x, y, w, h) {
-            renderer.drawRect(x, y, w, h, 0x222222FF);
-            renderer.drawRect(x, y, w * Z.clamp(this.progress, 0, 1), h, 0x44AAFFFF);
-        }
-    }
-
-    /* 75. Fampahafantarana - Toast notification queue */
-    class Fampahafantarana {
-        constructor() {
-            this.queue = [];
-            this.current = null;
-            this.timer = 0;
-        }
-        push(text, duration = 2, color = 0xFFFFFFFF) {
-            this.queue.push({ text, duration, color });
-        }
-        update(dt) {
-            if (!this.current && this.queue.length > 0) {
-                this.current = this.queue.shift();
-                this.timer = this.current.duration;
-            }
-            if (this.current) {
-                this.timer -= dt;
-                if (this.timer <= 0) this.current = null;
-            }
-        }
-        render(renderer, x, y) {
-            if (this.current && renderer.drawText) {
-                renderer.drawText(this.current.text, x, y, this.current.color);
-            }
-        }
-    }
-
-    /* 76. Efijoro - Modal dialog box */
-    class Efijoro {
-        constructor(x, y, w, h) {
-            this.x = x; this.y = y; this.w = w; this.h = h;
-            this.visible = false;
-            this.title = '';
-            this.body = '';
-            this.buttons = [];
-        }
-        open(title, body, buttons = []) {
-            this.title = title; this.body = body; this.buttons = buttons;
-            this.visible = true;
-        }
-        close() { this.visible = false; }
-        handleClick(px, py) {
-            if (!this.visible) return null;
-            for (const b of this.buttons) {
-                if (px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h) {
-                    if (b.onClick) b.onClick();
-                    return b;
-                }
-            }
-            return null;
-        }
-        render(renderer) {
-            if (!this.visible) return;
-            renderer.drawRect(0, 0, 99999, 99999, 0x000000AA);
-            renderer.drawRect(this.x, this.y, this.w, this.h, 0x222233FF);
-            for (const b of this.buttons) {
-                renderer.drawRect(b.x, b.y, b.w, b.h, 0x4466AAFF);
-            }
-        }
-    }
-
-    /* 77. Bokotra - Button widget with hover/press states */
-    class Bokotra {
-        constructor(x, y, w, h, label, onClick) {
-            this.x = x; this.y = y; this.w = w; this.h = h;
-            this.label = label;
-            this.onClick = onClick;
-            this.state = 'tsotra';
-            this.colors = { tsotra: 0x3366AAFF, hover: 0x4477BBFF, tsindry: 0x2255AAFF };
-        }
-        update(pointerX, pointerY, pointerDown) {
-            const inside = pointerX >= this.x && pointerX <= this.x + this.w &&
-                            pointerY >= this.y && pointerY <= this.y + this.h;
-            if (inside && pointerDown) this.state = 'tsindry';
-            else if (inside) this.state = 'hover';
-            else this.state = 'tsotra';
-            return inside;
-        }
-        click() { if (this.onClick) this.onClick(); }
-        render(renderer) {
-            renderer.drawRect(this.x, this.y, this.w, this.h, this.colors[this.state]);
-        }
-    }
-
-    /* 78. Sikaray - Grid layout UI container */
-    class Sikaray {
-        constructor(x, y, cols, cellW, cellH, gap = 4) {
-            this.x = x; this.y = y;
-            this.cols = cols;
-            this.cellW = cellW; this.cellH = cellH;
-            this.gap = gap;
-            this.items = [];
-        }
-        add(item) {
-            this.items.push(item);
-            this._layout();
-            return item;
-        }
-        _layout() {
-            this.items.forEach((item, i) => {
-                const col = i % this.cols;
-                const row = Math.floor(i / this.cols);
-                item.x = this.x + col * (this.cellW + this.gap);
-                item.y = this.y + row * (this.cellH + this.gap);
-            });
-        }
-    }
-
-    /* 79. SoratraBitmap - Bitmap font renderer */
-    class SoratraBitmap {
-        constructor(atlas, charMap, charW, charH) {
-            this.atlas = atlas;
-            this.charMap = charMap;
-            this.charW = charW;
-            this.charH = charH;
-        }
-        draw(renderer, text, x, y, scale = 1, textureKey = 'font', color = 0xFFFFFFFF) {
-            let cx = x;
-            for (const ch of text) {
-                const frame = this.charMap[ch];
-                if (frame) {
-                    renderer.drawSprite(cx, y, this.charW * scale, this.charH * scale,
-                        frame.x, frame.y, frame.w, frame.h, color, textureKey);
-                }
-                cx += (this.charW + 1) * scale;
-            }
-        }
-        measure(text, scale = 1) { return text.length * (this.charW + 1) * scale; }
-    }
-
-    /* 80. SoratraMiloko - Rich text tag parser [color=RRGGBB]...[/color] */
-    class SoratraMiloko {
-        static parse(input) {
-            const segments = [];
-            const regex = /\[color=([0-9A-Fa-f]{6})\](.*?)\[\/color\]/g;
-            let lastIndex = 0;
-            let match;
-            while ((match = regex.exec(input)) !== null) {
-                if (match.index > lastIndex) {
-                    segments.push({ text: input.slice(lastIndex, match.index), color: null });
-                }
-                segments.push({ text: match[2], color: parseInt(match[1], 16) });
-                lastIndex = regex.lastIndex;
-            }
-            if (lastIndex < input.length) segments.push({ text: input.slice(lastIndex), color: null });
-            return segments;
-        }
-    }
-
-    /* 81. Horohoro - Gamepad vibration wrapper */
-    class Horohoro {
-        static vibrate(gamepadIndex, weakMag = 0.5, strongMag = 0.5, duration = 200) {
-            const gp = navigator.getGamepads && navigator.getGamepads()[gamepadIndex];
-            if (gp && gp.vibrationActuator) {
-                gp.vibrationActuator.playEffect('dual-rumble', {
-                    duration, weakMagnitude: weakMag, strongMagnitude: strongMag
-                });
-                return true;
-            }
-            return false;
-        }
-    }
-
-    /* 82. Fihetsika - Touch gesture recognizer (swipe, pinch, tap) */
-    class Fihetsika {
-        constructor() {
-            this.onSwipe = null;
-            this.onPinch = null;
-            this.onTap = null;
-            this._touches = new Map();
-            this._startDist = 0;
-        }
-        touchStart(id, x, y) {
-            this._touches.set(id, { startX: x, startY: y, x, y, t: performance.now() });
-        }
-        touchMove(id, x, y) {
-            const t = this._touches.get(id);
-            if (t) { t.x = x; t.y = y; }
-            if (this._touches.size === 2) {
-                const pts = Array.from(this._touches.values());
-                const dist = Z.dist(pts[0].x, pts[0].y, pts[1].x, pts[1].y);
-                if (this._startDist > 0 && this.onPinch) {
-                    this.onPinch(dist / this._startDist);
-                }
-                if (this._startDist === 0) this._startDist = dist;
-            }
-        }
-        touchEnd(id) {
-            const t = this._touches.get(id);
-            if (t) {
-                const dx = t.x - t.startX, dy = t.y - t.startY;
-                const dist = Math.hypot(dx, dy);
-                const dt = performance.now() - t.t;
-                if (dist < 10 && dt < 300 && this.onTap) this.onTap(t.x, t.y);
-                else if (dist > 40 && this.onSwipe) {
-                    const angle = Math.atan2(dy, dx);
-                    const dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'havanana' : 'havia') : (dy > 0 ? 'ambany' : 'ambony');
-                    this.onSwipe(dir, angle, dist);
-                }
-            }
-            this._touches.delete(id);
-            if (this._touches.size < 2) this._startDist = 0;
-        }
-    }
-
-    /* 83. FisehoanaIndray - Input replay recorder/player */
-    class FisehoanaIndray {
-        constructor() {
-            this.frames = [];
-            this.recording = false;
-            this.playing = false;
-            this.playIndex = 0;
-        }
-        startRecording() { this.frames = []; this.recording = true; }
-        stopRecording() { this.recording = false; }
-        record(inputState) {
-            if (this.recording) this.frames.push({ ...inputState });
-        }
-        startPlayback() { this.playing = true; this.playIndex = 0; }
-        nextFrame() {
-            if (!this.playing || this.playIndex >= this.frames.length) { this.playing = false; return null; }
-            return this.frames[this.playIndex++];
-        }
-        toJSON() { return JSON.stringify(this.frames); }
-        fromJSON(json) { this.frames = JSON.parse(json); }
-    }
-
-    /* 84. Aloka - Motion trail / ghost effect */
-    class Aloka {
-        constructor(maxGhosts = 8, interval = 0.03) {
-            this.maxGhosts = maxGhosts;
-            this.interval = interval;
-            this.ghosts = [];
-            this.timer = 0;
-        }
-        update(dt, x, y, frame) {
-            this.timer += dt;
-            if (this.timer >= this.interval) {
-                this.timer = 0;
-                this.ghosts.push({ x, y, frame, life: 1 });
-                if (this.ghosts.length > this.maxGhosts) this.ghosts.shift();
-            }
-            for (const g of this.ghosts) g.life -= dt * 2;
-            this.ghosts = this.ghosts.filter(g => g.life > 0);
-        }
-        render(drawFn) {
-            for (const g of this.ghosts) {
-                const alpha = Math.floor(Z.clamp(g.life, 0, 1) * 120);
-                drawFn(g.x, g.y, g.frame, 0xFFFFFF00 | alpha);
-            }
-        }
-    }
-
-    /* 85. AndroSyAlina - Day-night cycle manager */
-    class AndroSyAlina {
-        constructor(dayLength = 120) {
-            this.dayLength = dayLength;
-            this.time = dayLength * 0.25;
-        }
-        update(dt) {
-            this.time = (this.time + dt) % this.dayLength;
-        }
-        getPhase() {
-            const t = this.time / this.dayLength;
-            if (t < 0.25) return 'maraina';
-            if (t < 0.5) return 'antoandro';
-            if (t < 0.75) return 'hariva';
-            return 'alina';
-        }
-        getTint() {
-            const t = this.time / this.dayLength;
-            const brightness = 0.4 + 0.6 * Math.sin(t * PI2 - HALF_PI) * 0.5 + 0.3;
-            const b = Z.clamp(brightness, 0.15, 1);
-            const v = Math.floor(b * 255);
-            return (v << 24) | (v << 16) | (v << 8) | 255;
-        }
-    }
-
-    /* 86. FamoronanaSehatra - Procedural room-based level generator */
-    class FamoronanaSehatra {
-        constructor(cols, rows, seed) {
-            this.cols = cols;
-            this.rows = rows;
-            this.rng = new Kisendrasendra(seed);
-            this.grid = new Array(cols * rows).fill(1);
-            this.rooms = [];
-        }
-        generate(roomCount = 8, minSize = 3, maxSize = 7) {
-            for (let i = 0; i < roomCount; i++) {
-                const w = this.rng.int(minSize, maxSize);
-                const h = this.rng.int(minSize, maxSize);
-                const x = this.rng.int(1, Math.max(1, this.cols - w - 1));
-                const y = this.rng.int(1, Math.max(1, this.rows - h - 1));
-                this._carveRoom(x, y, w, h);
-                this.rooms.push({ x, y, w, h, cx: Math.floor(x + w / 2), cy: Math.floor(y + h / 2) });
-            }
-            for (let i = 1; i < this.rooms.length; i++) {
-                this._carveCorridor(this.rooms[i - 1], this.rooms[i]);
-            }
-            return this.grid;
-        }
-        _carveRoom(x, y, w, h) {
-            for (let iy = y; iy < y + h && iy < this.rows; iy++) {
-                for (let ix = x; ix < x + w && ix < this.cols; ix++) {
-                    this.grid[iy * this.cols + ix] = 0;
-                }
-            }
-        }
-        _carveCorridor(a, b) {
-            let x = a.cx, y = a.cy;
-            while (x !== b.cx) { this.grid[y * this.cols + x] = 0; x += x < b.cx ? 1 : -1; }
-            while (y !== b.cy) { this.grid[y * this.cols + x] = 0; y += y < b.cy ? 1 : -1; }
-        }
-    }
-
-    /* 87. TanyFbm - Terrain height/biome generator via noise */
-    class TanyFbm {
-        constructor(seed = 1) {
-            this.seed = seed;
-        }
-        heightAt(x, y, octaves = 4, scale = 0.02) {
-            return Tabataba.fbm(x * scale, y * scale, octaves, this.seed);
-        }
-        biomeAt(x, y) {
-            const h = this.heightAt(x, y);
-            if (h < -0.2) return 'ranomasina';
-            if (h < 0) return 'moron-drano';
-            if (h < 0.3) return 'tanety';
-            if (h < 0.6) return 'ala';
-            return 'tendrombohitra';
-        }
-    }
-
-    /* 88. Vola - Currency / economy tracker */
-    class Vola {
-        constructor(start = 0) {
-            this.amount = start;
-            this.listeners = [];
-        }
-        add(n) { this.amount += n; this._notify(); }
-        spend(n) {
-            if (this.amount < n) return false;
-            this.amount -= n;
-            this._notify();
-            return true;
-        }
-        onChange(fn) { this.listeners.push(fn); }
-        _notify() { for (const fn of this.listeners) fn(this.amount); }
-    }
-
-    /* 89. Fivarotana - Shop / trade system */
-    class Fivarotana {
-        constructor(wallet) {
-            this.wallet = wallet;
-            this.items = [];
-        }
-        stock(id, name, price, qty = -1) {
-            this.items.push({ id, name, price, qty });
-        }
-        buy(id, inventory) {
-            const item = this.items.find(i => i.id === id);
-            if (!item || item.qty === 0) return false;
-            if (!this.wallet.spend(item.price)) return false;
-            if (item.qty > 0) item.qty--;
-            if (inventory) inventory.add({ id: item.id, qty: 1 });
-            return true;
-        }
-        sell(id, price, inventory) {
-            if (!inventory || !inventory.has(id)) return false;
-            inventory.remove(id, 1);
-            this.wallet.add(price);
-            return true;
-        }
-    }
-
-    /* 90. Safidy - Branching dialogue choice manager */
-    class Safidy {
-        constructor(dialogue) {
-            this.dialogue = dialogue;
-            this.choices = new Map();
-        }
-        addChoices(nodeId, options) {
-            this.choices.set(nodeId, options);
-        }
-        getChoices(nodeId) { return this.choices.get(nodeId) || []; }
-        choose(nodeId, index) {
-            const options = this.getChoices(nodeId);
-            const chosen = options[index];
-            if (chosen && chosen.next) this.dialogue.start(chosen.next);
-            if (chosen && chosen.onChoose) chosen.onChoose();
-            return chosen;
-        }
-    }
-
-    /* 91. Horonantsary - Cutscene sequencer */
-    class Horonantsary {
-        constructor() {
-            this.steps = [];
-            this.index = 0;
-            this.playing = false;
-            this._waitTimer = 0;
-        }
-        addWait(duration) { this.steps.push({ type: 'miandry', duration }); return this; }
-        addAction(fn) { this.steps.push({ type: 'hetsika', fn }); return this; }
-        play() { this.playing = true; this.index = 0; this._waitTimer = 0; }
-        update(dt) {
-            if (!this.playing || this.index >= this.steps.length) { this.playing = false; return; }
-            const step = this.steps[this.index];
-            if (step.type === 'hetsika') {
-                step.fn();
-                this.index++;
-            } else if (step.type === 'miandry') {
-                this._waitTimer += dt;
-                if (this._waitTimer >= step.duration) { this._waitTimer = 0; this.index++; }
-            }
-        }
-    }
-
-    /* 92. Rohy - Basic WebSocket networking helper */
-    class Rohy {
-        constructor(url) {
-            this.url = url;
-            this.socket = null;
-            this.handlers = new Map();
-            this.connected = false;
-        }
-        connect() {
-            this.socket = new WebSocket(this.url);
-            this.socket.onopen = () => { this.connected = true; this._emit('misokatra'); };
-            this.socket.onclose = () => { this.connected = false; this._emit('mikatona'); };
-            this.socket.onmessage = (e) => {
-                try {
-                    const msg = JSON.parse(e.data);
-                    this._emit(msg.type, msg.data);
-                } catch (err) { this._emit('hafahafa', e.data); }
-            };
-        }
-        on(type, fn) {
-            if (!this.handlers.has(type)) this.handlers.set(type, []);
-            this.handlers.get(type).push(fn);
-        }
-        _emit(type, data) {
-            const list = this.handlers.get(type);
-            if (list) for (const fn of list) fn(data);
-        }
-        send(type, data) {
-            if (this.connected) this.socket.send(JSON.stringify({ type, data }));
-        }
-    }
-
-    /* 93. Marika - Entity tagging / grouping registry */
-    class Marika {
-        constructor() {
-            this.groups = new Map();
-        }
-        tag(entity, tagName) {
-            if (!this.groups.has(tagName)) this.groups.set(tagName, new Set());
-            this.groups.get(tagName).add(entity);
-        }
-        untag(entity, tagName) {
-            const g = this.groups.get(tagName);
-            if (g) g.delete(entity);
-        }
-        getGroup(tagName) {
-            return this.groups.has(tagName) ? Array.from(this.groups.get(tagName)) : [];
-        }
-        hasTag(entity, tagName) {
-            const g = this.groups.get(tagName);
-            return g ? g.has(entity) : false;
-        }
-    }
-
-    /* 94. SokajyHalina - Depth / layer sort manager */
-    class SokajyHalina {
-        constructor() {
-            this.layers = new Map();
-        }
-        add(layerName, item, z = 0) {
-            if (!this.layers.has(layerName)) this.layers.set(layerName, []);
-            this.layers.get(layerName).push({ item, z });
-        }
-        clear(layerName) {
-            if (layerName) this.layers.set(layerName, []);
-            else this.layers.clear();
-        }
-        renderAll(renderFn, order) {
-            const names = order || Array.from(this.layers.keys());
-            for (const name of names) {
-                const list = this.layers.get(name);
-                if (!list) continue;
-                list.sort((a, b) => a.z - b.z);
-                for (const entry of list) renderFn(entry.item, name);
-            }
-        }
-    }
-
-    /* 95. Vovonana - Hitbox / hurtbox combat resolver */
-    class Vovonana {
-        constructor() {
-            this.hitboxes = [];
-            this.hurtboxes = [];
-            this._hitPairs = new Set();
-        }
-        addHitbox(owner, x, y, w, h, damage, tag = 'hitbox') {
-            const box = { owner, x, y, w, h, damage, tag };
-            this.hitboxes.push(box);
-            return box;
-        }
-        addHurtbox(owner, x, y, w, h, tag = 'hurtbox') {
-            const box = { owner, x, y, w, h, tag };
-            this.hurtboxes.push(box);
-            return box;
-        }
-        resolve(onHit) {
-            for (const hb of this.hitboxes) {
-                for (const hu of this.hurtboxes) {
-                    if (hb.owner === hu.owner) continue;
-                    const key = hb.owner + '_' + hu.owner + '_' + hb.tag;
-                    if (this._hitPairs.has(key)) continue;
-                    const chevauche = hb.x < hu.x + hu.w && hb.x + hb.w > hu.x &&
-                                       hb.y < hu.y + hu.h && hb.y + hb.h > hu.y;
-                    if (chevauche) {
-                        this._hitPairs.add(key);
-                        onHit(hb, hu);
-                    }
-                }
-            }
-        }
-        clearFrame() {
-            this.hitboxes = [];
-            this.hurtboxes = [];
-        }
-        resetHitPairs() { this._hitPairs.clear(); }
-    }
-
-    /* 96. Fanosehana - Knockback / impulse resolver */
-    class Fanosehana {
-        static apply(velocity, fromX, fromY, toX, toY, force, decay = 0.9) {
-            const dx = toX - fromX, dy = toY - fromY;
-            const len = Math.hypot(dx, dy) || 1;
-            velocity.x += (dx / len) * force;
-            velocity.y += (dy / len) * force;
-            velocity._decay = decay;
-            return velocity;
-        }
-        static update(velocity, dt) {
-            if (velocity._decay) {
-                const d = Math.pow(velocity._decay, dt * 60);
-                velocity.x *= d;
-                velocity.y *= d;
-            }
-        }
-    }
-
-    /* 97. AlokaEfijoro - Screen fade and vignette overlay */
-    class AlokaEfijoro {
-        constructor() {
-            this.fadeAlpha = 0;
-            this.vignetteStrength = 0;
-        }
-        fadeTo(alpha, speed = 2) { this._targetFade = alpha; this._fadeSpeed = speed; }
-        update(dt) {
-            if (this._targetFade !== undefined) {
-                this.fadeAlpha = Z.approach(this.fadeAlpha, this._targetFade, this._fadeSpeed * dt);
-            }
-        }
-        render(renderer, width, height) {
-            if (this.fadeAlpha > 0) {
-                const a = Math.floor(Z.clamp(this.fadeAlpha, 0, 1) * 255);
-                renderer.drawRect(0, 0, width, height, a);
-            }
-            if (this.vignetteStrength > 0) {
-                const border = 40 * this.vignetteStrength;
-                const c = Math.floor(180 * this.vignetteStrength);
-                renderer.drawRect(0, 0, width, border, c);
-                renderer.drawRect(0, height - border, width, border, c);
-                renderer.drawRect(0, 0, border, height, c);
-                renderer.drawRect(width - border, 0, border, height, c);
-            }
-        }
-    }
-
-    /* 98. FitaovanaFanampiny - Ready-made example plugins pack */
-    const FitaovanaFanampinyExamples = {
-        fpsCounter: {
-            name: 'fpsCounter',
-            version: '1.0.0',
-            install() { console.log('fpsCounter plugin: ampiasao R.Antontanisa hijerena fps'); }
-        },
-        autoSave: {
-            name: 'autoSave',
-            version: '1.0.0',
-            install() {
-                this._interval = setInterval(() => console.log('autoSave: tehirizina'), 60000);
-            },
-            uninstall() { if (this._interval) clearInterval(this._interval); }
-        }
-    };
-
-    /* 99. MpitantanaSokajy - Simple job/task scheduler for deferred calls */
-    class MpitantanaSokajy {
-        constructor() {
-            this.tasks = [];
-        }
-        schedule(delay, fn, repeat = false) {
-            const task = { delay, timer: delay, fn, repeat, done: false };
-            this.tasks.push(task);
-            return task;
-        }
-        update(dt) {
-            for (const t of this.tasks) {
-                if (t.done) continue;
-                t.timer -= dt;
-                if (t.timer <= 0) {
-                    t.fn();
-                    if (t.repeat) t.timer = t.delay;
-                    else t.done = true;
-                }
-            }
-            this.tasks = this.tasks.filter(t => !t.done);
-        }
-        cancel(task) { task.done = true; }
-    }
-
-    /* 100. MpitantanaFanampinyLehibe - Extended plugin manager with hooks */
-    class MpitantanaFanampinyLehibe extends MpitantanaFanampiny {
-        constructor() {
-            super();
-            this.hooks = new Map();
-        }
-        addHook(name, fn) {
-            if (!this.hooks.has(name)) this.hooks.set(name, []);
-            this.hooks.get(name).push(fn);
-        }
-        runHook(name, ...args) {
-            const list = this.hooks.get(name);
-            if (list) for (const fn of list) fn(...args);
-        }
-        installAll(plugins) {
-            let count = 0;
-            for (const p of plugins) if (this.install(p)) count++;
-            return count;
-        }
-    }
-
     // ============================================================
     // GAME LOOP - Fototra lalao
     // ============================================================
@@ -5021,10 +3779,674 @@
         }
     }
 
+
+    // ============================================================
+    // V4.2.0 — MODULE VAOVAO (35) — fanitarana 50 ho 85 rafitra
+    // Fizarana araka ny "hevitra plugins 50" nomen'ny audit v4.0.1
+    // ============================================================
+
+    // ---- A. CORE GAMEPLAY ----
+
+    // 51. Hitbox/Hurtbox manager — mitokana amin'ny collision @ combat
+    class FitaovanaVoa {
+        constructor() {
+            this.hitboxes = [];
+            this.hurtboxes = [];
+        }
+        addHitbox(owner, rect, damage, team = 0) {
+            const hb = { owner, x: rect.x, y: rect.y, w: rect.w, h: rect.h, damage, team, active: true, hitSet: new Set() };
+            this.hitboxes.push(hb);
+            return hb;
+        }
+        addHurtbox(owner, rect, team = 0) {
+            const hb = { owner, x: rect.x, y: rect.y, w: rect.w, h: rect.h, team };
+            this.hurtboxes.push(hb);
+            return hb;
+        }
+        removeHitbox(hb) { const i = this.hitboxes.indexOf(hb); if (i !== -1) this.hitboxes.splice(i, 1); }
+        removeHurtbox(hb) { const i = this.hurtboxes.indexOf(hb); if (i !== -1) this.hurtboxes.splice(i, 1); }
+        update(onHit) {
+            for (const hit of this.hitboxes) {
+                if (!hit.active) continue;
+                for (const hurt of this.hurtboxes) {
+                    if (hit.team === hurt.team) continue;
+                    if (hit.hitSet.has(hurt)) continue;
+                    if (Fizika.rectVsRect(hit.x, hit.y, hit.w, hit.h, hurt.x, hurt.y, hurt.w, hurt.h)) {
+                        hit.hitSet.add(hurt);
+                        if (onHit) onHit(hit, hurt);
+                    }
+                }
+            }
+        }
+        clear() { this.hitboxes.length = 0; this.hurtboxes.length = 0; }
+    }
+
+    // 52. Input buffer (jump buffer + coyote time) — platformer mamirifiry
+    class FitahirizanaBaiko {
+        constructor(bufferTime = 0.15, coyoteTime = 0.1) {
+            this.bufferTime = bufferTime;
+            this.coyoteTime = coyoteTime;
+            this._pressedAt = new Map();
+            this._t = 0;
+            this._groundedUntil = 0;
+        }
+        press(action) { this._pressedAt.set(action, this._t); }
+        setGrounded(isGrounded) { if (isGrounded) this._groundedUntil = this._t + this.coyoteTime; }
+        consume(action) {
+            const t = this._pressedAt.get(action);
+            if (t !== undefined && this._t - t <= this.bufferTime) {
+                this._pressedAt.delete(action);
+                return true;
+            }
+            return false;
+        }
+        canCoyote() { return this._t <= this._groundedUntil; }
+        update(dt) { this._t += dt; }
+    }
+
+    // 53. Arsenal — fitantanana bala/cooldown/reload/spread amin'ny basy maro
+    class Fiadiana {
+        constructor(weapons = []) {
+            this.weapons = weapons;
+            this.index = 0;
+            this._cd = 0;
+            this._reloading = false;
+            this._reloadT = 0;
+        }
+        get current() { return this.weapons[this.index]; }
+        switchTo(i) { if (i >= 0 && i < this.weapons.length) { this.index = i; this._reloading = false; } }
+        canFire() { return !this._reloading && this._cd <= 0 && this.current && this.current.ammo > 0; }
+        fire() {
+            if (!this.canFire()) return false;
+            this.current.ammo--;
+            this._cd = this.current.cooldown;
+            return true;
+        }
+        reload() {
+            if (!this.current || this._reloading || this.current.ammo === this.current.maxAmmo) return;
+            this._reloading = true;
+            this._reloadT = this.current.reloadTime;
+        }
+        update(dt) {
+            if (this._cd > 0) this._cd -= dt;
+            if (this._reloading) {
+                this._reloadT -= dt;
+                if (this._reloadT <= 0) {
+                    this.current.ammo = this.current.maxAmmo;
+                    this._reloading = false;
+                }
+            }
+        }
+    }
+
+    // 54. Day/Night cycle
+    const AndroAlina = {
+        _t: 0,
+        dayLength: 120,
+        update(dt) { this._t = (this._t + dt) % this.dayLength; },
+        phase() { return this._t / this.dayLength; },
+        isNight() { const p = this.phase(); return p > 0.7 || p < 0.15; },
+        tint() {
+            const p = this.phase();
+            const nightAmount = 0.5 - 0.5 * Math.cos(p * Math.PI * 2);
+            return { r: 0.05, g: 0.05, b: 0.25, a: nightAmount * 0.55 };
+        },
+        setTime(p) { this._t = Z.clamp(p, 0, 1) * this.dayLength; }
+    };
+
+    // 55. Bokotra virtoaly azo amboarina (ABXY custom)
+    class BokotraVirtoaly {
+        constructor() { this.buttons = new Map(); }
+        define(name) { this.buttons.set(name, { down: false, justDown: false, justUp: false }); }
+        press(name) {
+            const b = this.buttons.get(name); if (!b) return;
+            if (!b.down) b.justDown = true;
+            b.down = true;
+        }
+        release(name) {
+            const b = this.buttons.get(name); if (!b) return;
+            b.down = false; b.justUp = true;
+        }
+        isDown(name) { const b = this.buttons.get(name); return !!(b && b.down); }
+        justPressed(name) { const b = this.buttons.get(name); return !!(b && b.justDown); }
+        justReleased(name) { const b = this.buttons.get(name); return !!(b && b.justUp); }
+        endFrame() { for (const b of this.buttons.values()) { b.justDown = false; b.justUp = false; } }
+    }
+
+    // ---- B. COMBAT / BR / ARCADE ----
+
+    // 56. Zone BR (faribolana mihena, toy ny PUBG)
+    class FaribolanaMihena {
+        constructor(cx, cy, startRadius, endRadius, duration, damagePerSecond = 5) {
+            this.cx = cx; this.cy = cy;
+            this.startRadius = startRadius; this.endRadius = endRadius;
+            this.duration = duration; this.t = 0;
+            this.damagePerSecond = damagePerSecond;
+        }
+        update(dt) { this.t = Math.min(this.duration, this.t + dt); }
+        get radius() { return Z.lerp(this.startRadius, this.endRadius, this.duration > 0 ? this.t / this.duration : 1); }
+        isOutside(x, y) { return Z.dist(x, y, this.cx, this.cy) > this.radius; }
+        damageIfOutside(x, y, dt) { return this.isOutside(x, y) ? this.damagePerSecond * dt : 0; }
+        progress() { return this.duration > 0 ? this.t / this.duration : 1; }
+    }
+
+    // 57. Bullet hell pattern generator (spiral, wave, aimed, burst)
+    const EndrikaBala = {
+        spiral(count, tOffset, speed) {
+            const out = [];
+            for (let i = 0; i < count; i++) out.push({ angle: tOffset + (i * Math.PI * 2 / count), speed });
+            return out;
+        },
+        wave(baseAngle, count, spread, speed) {
+            const out = [];
+            for (let i = 0; i < count; i++) {
+                const t = count === 1 ? 0 : (i / (count - 1)) - 0.5;
+                out.push({ angle: baseAngle + t * spread, speed });
+            }
+            return out;
+        },
+        aimed(fromX, fromY, toX, toY, speed) {
+            return [{ angle: Math.atan2(toY - fromY, toX - fromX), speed }];
+        },
+        burst(baseAngle, count, jitter, speed) {
+            const out = [];
+            for (let i = 0; i < count; i++) out.push({ angle: baseAngle + (Math.random() - 0.5) * jitter, speed });
+            return out;
+        }
+    };
+
+    // 58. Dash + i-frames
+    class Fisintonana {
+        constructor(distance = 120, duration = 0.18, iframeTime = 0.25, cooldown = 0.8) {
+            this.distance = distance; this.duration = duration;
+            this.iframeTime = iframeTime; this.cooldown = cooldown;
+            this._cd = 0; this._active = false; this._t = 0;
+            this._iframeT = 0; this.dx = 0; this.dy = 0;
+        }
+        canDash() { return this._cd <= 0 && !this._active; }
+        start(dirX, dirY) {
+            if (!this.canDash()) return false;
+            const mag = Math.hypot(dirX, dirY) || 1;
+            this.dx = dirX / mag; this.dy = dirY / mag;
+            this._active = true; this._t = 0;
+            this._iframeT = this.iframeTime;
+            this._cd = this.cooldown;
+            return true;
+        }
+        get isInvincible() { return this._iframeT > 0; }
+        update(dt) {
+            if (this._cd > 0) this._cd -= dt;
+            if (this._iframeT > 0) this._iframeT -= dt;
+            let mx = 0, my = 0;
+            if (this._active) {
+                this._t += dt;
+                const speed = this.distance / this.duration;
+                mx = this.dx * speed * dt;
+                my = this.dy * speed * dt;
+                if (this._t >= this.duration) this._active = false;
+            }
+            return { dx: mx, dy: my };
+        }
+    }
+
+    // 59. Combo counter & multiplier
+    class IsaMitohy {
+        constructor(decayTime = 1.5) {
+            this.combo = 0; this.multiplier = 1;
+            this.decayTime = decayTime; this._t = 0;
+            this.best = 0;
+        }
+        add(points = 1) {
+            this.combo++;
+            this._t = this.decayTime;
+            this.multiplier = 1 + Math.floor(this.combo / 5) * 0.5;
+            this.best = Math.max(this.best, this.combo);
+            return points * this.multiplier;
+        }
+        update(dt) {
+            if (this._t > 0) {
+                this._t -= dt;
+                if (this._t <= 0) { this.combo = 0; this.multiplier = 1; }
+            }
+        }
+        reset() { this.combo = 0; this.multiplier = 1; this._t = 0; }
+    }
+
+    // 60. Kill feed & leaderboard
+    class TantaraFandresena {
+        constructor(maxFeed = 5, maxBoard = 10) {
+            this.maxFeed = maxFeed; this.maxBoard = maxBoard;
+            this.feed = []; this.board = new Map();
+        }
+        addKill(killer, victim) {
+            this.feed.unshift({ killer, victim, t: Date.now() });
+            if (this.feed.length > this.maxFeed) this.feed.pop();
+            this.addScore(killer, 1);
+        }
+        addScore(name, amount = 1) { this.board.set(name, (this.board.get(name) || 0) + amount); }
+        ranking() {
+            return [...this.board.entries()]
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, this.maxBoard)
+                .map(([name, score]) => ({ name, score }));
+        }
+        clear() { this.feed.length = 0; this.board.clear(); }
+    }
+
+    // 61. Auto-aim assist
+    const FanampianaKendrena = {
+        findBestTarget(x, y, aimAngle, targets, maxAngle = 0.5, maxDist = 400) {
+            let best = null, bestScore = Infinity;
+            for (const t of targets) {
+                const d = Z.dist(x, y, t.x, t.y);
+                if (d > maxDist) continue;
+                const ang = Math.atan2(t.y - y, t.x - x);
+                let diff = Math.abs(ang - aimAngle);
+                if (diff > Math.PI) diff = Math.PI * 2 - diff;
+                if (diff > maxAngle) continue;
+                const score = diff * 2 + d * 0.01;
+                if (score < bestScore) { bestScore = score; best = t; }
+            }
+            return best;
+        },
+        snapAngle(x, y, target) { return Math.atan2(target.y - y, target.x - x); }
+    };
+
+    // 62. Spectator mode
+    class Fijerena {
+        constructor(targets = []) { this.targets = targets; this.index = 0; }
+        get current() { return this.targets[this.index] || null; }
+        next() { if (this.targets.length) this.index = (this.index + 1) % this.targets.length; }
+        prev() { if (this.targets.length) this.index = (this.index - 1 + this.targets.length) % this.targets.length; }
+        setTargets(list) { this.targets = list; this.index = 0; }
+    }
+
+    // ---- C. MAPA & TONTOLO ----
+
+    // 63. Biome generator (mampiasa Tabataba.fbm)
+    const KarazanTany = {
+        biomeAt(x, y, seed = 1, scale = 0.01) {
+            const n = Tabataba.fbm(x * scale, y * scale, 4, seed);
+            if (n < -0.2) return 'rano';
+            if (n < 0.0) return 'fasika';
+            if (n < 0.35) return 'ahitra';
+            if (n < 0.6) return 'ala';
+            return 'oram-panala';
+        },
+        generate(width, height, cellSize = 16, seed = 1) {
+            const grid = [];
+            for (let y = 0; y < height; y += cellSize) {
+                const row = [];
+                for (let x = 0; x < width; x += cellSize) row.push(this.biomeAt(x, y, seed));
+                grid.push(row);
+            }
+            return grid;
+        }
+    };
+
+    // 64. Destructible grid (logika fotsiny — durability isaky ny sela)
+    class DrafitraSimba {
+        constructor(cols, rows, cellSize, maxHp = 3) {
+            this.cols = cols; this.rows = rows; this.cellSize = cellSize;
+            this.hp = new Uint8Array(cols * rows).fill(maxHp);
+            this.maxHp = maxHp;
+        }
+        _idx(cx, cy) { return cy * this.cols + cx; }
+        cellAt(x, y) { return { cx: Math.floor(x / this.cellSize), cy: Math.floor(y / this.cellSize) }; }
+        damage(cx, cy, amount = 1) {
+            if (cx < 0 || cy < 0 || cx >= this.cols || cy >= this.rows) return false;
+            const i = this._idx(cx, cy);
+            if (this.hp[i] === 0) return false;
+            this.hp[i] = Math.max(0, this.hp[i] - amount);
+            return this.hp[i] === 0;
+        }
+        isBroken(cx, cy) {
+            if (cx < 0 || cy < 0 || cx >= this.cols || cy >= this.rows) return true;
+            return this.hp[this._idx(cx, cy)] === 0;
+        }
+        repair(cx, cy) { const i = this._idx(cx, cy); if (i >= 0 && i < this.hp.length) this.hp[i] = this.maxHp; }
+    }
+
+    // 65. Radar — fikarohana zavatra akaiky
+    const Radar = {
+        scan(x, y, range, entities) {
+            const out = [];
+            for (const e of entities) {
+                const d = Z.dist(x, y, e.x, e.y);
+                if (d <= range) out.push({ entity: e, dist: d, angle: Math.atan2(e.y - y, e.x - x) });
+            }
+            out.sort((a, b) => a.dist - b.dist);
+            return out;
+        }
+    };
+
+    // 66. Parallax tsy mifarana
+    const FotsakaTsyMifarana = {
+        layerOffset(cameraX, cameraY, factor, wrapWidth = 0) {
+            let x = cameraX * factor;
+            let y = cameraY * factor;
+            if (wrapWidth > 0) x = ((x % wrapWidth) + wrapWidth) % wrapWidth;
+            return { x, y };
+        }
+    };
+
+    // 67. Wave spawner tsotra (azo ampiasaina @ Zombie/Tower Defense/BR)
+    class MpamorontsatsaVahiny {
+        constructor(opts) {
+            opts = opts || {};
+            this.total = opts.total || 10;
+            this.maxConcurrent = opts.maxConcurrent || 5;
+            this.spawnInterval = opts.spawnInterval || [0.5, 1.2];
+            this.spawned = 0; this.alive = 0; this.killed = 0;
+            this._timer = 0;
+        }
+        update(dt, spawnFn, canSpawnMore) {
+            if (this.spawned >= this.total) return;
+            if (this.alive >= this.maxConcurrent) return;
+            this._timer -= dt;
+            if (this._timer <= 0) {
+                if (!canSpawnMore || canSpawnMore()) {
+                    spawnFn();
+                    this.spawned++; this.alive++;
+                    this._timer = Z.rand(this.spawnInterval[0], this.spawnInterval[1]);
+                }
+            }
+        }
+        notifyKilled() { this.alive = Math.max(0, this.alive - 1); this.killed++; }
+        isComplete() { return this.killed >= this.total; }
+    }
+
+    // 68. Loot table voalanja araka ny rarity
+    class Anjara {
+        constructor() { this.entries = []; }
+        add(item, weight, rarity) {
+            this.entries.push({ item, weight: weight || 1, rarity: rarity || 'common' });
+            return this;
+        }
+        roll() {
+            const total = this.entries.reduce((s, e) => s + e.weight, 0);
+            if (total <= 0) return null;
+            let r = Math.random() * total;
+            for (const e of this.entries) {
+                r -= e.weight;
+                if (r <= 0) return e;
+            }
+            return this.entries[this.entries.length - 1] || null;
+        }
+        rollMany(n) { const out = []; for (let i = 0; i < n; i++) out.push(this.roll()); return out; }
+    }
+
+    // 69. Ladder / Door / Teleporter trigger zones
+    class Vavahady {
+        constructor() { this.zones = []; }
+        add(x, y, w, h, type, target) { this.zones.push({ x, y, w, h, type, target: target || null }); return this; }
+        check(px, py, pw, ph) {
+            for (const z of this.zones) {
+                if (Fizika.rectVsRect(px, py, pw, ph, z.x, z.y, z.w, z.h)) return z;
+            }
+            return null;
+        }
+    }
+
+    // ---- D. MULTIPLAYER & SOCIAL (endrika local-logic) ----
+
+    // 70. Replay recorder (input frame recording + playback)
+    class Firaketana {
+        constructor() { this.frames = []; this._recording = false; this._playIdx = 0; }
+        start() { this.frames = []; this._recording = true; }
+        stop() { this._recording = false; }
+        record(inputState) { if (this._recording) this.frames.push(Object.assign({}, inputState)); }
+        play() { this._playIdx = 0; }
+        nextFrame() { return this._playIdx < this.frames.length ? this.frames[this._playIdx++] : null; }
+        get isDone() { return this._playIdx >= this.frames.length; }
+        toJSON() { return JSON.stringify(this.frames); }
+        static fromJSON(json) { const r = new Firaketana(); r.frames = JSON.parse(json); return r; }
+    }
+
+    // 71. Anti-cheat fototra (speed hack detection)
+    const FiarovanaFitaka = {
+        maxSpeed: 1000,
+        check(vx, vy) { return Math.hypot(vx, vy) <= this.maxSpeed; },
+        flagIfInvalid(vx, vy, onFlag) {
+            const ok = this.check(vx, vy);
+            if (!ok && onFlag) onFlag({ vx, vy, speed: Math.hypot(vx, vy) });
+            return ok;
+        }
+    };
+
+    // 72. Team / Clan system
+    class Ekipa {
+        constructor() { this.teams = new Map(); }
+        createTeam(id) { if (!this.teams.has(id)) this.teams.set(id, { members: new Set(), score: 0 }); }
+        join(id, memberId) { this.createTeam(id); this.teams.get(id).members.add(memberId); }
+        leave(id, memberId) { const t = this.teams.get(id); if (t) t.members.delete(memberId); }
+        addScore(id, amount) { const t = this.teams.get(id); if (t) t.score += amount; }
+        areAllies(memberA, memberB) {
+            for (const t of this.teams.values()) {
+                if (t.members.has(memberA) && t.members.has(memberB)) return true;
+            }
+            return false;
+        }
+        standings() {
+            return [...this.teams.entries()]
+                .map(([id, t]) => ({ id, score: t.score, count: t.members.size }))
+                .sort((a, b) => b.score - a.score);
+        }
+    }
+
+    // 73. Emote wheel
+    class Fihetsehampo {
+        constructor(emotes) { this.emotes = emotes || []; this.onEmote = null; }
+        trigger(name, entityId) {
+            if (this.emotes.indexOf(name) === -1) return false;
+            if (this.onEmote) this.onEmote(name, entityId);
+            return true;
+        }
+    }
+
+    // 74. Proximity audio (feo mihamalemy arakaraka distance)
+    const FeoAkaiky = {
+        volumeForDistance(listenerX, listenerY, sourceX, sourceY, maxDist, minDist) {
+            maxDist = maxDist || 500; minDist = minDist || 50;
+            const d = Z.dist(listenerX, listenerY, sourceX, sourceY);
+            if (d <= minDist) return 1;
+            if (d >= maxDist) return 0;
+            return 1 - (d - minDist) / (maxDist - minDist);
+        },
+        playAt(key, listenerX, listenerY, sourceX, sourceY, opts) {
+            opts = opts || {};
+            const vol = this.volumeForDistance(listenerX, listenerY, sourceX, sourceY, opts.maxDist, opts.minDist);
+            if (vol <= 0) return null;
+            const finalOpts = Object.assign({}, opts, { volume: (opts.volume !== undefined ? opts.volume : 1) * vol });
+            return Feo.play(key, finalOpts);
+        }
+    };
+
+    // 75. Skin / cosmetic manager
+    class Akanjo {
+        constructor() { this.skins = new Map(); this.equipped = new Map(); }
+        register(key, textureKey) { this.skins.set(key, textureKey); }
+        equip(entityId, key) { if (this.skins.has(key)) this.equipped.set(entityId, key); }
+        textureFor(entityId, fallback) {
+            fallback = fallback || 'white';
+            const key = this.equipped.get(entityId);
+            return key ? (this.skins.get(key) || fallback) : fallback;
+        }
+    }
+
+    // ---- E. JUICE / VOLA / POLISH ----
+
+    // 76. Screen juice pack (hitstop flag, flash, impact bundler)
+    const VonoVono = {
+        hitstop(game, durationMs) {
+            // "hitstop": mametraka marika ho an'ny Sehatra hijerena mba
+            // hijanona vetivety ny update-ny manokana — TSY manajanona
+            // an-keriny ny Lalao._loop fototra (mba tsy hisy risika amin'ny
+            // rafitra hafa rehetra); ny scene ihany no mamaky ity marika ity.
+            game._hitstopUntil = performance.now() + (durationMs || 60);
+        },
+        isHitstopped(game) { return performance.now() < (game._hitstopUntil || 0); },
+        flash(scene, color, durationMs) {
+            scene._flashColor = color || 0xFFFFFFFF;
+            scene._flashUntil = performance.now() + (durationMs || 100);
+        },
+        getFlashAlpha(scene) {
+            if (!scene._flashUntil) return 0;
+            const remain = scene._flashUntil - performance.now();
+            return remain > 0 ? Math.min(1, remain / 100) : 0;
+        },
+        impact(game, scene, shakeAmt, shakeMs, hitstopMs) {
+            if (game.camera) game.camera.shake(shakeAmt || 6, shakeMs || 120);
+            this.hitstop(game, hitstopMs || 50);
+            this.flash(scene, 0xFFFFFFFF, 80);
+        }
+    };
+
+    // 77. Typewriter text reveal
+    class Fanoratana {
+        constructor(text, charsPerSecond) {
+            this.charsPerSecond = charsPerSecond || 30;
+            this.setText(text || '');
+        }
+        setText(text) { this.text = text; this._t = 0; this.done = false; }
+        update(dt) {
+            if (this.done) return;
+            this._t += dt * this.charsPerSecond;
+            if (this._t >= this.text.length) { this._t = this.text.length; this.done = true; }
+        }
+        get visible() { return this.text.slice(0, Math.floor(this._t)); }
+        skip() { this._t = this.text.length; this.done = true; }
+    }
+
+    // 78. Achievement manager (toast + save)
+    class ZavaBita {
+        constructor(tehirizo, slot) {
+            this.tehirizo = tehirizo; this.slot = slot === undefined ? 7 : slot;
+            this.definitions = new Map();
+            this.unlocked = new Set((tehirizo && tehirizo.load(this.slot)) || []);
+            this.onUnlock = null;
+        }
+        define(id, name, desc) { this.definitions.set(id, { name, desc }); }
+        unlock(id) {
+            if (this.unlocked.has(id) || !this.definitions.has(id)) return false;
+            this.unlocked.add(id);
+            if (this.tehirizo) this.tehirizo.save(this.slot, [...this.unlocked]);
+            if (this.onUnlock) this.onUnlock(id, this.definitions.get(id));
+            return true;
+        }
+        isUnlocked(id) { return this.unlocked.has(id); }
+        progress() { return { unlocked: this.unlocked.size, total: this.definitions.size }; }
+    }
+
+    // 79. Mock shop / IAP structure (tsy misy tena fandoavam-bola)
+    class FivarotanaMock {
+        constructor(currency) { this.currency = currency || 0; this.items = new Map(); this.owned = new Set(); }
+        addItem(id, price) { this.items.set(id, price); }
+        addCurrency(amount) { this.currency += amount; }
+        canBuy(id) { const p = this.items.get(id); return p !== undefined && this.currency >= p && !this.owned.has(id); }
+        buy(id) {
+            if (!this.canBuy(id)) return false;
+            this.currency -= this.items.get(id);
+            this.owned.add(id);
+            return true;
+        }
+    }
+
+    // 80. Daily reward spin (mampiasa Anjara)
+    class FitsingerinaIsanAndro {
+        constructor(tehirizo, slot) { this.tehirizo = tehirizo; this.slot = slot === undefined ? 6 : slot; }
+        canSpin() {
+            const last = (this.tehirizo && this.tehirizo.load(this.slot)) || null;
+            if (!last) return true;
+            return (Date.now() - last.timestamp) >= 24 * 3600 * 1000;
+        }
+        spin(anjara) {
+            if (!this.canSpin()) return null;
+            const result = anjara.roll();
+            if (this.tehirizo) this.tehirizo.save(this.slot, { timestamp: Date.now(), reward: result ? result.item : null });
+            return result;
+        }
+    }
+
+    // 81. Tutorial ghost (mampiasa Firaketana)
+    class MpampianatraMatoatoa {
+        constructor(firaketana) { this.firaketana = firaketana; this.firaketana.play(); }
+        step() { return this.firaketana.nextFrame(); }
+        get isDone() { return this.firaketana.isDone; }
+    }
+
+    // 82. Analytics heatmap (fahafatesana, sns.)
+    class SarintanyMafana {
+        constructor(width, height, cellSize) {
+            this.cellSize = cellSize || 32;
+            this.cols = Math.max(1, Math.ceil(width / this.cellSize));
+            this.rows = Math.max(1, Math.ceil(height / this.cellSize));
+            this.grid = new Uint32Array(this.cols * this.rows);
+        }
+        record(x, y, amount) {
+            amount = amount === undefined ? 1 : amount;
+            const cx = Math.floor(x / this.cellSize), cy = Math.floor(y / this.cellSize);
+            if (cx < 0 || cy < 0 || cx >= this.cols || cy >= this.rows) return;
+            this.grid[cy * this.cols + cx] += amount;
+        }
+        valueAt(x, y) {
+            const cx = Math.floor(x / this.cellSize), cy = Math.floor(y / this.cellSize);
+            if (cx < 0 || cy < 0 || cx >= this.cols || cy >= this.rows) return 0;
+            return this.grid[cy * this.cols + cx];
+        }
+        max() { let m = 0; for (let i = 0; i < this.grid.length; i++) if (this.grid[i] > m) m = this.grid[i]; return m; }
+    }
+
+    // 83. Mod loader (mamaky JSON mod avy @ mpilalao)
+    const MpametakaMody = {
+        _mods: new Map(),
+        register(id, data) { this._mods.set(id, data); },
+        get(id) { return this._mods.get(id); },
+        loadFromUrl(id, url) {
+            return fetch(url).then(res => res.json()).then(json => { this.register(id, json); return json; });
+        },
+        list() { return [...this._mods.keys()]; }
+    };
+
+    // 84. AI Director (mandrefy "stress" ka mangataka spawn)
+    class MpitarikaAI {
+        constructor(opts) {
+            opts = opts || {};
+            this.stress = 0;
+            this.maxStress = opts.maxStress || 100;
+            this.decayRate = opts.decayRate || 5;
+            this.onSpawnRequest = null;
+            this._cooldown = 0;
+        }
+        addStress(amount) { this.stress = Z.clamp(this.stress + amount, 0, this.maxStress); }
+        update(dt) {
+            this.stress = Math.max(0, this.stress - this.decayRate * dt);
+            this._cooldown -= dt;
+            if (this.stress < this.maxStress * 0.3 && this._cooldown <= 0) {
+                if (this.onSpawnRequest) this.onSpawnRequest(this.stress);
+                this._cooldown = 3;
+            }
+        }
+    }
+
+    // 85. Chat wheel / quick-ping
+    class FanambaraKely extends Hetsika {
+        constructor(cooldown) { super(); this.cooldown = cooldown === undefined ? 2 : cooldown; this._cd = 0; }
+        ping(x, y, message, senderId) {
+            if (this._cd > 0) return false;
+            this._cd = this.cooldown;
+            this.emit('ping', { x, y, message, senderId, t: Date.now() });
+            return true;
+        }
+        update(dt) { if (this._cd > 0) this._cd -= dt; }
+    }
+
+
     // ============================================================
     // EXPORT - Mamoaka ny API
     // ============================================================
     const RakitrakatraV4 = {
+        // Version
         KINOVANA: '4.2.0',
         ANARANMIAFINA: 'Ady Goavana',
         
@@ -5093,56 +4515,26 @@
         Famirapiratana,
         Hozongozona,
 
-        RakotraSary,
-        FizarinaSarimihetsika,
-        Fisononana,
-        Manaraka,
-        LalanaDijkstra,
-        HazoFitondrantena,
-        MpandefaOnja,
-        IsaFahavoazana,
-        TsipikaFahasalamana,
-        Fahaizana,
-        Kombo,
-        MpanovaHafainganan,
-        Balafomanga,
-        Taratra,
-        Fitondrana,
-        Vorona,
-        Isometrika,
-        AutoTile,
-        MaripahatanterahanaSystem,
-        TarehimarikaLoka,
-        FitehirizanaMaro,
-        Kirakira,
-        FifindraSehatra,
-        TsipikaFampidirana,
-        Fampahafantarana,
-        Efijoro,
-        Bokotra,
-        Sikaray,
-        SoratraBitmap,
-        SoratraMiloko,
-        Horohoro,
-        Fihetsika,
-        FisehoanaIndray,
-        Aloka,
-        AndroSyAlina,
-        FamoronanaSehatra,
-        TanyFbm,
-        Vola,
-        Fivarotana,
-        Safidy,
-        Horonantsary,
-        Rohy,
-        Marika,
-        SokajyHalina,
-        Vovonana,
-        Fanosehana,
-        AlokaEfijoro,
-        FitaovanaFanampinyExamples,
-        MpitantanaSokajy,
-        MpitantanaFanampinyLehibe
+        // ---- V4.2.0: MODULE VAOVAO (35) ----
+
+        // A. Core gameplay
+        FitaovanaVoa, FitahirizanaBaiko, Fiadiana, AndroAlina, BokotraVirtoaly,
+
+        // B. Combat / BR / Arcade
+        FaribolanaMihena, EndrikaBala, Fisintonana, IsaMitohy,
+        TantaraFandresena, FanampianaKendrena, Fijerena,
+
+        // C. Mapa & tontolo
+        KarazanTany, DrafitraSimba, Radar, FotsakaTsyMifarana,
+        MpamorontsatsaVahiny, Anjara, Vavahady,
+
+        // D. Multiplayer & social (local-logic)
+        Firaketana, FiarovanaFitaka, Ekipa, Fihetsehampo, FeoAkaiky, Akanjo,
+
+        // E. Juice / vola / polish
+        VonoVono, Fanoratana, ZavaBita, FivarotanaMock,
+        FitsingerinaIsanAndro, MpampianatraMatoatoa, SarintanyMafana,
+        MpametakaMody, MpitarikaAI, FanambaraKely
     };
 
     // Export to global
@@ -5154,6 +4546,6 @@
         global.Rakitrakatra = RakitrakatraV4;
     }
 
-    console.log('miazakazaka ny rakitrakatra');
+    console.log('miazakazaka');
    
 })(typeof window !== 'undefined' ? window : globalThis);
