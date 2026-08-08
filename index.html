@@ -1,628 +1,240 @@
 <!DOCTYPE html>
 <html lang="mg">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAKITRAKATRA V4.2.1 - Plugin Explorer</title>
-    <style>
-        :root {
-            --bg: #0a0a0f;
-            --panel: #12121a;
-            --border: #2a2a3a;
-            --accent: #00ff88;
-            --accent-dim: #00ff8833;
-            --text: #e0e0e0;
-            --text-dim: #888;
-            --code-bg: #1a1a24;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-        
-        /* Header */
-        header { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
-        header h1 { font-size: 18px; color: var(--accent); }
-        header .version { font-size: 12px; color: var(--text-dim); background: var(--accent-dim); padding: 2px 8px; border-radius: 4px; }
-        
-        /* Main Layout */
-        .main { display: flex; flex: 1; overflow: hidden; }
-        
-        /* Sidebar - Plugin List */
-        .sidebar { width: 280px; border-right: 1px solid var(--border); overflow-y: auto; flex-shrink: 0; }
-        .sidebar input { width: 100%; padding: 10px 14px; background: var(--panel); border: none; border-bottom: 1px solid var(--border); color: var(--text); font-size: 13px; outline: none; }
-        .sidebar input::placeholder { color: var(--text-dim); }
-        .plugin-list { list-style: none; }
-        .plugin-item { padding: 8px 14px; cursor: pointer; font-size: 13px; border-left: 3px solid transparent; transition: all 0.15s; display: flex; justify-content: space-between; align-items: center; }
-        .plugin-item:hover { background: var(--accent-dim); }
-        .plugin-item.active { background: var(--accent-dim); border-left-color: var(--accent); color: var(--accent); }
-        .plugin-item .cat { font-size: 10px; color: var(--text-dim); text-transform: uppercase; }
-        .cat-tag { display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 9px; font-weight: bold; }
-        .cat-A { background: #ff444433; color: #ff6666; }
-        .cat-B { background: #ff880033; color: #ffaa44; }
-        .cat-C { background: #4488ff33; color: #66aaff; }
-        .cat-D { background: #aa44ff33; color: #cc88ff; }
-        .cat-E { background: #ffff0033; color: #ffff66; }
-        .cat-core { background: #00ff8833; color: #00ff88; }
-        
-        /* Content Area */
-        .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        
-        /* Demo Canvas Area */
-        .demo-area { flex: 1; position: relative; background: #000; display: flex; align-items: center; justify-content: center; min-height: 300px; }
-        .demo-area canvas { border: 1px solid var(--border); image-rendering: pixelated; }
-        .demo-overlay { position: absolute; top: 10px; right: 10px; font-size: 11px; color: var(--text-dim); pointer-events: none; }
-        .demo-controls { position: absolute; bottom: 10px; left: 10px; display: flex; gap: 8px; }
-        .demo-btn { padding: 5px 12px; background: var(--accent-dim); border: 1px solid var(--accent); color: var(--accent); border-radius: 4px; cursor: pointer; font-size: 12px; }
-        .demo-btn:hover { background: var(--accent); color: #000; }
-        
-        /* Code Panel */
-        .code-panel { height: 280px; border-top: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
-        .code-tabs { display: flex; border-bottom: 1px solid var(--border); }
-        .code-tab { padding: 8px 16px; font-size: 12px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-dim); }
-        .code-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-        .code-content { flex: 1; overflow: auto; padding: 14px; background: var(--code-bg); }
-        .code-content pre { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; color: #c0c0d0; }
-        .code-content .kw { color: #cc77ff; }
-        .code-content .fn { color: #66ccff; }
-        .code-content .str { color: #88ff88; }
-        .code-content .num { color: #ffaa44; }
-        .code-content .cmt { color: #666; font-style: italic; }
-        
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .main { flex-direction: column; }
-            .sidebar { width: 100%; height: 200px; border-right: none; border-bottom: 1px solid var(--border); }
-            .code-panel { height: 200px; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAKITRAKATRA V4.2.1 - Plugin Explorer</title>
+<style>
+:root{--bg:#0a0a0f;--panel:#12121a;--border:#2a2a3a;--accent:#00ff88;--accent-dim:#00ff8833;--text:#e0e0e0;--dim:#888;--code-bg:#1a1a24}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+header{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;flex-shrink:0}
+header h1{font-size:18px;color:var(--accent)}
+header .ver{font-size:12px;color:var(--dim);background:var(--accent-dim);padding:2px 8px;border-radius:4px}
+.main{display:flex;flex:1;overflow:hidden}
+.sidebar{width:280px;border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0}
+.sidebar input{width:100%;padding:10px 14px;background:var(--panel);border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:13px;outline:none}
+.sidebar input::placeholder{color:var(--dim)}
+.plist{list-style:none}
+.pi{padding:8px 14px;cursor:pointer;font-size:13px;border-left:3px solid transparent;transition:all .15s;display:flex;justify-content:space-between;align-items:center}
+.pi:hover{background:var(--accent-dim)}
+.pi.active{background:var(--accent-dim);border-left-color:var(--accent);color:var(--accent)}
+.cat-tag{display:inline-block;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:bold}
+.cat-core{background:#00ff8833;color:#00ff88}
+.cat-A{background:#ff444433;color:#ff6666}
+.cat-B{background:#ff880033;color:#ffaa44}
+.cat-C{background:#4488ff33;color:#66aaff}
+.cat-D{background:#aa44ff33;color:#cc88ff}
+.cat-E{background:#ffff0033;color:#ffff66}
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.demo-area{flex:1;position:relative;background:#000;display:flex;align-items:center;justify-content:center;min-height:300px}
+.demo-area canvas{border:1px solid var(--border);image-rendering:pixelated}
+.demo-overlay{position:absolute;top:10px;right:10px;font-size:11px;color:var(--dim);pointer-events:none}
+.code-panel{height:280px;border-top:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.code-tabs{display:flex;border-bottom:1px solid var(--border)}
+.code-tab{padding:8px 16px;font-size:12px;cursor:pointer;border-bottom:2px solid transparent;color:var(--dim)}
+.code-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.code-content{flex:1;overflow:auto;padding:14px;background:var(--code-bg)}
+.code-content pre{font-family:'Cascadia Code','Fira Code',monospace;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;color:#c0c0d0}
+.kw{color:#cc77ff}.fn{color:#66ccff}.str{color:#88ff88}.num{color:#ffaa44}.cmt{color:#666;font-style:italic}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+@media(max-width:768px){.main{flex-direction:column}.sidebar{width:100%;height:200px;border-right:none;border-bottom:1px solid var(--border)}.code-panel{height:200px}}
+</style>
 </head>
 <body>
-
 <header>
-    <h1>⚡ RAKITRAKATRA V4.2.1</h1>
-    <span class="version">85 Plugins • Teny Gasy • WebGL2</span>
+<h1>⚡ RAKITRAKATRA V4.2.1</h1>
+<span class="ver">85 Plugins • Teny Gasy • WebGL2</span>
 </header>
-
 <div class="main">
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <input type="text" id="searchInput" placeholder="🔍 Hitady plugin...">
-        <ul class="plugin-list" id="pluginList"></ul>
-    </div>
-    
-    <!-- Content -->
-    <div class="content">
-        <div class="demo-area" id="demoArea">
-            <canvas id="demoCanvas" width="640" height="400"></canvas>
-            <div class="demo-overlay" id="demoOverlay">FPS: --</div>
-            <div class="demo-controls" id="demoControls"></div>
-        </div>
-        <div class="code-panel">
-            <div class="code-tabs">
-                <div class="code-tab active" data-tab="usage">📖 Fampiasana</div>
-                <div class="code-tab" data-tab="source">🔧 Source Code</div>
-                <div class="code-tab" data-tab="api">📋 API Reference</div>
-            </div>
-            <div class="code-content">
-                <pre id="codeDisplay"><span class="cmt">// Safidio ny plugin iray ao amin'ny lisitra havia...</span></pre>
-            </div>
-        </div>
-    </div>
+<div class="sidebar">
+<input type="text" id="searchInput" placeholder="🔍 Hitady plugin...">
+<ul class="plist" id="pluginList"></ul>
+</div>
+<div class="content">
+<div class="demo-area">
+<canvas id="demoCanvas" width="640" height="400"></canvas>
+<div class="demo-overlay" id="demoOverlay">FPS: --</div>
+</div>
+<div class="code-panel">
+<div class="code-tabs">
+<div class="code-tab active" data-tab="usage">📖 Fampiasana</div>
+<div class="code-tab" data-tab="api">📋 API Reference</div>
+</div>
+<div class="code-content">
+<pre id="codeDisplay"><span class="cmt">// Safidio ny plugin iray ao amin'ny lisitra havia...</span></pre>
+</div>
+</div>
+</div>
 </div>
 
-<!-- RAKITRAKATRA V4.2.1 ENGINE (inline) -->
-<script>
-// === MINIFIED ENGINE CORE (v4.2.1 patched) ===
-// Ny engine feno dia efa ao amin'ny response taloha.
-// Eto dia mametraka ny global R isika mba ho azo ampiasain'ny demos.
-</script>
-<!-- PASTE THE FULL RAKITRAKATRA V4.2.1 CODE HERE -->
 <script src="rakitrakatra.js"></script>
-
 <script>
 // ============================================================
-// PLUGIN REGISTRY - 85 plugins with demos & usage code
+// PLUGIN REGISTRY — 85 plugins, ZERO template literals
 // ============================================================
-const PLUGINS = [
-    // ---- CORE ----
-    { id: 'Vektora2', name: 'Vektora2', cat: 'core', desc: 'Vecteur 2D optimized',
-      usage: `// Mamorona vektora\nconst v = new R.Vektora2(10, 20);\n\n// Manampy\nv.add(new R.Vektora2(5, 3));\nconsole.log(v.x, v.y); // 15, 23\n\n// Normalize\nv.normalize();\n\n// Static methods\nconst d = R.Vektora2.distance(a, b);\nconst lerped = R.Vektora2.lerp(a, b, 0.5);`,
-      demo: (ctx, w, h, t) => {
-          const cx = w/2, cy = h/2;
-          for(let i = 0; i < 8; i++) {
-              const a = (i/8)*Math.PI*2 + t;
-              const v = R.Vektora2.fromAngle(a, 100);
-              ctx.strokeStyle = '#00ff88';
-              ctx.lineWidth = 2;
-              ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx+v.x, cy+v.y); ctx.stroke();
-              ctx.fillStyle = '#00ff88';
-              ctx.beginPath(); ctx.arc(cx+v.x, cy+v.y, 4, 0, Math.PI*2); ctx.fill();
-          }
-      }
-    },
-    { id: 'Efajoro', name: 'Efajoro', cat: 'core', desc: 'Rectangle AABB',
-      usage: `const r = new R.Efajoro(10, 20, 100, 50);\n\n// Properties\nconsole.log(r.left, r.right, r.cx, r.cy);\n\n// Collision\nif (r.intersects(otherRect)) {\n  const overlap = r.intersection(otherRect);\n}`,
-      demo: (ctx, w, h, t) => {
-          const r1 = new R.Efajoro(w/2-60+Math.sin(t)*40, h/2-30, 80, 60);
-          const r2 = new R.Efajoro(w/2-20, h/2-40+Math.cos(t*1.3)*30, 60, 80);
-          ctx.strokeStyle = '#00ff88'; ctx.strokeRect(r1.x, r1.y, r1.w, r1.h);
-          ctx.strokeStyle = '#ff4444'; ctx.strokeRect(r2.x, r2.y, r2.w, r2.h);
-          if(r1.intersects(r2)) {
-              const inter = r1.intersection(r2);
-              if(inter) { ctx.fillStyle='rgba(255,255,0,0.3)'; ctx.fillRect(inter.x,inter.y,inter.w,inter.h); }
-          }
-      }
-    },
-    { id: 'Boribory', name: 'Boribory', cat: 'core', desc: 'Circle collision',
-      usage: `const c = new R.Boribory(100, 100, 30);\n\nif (c.contains(mouseX, mouseY)) {\n  console.log('Inside!');\n}\n\nif (c.intersectsRect(rect)) {\n  // circle-rect collision\n}`,
-      demo: (ctx, w, h, t) => {
-          const c1 = new R.Boribory(w/2+Math.sin(t)*80, h/2, 30);
-          const c2 = new R.Boribory(w/2-Math.sin(t)*80, h/2, 25);
-          ctx.beginPath(); ctx.arc(c1.x,c1.y,c1.r,0,Math.PI*2); ctx.strokeStyle='#00ff88'; ctx.stroke();
-          ctx.beginPath(); ctx.arc(c2.x,c2.y,c2.r,0,Math.PI*2); ctx.strokeStyle='#ff4444'; ctx.stroke();
-          if(c1.intersects(c2)) { ctx.fillStyle='rgba(255,255,0,0.4)'; ctx.beginPath(); ctx.arc((c1.x+c2.x)/2,(c1.y+c2.y)/2,10,0,Math.PI*2); ctx.fill(); }
-      }
-    },
-    { id: 'Lamina2D', name: 'Lamina2D', cat: 'core', desc: 'Matrice 2D transform',
-      usage: `const m = new R.Lamina2D();\nm.translate(100, 50);\nm.rotate(Math.PI / 4);\nm.scale(2, 2);\n\nconst point = m.transformPoint(10, 0);`,
-      demo: (ctx, w, h, t) => {
-          const m = new R.Lamina2D();
-          m.translate(w/2, h/2); m.rotate(t); m.scale(1+Math.sin(t*2)*0.3, 1+Math.cos(t*2)*0.3);
-          ctx.save(); ctx.setTransform(m.m[0],m.m[1],m.m[2],m.m[3],m.m[4],m.m[5]);
-          ctx.strokeStyle='#00ff88'; ctx.lineWidth=2; ctx.strokeRect(-40,-40,80,80);
-          ctx.fillStyle='#00ff8833'; ctx.fillRect(-40,-40,80,80);
-          ctx.restore();
-      }
-    },
-    { id: 'Z', name: 'Z Utils', cat: 'core', desc: 'Fitahirizana fonctions utilitaires',
-      usage: `R.Z.lerp(0, 100, 0.5);     // 50\nR.Z.clamp(150, 0, 100);    // 100\nR.Z.rand(10, 20);          // random 10-20\nR.Z.shuffle([1,2,3,4]);   // shuffled copy\nR.Z.uuid();                // unique ID`,
-      demo: (ctx, w, h, t) => {
-          for(let i=0;i<20;i++){
-              const x = R.Z.rand(20, w-20);
-              const y = R.Z.lerp(h*0.3, h*0.7, R.Z.smoothstep((Math.sin(t+i*0.5)+1)/2));
-              const s = R.Z.map(Math.sin(t*2+i), -1, 1, 3, 10);
-              ctx.fillStyle = 'hsl(' + (i * 18) + ', 80%, 60%)';
-              ctx.beginPath(); ctx.arc(x,y,s,0,Math.PI*2); ctx.fill();
-          }
-      }
-    },
-    
-    // ---- ECS & SYSTEMS ----
-    { id: 'Vondrona', name: 'Vondrona (ECS)', cat: 'core', desc: 'Entity Component System SoA',
-      usage: `const ecs = new R.Vondrona(1000);\nconst id = ecs.create();\necs.x[id] = 100;\necs.y[id] = 200;\necs.hp[id] = 50;\n\n// Query by tag\necs.setTag(id, 1);\necs.query(1, (eid) => {\n  console.log(ecs.x[eid], ecs.y[eid]);\n});\n\n// Destroy\necs.destroy(id);`,
-      demo: (ctx, w, h, t) => {
-          if(!this._ecs) { this._ecs = new R.Vondrona(500); for(let i=0;i<100;i++){const id=this._ecs.create();this._ecs.x[id]=Math.random()*w;this._ecs.y[id]=Math.random()*h;this._ecs.vx[id]=(Math.random()-0.5)*60;this._ecs.vy[id]=(Math.random()-0.5)*60;this._ecs.color[id]=0xFF00FF88;} }
-          const ecs=this._ecs; const dt=0.016;
-          ecs.forEach(id=>{ecs.x[id]+=ecs.vx[id]*dt;ecs.y[id]+=ecs.vy[id]*dt;if(ecs.x[id]<0||ecs.x[id]>w)ecs.vx[id]*=-1;if(ecs.y[id]<0||ecs.y[id]>h)ecs.vy[id]*=-1;});
-          ecs.forEach(id=>{ctx.fillStyle='#00ff88';ctx.fillRect(ecs.x[id]-2,ecs.y[id]-2,4,4);});
-      }
-    },
-    { id: 'SakanToerana', name: 'SakanToerana', cat: 'core', desc: 'Spatial Hash Grid O(n)',
-      usage: `const grid = new R.SakanToerana(64);\ngrid.insert(entityId, x, y, w, h);\n\n// Query region\nconst candidates = grid.query(rx, ry, rw, rh);\nfor (const id of candidates) {\n  // check precise collision\n}`,
-      demo: (ctx, w, h, t) => {
-          const grid = new R.SakanToerana(64);
-          const entities = [];
-          for(let i=0;i<50;i++) { const e={x:Math.random()*w,y:Math.random()*h,w:8,h:8}; entities.push(e); grid.insert(i,e.x,e.y,e.w,e.h); }
-          const qx=w/2-50+Math.sin(t)*100, qy=h/2-50+Math.cos(t*0.7)*80;
-          const found = grid.query(qx,qy,100,100);
-          ctx.strokeStyle='#333'; 
-          for(let x=0;x<w;x+=64){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
-          for(let y=0;y<h;y+=64){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
-          entities.forEach((e,i)=>{ctx.fillStyle=found.has(i)?'#ffff00':'#00ff8844';ctx.fillRect(e.x,e.y,e.w,e.h);});
-          ctx.strokeStyle='#ff4444';ctx.lineWidth=2;ctx.strokeRect(qx,qy,100,100);
-      }
-    },
-    { id: 'Mpampiseho', name: 'Mpampiseho', cat: 'core', desc: 'WebGL2 Batched Renderer',
-      usage: `const renderer = new R.Mpampiseho(canvas);\nrenderer.begin(camera);\nrenderer.drawSprite(x,y,w,h, sx,sy,sw,sh, color, 'textureKey');\nrenderer.drawRect(x,y,w,h, 0xFFFF00FF);\nrenderer.end(); // flush() automatique`,
-      demo: (ctx, w, h, t) => {
-          for(let i=0;i<200;i++){
-              const x=(i*37+t*50)%w, y=(i*53+Math.sin(t+i)*30)%h;
-              ctx.fillStyle = 'hsl(' + (i * 18) + ', 80%, 60%)';
-              ctx.fillRect(x,y,6,6);
-          }
-      }
-    },
-    { id: 'Kamera', name: 'Kamera', cat: 'core', desc: 'Camera follow/shake/deadzone',
-      usage: `const cam = new R.Kamera(800, 600);\ncam.follow(playerEntity, 0.1);\ncam.setBounds(0, 0, 2000, 1500);\ncam.shake(10, 300); // magnitude, ms\ncam.update(dtMs);\n\n// Convert coordinates\nconst world = cam.screenToWorld(mx, my);`,
-      demo: (ctx, w, h, t) => {
-          ctx.fillStyle='#1a1a24';
-          for(let x=0;x<w;x+=40)for(let y=0;y<h;y+=40){ctx.fillRect(x+Math.sin(t+x*0.01)*5,y+Math.cos(t+y*0.01)*5,2,2);}
-          const cx=w/2+Math.sin(t)*100, cy=h/2+Math.cos(t*0.7)*80;
-          ctx.strokeStyle='#00ff88';ctx.lineWidth=2;ctx.strokeRect(cx-15,cy-15,30,30);
-          ctx.fillStyle='#00ff8833';ctx.font='11px monospace';ctx.fillText('camera target',cx-35,cy+30);
-      }
-    },
-    { id: 'Fanindry', name: 'Fanindry', cat: 'core', desc: 'Input keyboard/mouse/touch/gamepad',
-      usage: `R.Fanindry.init(canvas);\n\n// Keyboard\nif (R.Fanindry.isDown('arrowright')) moveRight();\nif (R.Fanindry.justPressed(' ')) jump();\n\n// Mouse\nif (R.Fanindry.mouseJustDown(0)) shoot();\n\n// Combined axis (KB + Gamepad + Touch)\nconst axis = R.Fanindry.axis();\nplayer.vx = axis.x * speed;`,
-      demo: (ctx, w, h, t) => {
-          const keys = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'];
-          keys.forEach((k,i)=>{
-              const down = R && R.Fanindry && R.Fanindry.keys && R.Fanindry.keys.has(k.toLowerCase());
-              ctx.fillStyle = down ? '#00ff88' : '#333';
-              ctx.fillRect(w/2-120+i*50, h/2-20, 40, 40);
-              ctx.fillStyle = '#fff'; ctx.font='9px monospace';
-              ctx.fillText(k.slice(0,4), w/2-118+i*50, h/2+5);
-          });
-          ctx.fillStyle='#888';ctx.font='12px sans-serif';ctx.fillText('Tsindrio ny kitendry...',w/2-80,h/2+50);
-      }
-    },
-    
-    // ---- A. CORE GAMEPLAY ----
-    { id: 'FitaovanaVoa', name: 'FitaovanaVoa', cat: 'A', desc: 'Hitbox/Hurtbox + Spatial Hash',
-      usage: `const combat = new R.FitaovanaVoa(64);\n\n// Add hitbox (attack)\ncombat.addHitbox(attacker, {x,y,w,h}, damage, team);\n\n// Add hurtbox (body)\ncombat.addHurtbox(victim, {x,y,w,h}, team);\n\n// Update with callback\ncombat.update((hit, hurt) => {\n  hurt.owner.hp -= hit.damage;\n  console.log('Hit!', hit.damage);\n});`,
-      demo: (ctx, w, h, t) => {
-          const combat = new R.FitaovanaVoa(64);
-          const hx=w/2-30+Math.sin(t*2)*60, hy=h/2-20;
-          combat.addHitbox({}, {x:hx,y:hy,w:40,h:40}, 10, 0);
-          combat.addHurtbox({}, {x:w/2-10,y:h/2-10,w:30,h:30}, 1);
-          let hit=false;
-          combat.update(()=>{hit=true;});
-          ctx.fillStyle=hit?'#ff4444':'#00ff8844';ctx.fillRect(hx,hy,40,40);
-          ctx.fillStyle='#4488ff';ctx.fillRect(w/2-10,h/2-10,30,30);
-          if(hit){ctx.fillStyle='#ffff00';ctx.font='bold 20px sans-serif';ctx.fillText('HIT!',w/2+30,h/2-20);}
-          ctx.fillStyle='#888';ctx.font='11px monospace';ctx.fillText('Team 0 vs Team 1',10,h-10);
-      }
-    },
-    { id: 'FitahirizanaBaiko', name: 'FitahirizanaBaiko', cat: 'A', desc: 'Input Buffer + Coyote Time',
-      usage: `const input = new R.FitahirizanaBaiko(0.15, 0.1);\n\n// Record press\ninput.press('jump');\n\n// Check buffer (within 150ms)\nif (input.consume('jump')) doJump();\n\n// Coyote time (can still jump 100ms after falling)\ninput.setGrounded(onGround);\nif (input.canCoyote()) canStillJump = true;`,
-      demo: (ctx, w, h, t) => {
-          const bufferT = 0.15;
-          const phase = (t % 2) / 2; // 0-1 cycle every 2s
-          const pressed = phase > 0.3 && phase < 0.35;
-          const consumed = phase > 0.3 && phase < 0.35 + bufferT;
-          ctx.fillStyle='#333';ctx.fillRect(w/2-150,h/2-10,300,20);
-          ctx.fillStyle=pressed?'#00ff88':consumed?'#ffff0066':'#222';
-          ctx.fillRect(w/2-150,h/2-10,300*(phase),20);
-          ctx.fillStyle='#fff';ctx.font='11px monospace';
-          ctx.fillText(pressed?'PRESS':'buffer window',w/2-40,h/2-20);
-          ctx.fillText(`coyote: ${bufferT}s`,w/2-40,h/2+30);
-      }
-    },
-    { id: 'Fiadiana', name: 'Fiadiana', cat: 'A', desc: 'Weapon arsenal/cooldown/reload',
-      usage: `const arsenal = new R.Fiadiana([\n  { name:'Pistol', ammo:12, maxAmmo:12, cooldown:0.3, reloadTime:1.5 },\n  { name:'Rifle', ammo:30, maxAmmo:30, cooldown:0.1, reloadTime:2.0 }\n]);\n\nif (arsenal.canFire()) {\n  arsenal.fire();\n  spawnBullet();\n}\nif (reloadKey) arsenal.reload();\narsenal.switchTo(1); // switch weapon\narsenal.update(dt);`,
-      demo: (ctx, w, h, t) => {
-          const weapons=[{name:'Pistol',ammo:12,max:12,cd:0.3},{name:'Rifle',ammo:30,max:30,cd:0.1}];
-          const idx=Math.floor(t/3)%2; const wp=weapons[idx];
-          const ammoLeft=Math.max(0,wp.ammo-Math.floor((t%3)*wp.cd*10));
-          ctx.fillStyle='#222';ctx.fillRect(w/2-100,h/2-30,200,60);
-          ctx.fillStyle='#00ff88';ctx.font='bold 14px monospace';ctx.fillText(wp.name,w/2-80,h/2-10);
-          ctx.fillStyle=ammoLeft>wp.max*0.3?'#00ff88':'#ff4444';
-          ctx.fillRect(w/2-80,h/2+5,160*(ammoLeft/wp.max),12);
-          ctx.fillStyle='#fff';ctx.font='10px monospace';ctx.fillText(ammoLeft + '/' + wp.max, w/2 - 80, h/2 + 28);
-      }
-    },
-    { id: 'AndroAlina', name: 'AndroAlina', cat: 'A', desc: 'Day/Night cycle ✅ FIXED',
-      usage: `R.AndroAlina.update(dt);\n\nconst tint = R.AndroAlina.tint();\n// Returns {r,g,b,a} overlay color\n\nif (R.AndroAlina.isNight()) {\n  activateNightVision();\n}\n\n// Manual control\nR.AndroAlina.setTime(0.5); // noon`,
-      demo: (ctx, w, h, t) => {
-          R.AndroAlina._t = (t * 10) % R.AndroAlina.dayLength;
-          const tint = R.AndroAlina.tint();
-          const p = R.AndroAlina.phase();
-          // Sky gradient
-          const grad = ctx.createLinearGradient(0,0,0,h);
-          const brightness = 1 - tint.a;
-          grad.addColorStop(0, \`rgb(\${30+brightness*100},\${40+brightness*140},\${80+brightness*175})\`);
-          grad.addColorStop(1, \`rgb(\${20+brightness*60},\${30+brightness*80},\${50+brightness*100})\`);
-          ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
-          // Sun/Moon
-          const sunY = h*0.2 + Math.sin((p-0.5)*Math.PI*2)*h*0.3;
-          ctx.fillStyle=p>0.2&&p<0.7?'#ffdd44':'#ddeeff';
-          ctx.beginPath();ctx.arc(w*0.7,sunY,20,0,Math.PI*2);ctx.fill();
-          // Overlay
-          ctx.fillStyle=\`rgba(5,5,25,\${tint.a})\`;ctx.fillRect(0,0,w,h);
-          ctx.fillStyle='#fff';ctx.font='12px monospace';
-          ctx.fillText('Phase: ' + (p * 100).toFixed(0) + '% | Night: ' + R.AndroAlina.isNight(), 10, h - 10);
-      }
-    },
-    { id: 'BokotraVirtoaly', name: 'BokotraVirtoaly', cat: 'A', desc: 'Custom virtual buttons ABXY',
-      usage: `const btn = new R.BokotraVirtoaly();\nbtn.define('fire');\nbtn.define('jump');\n\n// On touch\nbtn.press('fire');\nbtn.release('fire');\n\n// Check\nif (btn.justPressed('fire')) shoot();\nbtn.endFrame(); // call each frame`,
-      demo: (ctx, w, h, t) => {
-          const labels=['A','B','X','Y'];
-          const colors=['#44ff44','#ff4444','#4488ff','#ffff44'];
-          labels.forEach((l,i)=>{
-              const active = Math.sin(t*3+i)>0.5;
-              const bx=w/2+Math.cos(i*Math.PI/2)*60, by=h/2+Math.sin(i*Math.PI/2)*60;
-              ctx.beginPath();ctx.arc(bx,by,25,0,Math.PI*2);
-              ctx.fillStyle=active?colors[i]:colors[i]+'44';ctx.fill();
-              ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
-              ctx.fillStyle='#fff';ctx.font='bold 16px sans-serif';ctx.textAlign='center';ctx.fillText(l,bx,by+6);
-          });
-          ctx.textAlign='left';
-      }
-    },
-    
-    // ---- B. COMBAT / BR ----
-    { id: 'FaribolanaMihena', name: 'FaribolanaMihena', cat: 'B', desc: 'BR shrinking zone',
-      usage: `const zone = new R.FaribolanaMihena(cx, cy, 500, 50, 120, 5);\nzone.update(dt);\n\nconst dmg = zone.damageIfOutside(player.x, player.y, dt);\nplayer.hp -= dmg;\n\nconsole.log(zone.radius); // current radius\nconsole.log(zone.progress()); // 0..1`,
-      demo: (ctx, w, h, t) => {
-          const zone = new R.FaribolanaMihena(w/2,h/2,180,30,10,5);
-          zone.t = (t%10); zone.update(0);
-          ctx.beginPath();ctx.arc(w/2,h/2,zone.radius,0,Math.PI*2);
-          ctx.strokeStyle='#ff4444';ctx.lineWidth=3;ctx.stroke();
-          ctx.fillStyle='rgba(255,0,0,0.1)';ctx.fill();
-          // Danger zone outside
-          ctx.fillStyle='rgba(255,0,0,0.15)';
-          ctx.fillRect(0,0,w,h);
-          ctx.globalCompositeOperation='destination-out';
-          ctx.beginPath();ctx.arc(w/2,h/2,zone.radius,0,Math.PI*2);ctx.fill();
-          ctx.globalCompositeOperation='source-over';
-          ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText('Radius: ' + zone.radius.toFixed(0) + ' | Progress: ' + (zone.progress() * 100).toFixed(0) + '%', 10, h - 10);
-      }
-    },
-    { id: 'EndrikaBala', name: 'EndrikaBala', cat: 'B', desc: 'Bullet hell patterns',
-      usage: `// Spiral pattern\nconst bullets = R.EndrikaBala.spiral(12, timeOffset, 200);\nbullets.forEach(b => {\n  spawnBullet(x, y, b.angle, b.speed);\n});\n\n// Aimed burst\nconst aimed = R.EndrikaBala.aimed(ex,ey, px,py, 300);\n\n// Wave spread\nconst wave = R.EndrikaBala.wave(baseAngle, 8, 0.5, 250);`,
-      demo: (ctx, w, h, t) => {
-          const patterns = ['spiral','wave','burst'];
-          const pat = patterns[Math.floor(t/3)%3];
-          let bullets;
-          if(pat==='spiral') bullets=R.EndrikaBala.spiral(12,t*2,100);
-          else if(pat==='wave') bullets=R.EndrikaBala.wave(t*0.5,8,1.0,100);
-          else bullets=R.EndrikaBala.burst(t,16,0.8,100);
-          
-          bullets.forEach(b=>{
-              const dist=((t*100)%150);
-              const bx=w/2+Math.cos(b.angle)*dist, by=h/2+Math.sin(b.angle)*dist;
-              if(dist<150){ctx.fillStyle='#ffff44';ctx.beginPath();ctx.arc(bx,by,3,0,Math.PI*2);ctx.fill();}
-          });
-          ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText('Pattern: ' + pat, 10, h - 10);
-      }
-    },
-    { id: 'Fisintonana', name: 'Fisintonana', cat: 'B', desc: 'Dash + i-frames',
-      usage: `const dash = new R.Fisintonana(120, 0.18, 0.25, 0.8);\n\nif (dashBtn && dash.canDash()) {\n  dash.start(dirX, dirY);\n}\n\nconst move = dash.update(dt);\nplayer.x += move.dx;\nplayer.y += move.dy;\n\nif (dash.isInvincible) ignoreDamage();`,
-      demo: (ctx, w, h, t) => {
-          const dash = new R.Fisintonana(150,0.3,0.4,1.5);
-          const cycle=t%2;
-          if(cycle<0.1)dash.start(1,0);
-          const mv=dash.update(0.016);
-          const px=w/4+(cycle>0.1&&cycle<0.5?(cycle-0.1)*375:0);
-          ctx.fillStyle=dash.isInvincible?'rgba(255,255,255,0.5)':'#00ff88';
-          ctx.fillRect(px-10,h/2-10,20,20);
-          if(dash.isInvincible){ctx.strokeStyle='#fff';ctx.setLineDash([4,4]);ctx.strokeRect(px-12,h/2-12,24,24);ctx.setLineDash([]);}
-          ctx.fillStyle='#888';ctx.font='11px monospace';ctx.fillText('iFrames: ' + dash.isInvincible + ' | CD: ' + dash._cd.toFixed(2) + 's', 10, h - 10);
-    },
-    { id: 'IsaMitohy', name: 'IsaMitohy', cat: 'B', desc: 'Combo counter & multiplier',
-      usage: `const combo = new R.IsaMitohy(1.5);\n\n// On kill/hit\nconst score = combo.add(100);\nconsole.log(combo.combo);      // hit count\nconsole.log(combo.multiplier); // 1.0, 1.5, 2.0...\n\ncombo.update(dt); // decay timer\ncombo.reset();`,
-      demo: (ctx, w, h, t) => {
-          const combo = new R.IsaMitohy(2);
-          const hits = Math.floor(t*3)%20;
-          for(let i=0;i<hits;i++) combo.add(100);
-          combo.update(0);
-          ctx.fillStyle='#00ff88';ctx.font='bold 40px sans-serif';ctx.textAlign='center';
-          ctx.fillText(combo.combo + ' HITS', w / 2, h / 2 - 20);
-          ctx.fillStyle='#ffff44';ctx.font='bold 24px sans-serif';
-          ctx.fillText('x' + combo.multiplier.toFixed(1), w / 2, h / 2 + 20);
-          ctx.textAlign='left';
-      }
-    },
-    { id: 'TantaraFandresena', name: 'TantaraFandresena', cat: 'B', desc: 'Kill feed & leaderboard',
-      usage: `const feed = new R.TantaraFandresena(5, 10);\nfeed.addKill('Player1', 'Enemy3');\nfeed.addScore('Player1', 50);\n\nconst ranking = feed.ranking();\n// [{name:'Player1', score:51}, ...]`,
-      demo: (ctx, w, h, t) => {
-          const feed = new R.TantaraFandresena(5,5);
-          const names=['Soa','Niry','Hery','Bako','Fy'];
-          for(let i=0;i<Math.min(Math.floor(t*2),15);i++) feed.addKill(names[i%5],names[(i+2)%5]);
-          const rank=feed.ranking();
-          ctx.fillStyle='#000a';ctx.fillRect(w/2-100,20,200,rank.length*22+10);
-          rank.forEach((r,i)=>{ctx.fillStyle=i===0?'#ffff44':'#ccc';ctx.font='12px monospace';ctx.fillText('#' + (i + 1) + ' ' + r.name + ': ' + r.score, w / 2 - 80, 40 + i * 22);});
-      }
-    },
-    
-    // ---- C. MAPA & TONTOLO ----
-    { id: 'KarazanTany', name: 'KarazanTany', cat: 'C', desc: 'Biome generator (noise)',
-      usage: `const biome = R.KarazanTany.biomeAt(x, y, seed);\n// Returns: 'rano'|'fasika'|'ahitra'|'ala'|'oram-panala'\n\nconst grid = R.KarazanTany.generate(800, 600, 16, seed);`,
-      demo: (ctx, w, h, t) => {
-          const colors={rano:'#2244aa',fasika:'#ddcc66',ahitra:'#44aa44',ala:'#226622','oram-panala':'#dddddd'};
-          const cs=16;
-          for(let y=0;y<h;y+=cs)for(let x=0;x<w;x+=cs){
-              const b=R.KarazanTany.biomeAt(x+t*10,y,42);
-              ctx.fillStyle=colors[b]||'#333';ctx.fillRect(x,y,cs,cs);
-          }
-      }
-    },
-    { id: 'DrafitraSimba', name: 'DrafitraSimba', cat: 'C', desc: 'Destructible tile grid',
-      usage: `const wall = new R.DrafitraSimba(20, 15, 32, 3);\n\n// Damage a cell\nconst destroyed = wall.damage(cx, cy, 1);\n\nif (wall.isBroken(cx, cy)) {\n  // passable now\n}\n\nwall.repair(cx, cy);`,
-      demo: (ctx, w, h, t) => {
-          const wall = new R.DrafitraSimba(20,12,32,3);
-          const dmgCount = Math.floor(t*5)%60;
-          for(let i=0;i<dmgCount;i++) wall.damage(Math.floor(Math.random()*20),Math.floor(Math.random()*12),1);
-          for(let y=0;y<12;y++)for(let x=0;x<20;x++){
-              if(!wall.isBroken(x,y)){
-                  const hp=wall.hp[wall._idx(x,y)];
-                  ctx.fillStyle=hp===3?'#886644':hp===2?'#aa8866':'#ccaa88';
-                  ctx.fillRect(x*32,y*32,31,31);
-              }
-          }
-      }
-    },
-    { id: 'Anjara', name: 'Anjara', cat: 'C', desc: 'Weighted loot table',
-      usage: `const loot = new R.Anjara();\nloot.add('Gold', 50, 'common');\nloot.add('Sword', 10, 'rare');\nloot.add('Legendary', 1, 'epic');\n\nconst drop = loot.roll();\nconsole.log(drop.item); // 'Gold' most likely\n\nconst drops = loot.rollMany(5);`,
-      demo: (ctx, w, h, t) => {
-          const loot = new R.Anjara();
-          loot.add('Gold',50,'common');loot.add('Gem',15,'uncommon');loot.add('Sword',5,'rare');loot.add('Crown',1,'legendary');
-          const rarColors={common:'#aaa',uncommon:'#44ff44',rare:'#4488ff',legendary:'#ff44ff'};
-          const results=[];for(let i=0;i<10;i++)results.push(loot.roll());
-          results.forEach((r,i)=>{
-              if(!r)return;
-              ctx.fillStyle=rarColors[r.rarity]||'#fff';
-              ctx.fillRect(w/2-100+i*20,h/2-10,18,18);
-          });
-          ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText('10 rolls:',w/2-100,h/2-20);
-      }
-    },
-    { id: 'Lalana', name: 'Lalana (A*)', cat: 'C', desc: 'Pathfinding A*',
-      usage: `const path = R.Lalana.find(grid, sx, sy, ex, ey, {diagonal:true});\n\nif (path) {\n  const smooth = R.Lalana.smooth(path, tileSize);\n  // Follow waypoints\n}`,
-      demo: (ctx, w, h, t) => {
-          const gw=20,gh=12,cs=32;
-          const grid=[];for(let y=0;y<gh;y++){const row=[];for(let x=0;x<gw;x++)row.push(Math.random()<0.2?1:0);grid.push(row);}
-          grid[1][1]=0;grid[gh-2][gw-2]=0;
-          const path=R.Lalana.find(grid,1,1,gw-2,gh-2,{diagonal:true});
-          for(let y=0;y<gh;y++)for(let x=0;x<gw;x++){if(grid[y][x]){ctx.fillStyle='#333';ctx.fillRect(x*cs,y*cs,cs,cs);}}
-          if(path)path.forEach(p=>{ctx.fillStyle='#00ff8844';ctx.fillRect(p.x*cs+4,p.y*cs+4,cs-8,cs-8);});
-          ctx.fillStyle='#00ff88';ctx.fillRect(1*cs+8,1*cs+8,16,16);
-          ctx.fillStyle='#ff4444';ctx.fillRect((gw-2)*cs+8,(gh-2)*cs+8,16,16);
-      }
-    },
-    
-    // ---- D. MULTIPLAYER & SOCIAL ----
-    { id: 'Firaketana', name: 'Firaketana', cat: 'D', desc: 'Replay recorder/playback',
-      usage: `const replay = new R.Firaketana();\nreplay.start();\n\n// Each frame\nreplay.record({x: player.x, y: player.y, input: axis});\n\n// Playback\nreplay.play();\nconst frame = replay.nextFrame();\nif (replay.isDone) showResults();\n\n// Serialize\nconst json = replay.toJSON();`,
-      demo: (ctx, w, h, t) => {
-          const frames=60;const idx=Math.floor(t*30)%frames;
-          ctx.strokeStyle='#00ff8844';ctx.beginPath();
-          for(let i=0;i<frames;i++){const fx=i/frames*w,fy=h/2+Math.sin(i*0.2)*50;i===0?ctx.moveTo(fx,fy):ctx.lineTo(fx,fy);}
-          ctx.stroke();
-          const px=idx/frames*w,py=h/2+Math.sin(idx*0.2)*50;
-          ctx.fillStyle='#00ff88';ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.fill();
-          ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText('Frame: ' + idx + '/' + frames, 10, h - 10);
-      }
-    },
-    { id: 'Ekipa', name: 'Ekipa', cat: 'D', desc: 'Team/Clan system',
-      usage: `const teams = new R.Ekipa();\nteams.createTeam('red');\nteams.createTeam('blue');\nteams.join('red', playerId);\nteams.addScore('red', 10);\n\nif (teams.areAllies(p1, p2)) skipFriendlyFire();\n\nconst standings = teams.standings();`,
-      demo: (ctx, w, h, t) => {
-          const teams=new R.Ekipa();teams.createTeam('Red');teams.createTeam('Blue');
-          teams.addScore('Red',Math.floor(t*10)%50);teams.addScore('Blue',Math.floor(t*8)%50);
-          const st=teams.standings();
-          st.forEach((s,i)=>{
-              ctx.fillStyle=s.id==='Red'?'#ff4444':'#4488ff';
-              ctx.fillRect(w/2-100, h/2-30+i*40, 200*(s.score/50), 25);
-              ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText(\`\${s.id}: \${s.score}\`,w/2-90,h/2-12+i*40);
-          });
-      }
-    },
-    { id: 'FeoAkaiky', name: 'FeoAkaiky', cat: 'D', desc: 'Proximity audio volume',
-      usage: `const vol = R.FeoAkaiky.volumeForDistance(\n  listenerX, listenerY,\n  sourceX, sourceY,\n  500, 50  // maxDist, minDist\n);\n\nR.FeoAkaiky.playAt('explosion', lx, ly, sx, sy, {volume: 0.8});`,
-      demo: (ctx, w, h, t) => {
-          const lx=w/2,ly=h/2;
-          const sx=w/2+Math.sin(t)*150,sy=h/2+Math.cos(t*0.7)*100;
-          const vol=R.FeoAkaiky.volumeForDistance(lx,ly,sx,sy,200,30);
-          ctx.beginPath();ctx.arc(sx,sy,200,0,Math.PI*2);ctx.strokeStyle='#ff444433';ctx.stroke();
-          ctx.beginPath();ctx.arc(sx,sy,30,0,Math.PI*2);ctx.strokeStyle='#ff444466';ctx.stroke();
-          ctx.beginPath();ctx.arc(sx,sy,8+vol*15,0,Math.PI*2);ctx.fillStyle=\`rgba(255,68,68,\${vol})\`;ctx.fill();
-          ctx.fillStyle='#00ff88';ctx.fillRect(lx-5,ly-5,10,10);
-          ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText('Volume: ' + (vol * 100).toFixed(0) + '%', 10, h - 10);
-      }
-    },
-    
-    // ---- E. JUICE / POLISH ----
-    { id: 'VonoVono', name: 'VonoVono', cat: 'E', desc: 'Screen juice pack',
-      usage: `// Hitstop (freeze frames)\nR.VonoVono.hitstop(game, 60);\n\n// Screen flash\nR.VonoVono.flash(scene, 0xFFFFFFFF, 100);\n\n// Full impact bundle\nR.VonoVono.impact(game, scene, 8, 150, 50);\n// = shake + hitstop + flash`,
-      demo: (ctx, w, h, t) => {
-          const shake = Math.sin(t*20)*Math.max(0,5-t*3);
-          ctx.save();ctx.translate(shake,shake*0.7);
-          ctx.fillStyle='#00ff88';ctx.fillRect(w/2-20,h/2-20,40,40);
-          ctx.restore();
-          const flashAlpha = Math.max(0, 1-t*2);
-          if(flashAlpha>0){ctx.fillStyle=\`rgba(255,255,255,\${flashAlpha})\`;ctx.fillRect(0,0,w,h);}
-          ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText('Impact: shake + flash + hitstop',10,h-10);
-      }
-    },
-    { id: 'Fanoratana', name: 'Fanoratana', cat: 'E', desc: 'Typewriter text reveal',
-      usage: `const tw = new R.Fanoratana('Salama ô!', 30);\ntw.update(dt);\n\nconsole.log(tw.visible); // partial string\nif (tw.done) showNextDialog();\n\ntw.skip(); // instant complete`,
-      demo: (ctx, w, h, t) => {
-          const tw = new R.Fanoratana('Salama ô! Tongasoa eto amin\\'ny RAKITRAKATRA V4.2.1!', 25);
-          tw._t = (t * 25) % 60; tw.update(0);
-          ctx.fillStyle='#000a';ctx.fillRect(w/2-200,h/2-30,400,60);
-          ctx.fillStyle='#00ff88';ctx.font='14px monospace';ctx.textAlign='center';
-          ctx.fillText(tw.visible + (Math.sin(t*5)>0?'_':''),w/2,h/2+5);
-          ctx.textAlign='left';
-      }
-    },
-    { id: 'Vovoka', name: 'Vovoka', cat: 'E', desc: 'Particle system',
-      usage: `const particles = new R.Vovoka(5000);\nparticles.emit(x, y, {\n  count: 20,\n  speedMin: 50, speedMax: 200,\n  lifeMin: 0.5, lifeMax: 1.5,\n  sizeStart: 8, sizeEnd: 0,\n  color: 0xFFFF44FF,\n  gravity: 200\n});\nparticles.update(dt);\nparticles.render(renderer);`,
-      demo: (ctx, w, h, t) => {
-          for(let i=0;i<30;i++){
-              const age=(t*2+i*0.1)%1;
-              const angle=i*0.5+t;const speed=50+i*3;
-              const px=w/2+Math.cos(angle)*speed*age;
-              const py=h/2+Math.sin(angle)*speed*age+age*age*100;
-              const size=8*(1-age);const alpha=1-age;
-              ctx.fillStyle=\`rgba(255,255,68,\${alpha})\`;
-              ctx.fillRect(px-size/2,py-size/2,size,size);
-          }
-      }
-    },
-    { id: 'Toetrandro', name: 'Toetrandro', cat: 'E', desc: 'Weather rain/snow/storm',
-      usage: `const weather = new R.Toetrandro(800, 600);\nweather.setMode('rain', 1.0); // or 'snow', 'storm'\nweather.update(dt);\nweather.render(renderer);`,
-      demo: (ctx, w, h, t) => {
-          const modes=['rain','snow','storm'];const mode=modes[Math.floor(t/4)%3];
-          ctx.fillStyle='#111';ctx.fillRect(0,0,w,h);
-          const count=mode==='snow'?60:120;
-          for(let i=0;i<count;i++){
-              const seed=i*137.5;
-              if(mode==='snow'){
-                  const px=(seed*7+t*20)%w,py=(seed*13+t*40)%h;
-                  ctx.fillStyle='rgba(255,255,255,0.7)';ctx.fillRect(px,py,3,3);
-              }else{
-                  const px=(seed*7+t*10)%w,py=(seed*13+t*300)%h;
-                  ctx.strokeStyle='rgba(150,180,255,0.5)';ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px-2,py+12);ctx.stroke();
-              }
-          }
-          if(mode==='storm'&&Math.sin(t*10)>0.95){ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillRect(0,0,w,h);}
-          ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText(\`Mode: \${mode}\`,10,h-10);
-      }
-    },
-    { id: 'SarintanyMafana', name: 'SarintanyMafana', cat: 'E', desc: 'Analytics heatmap',
-      usage: `const heat = new R.SarintanyMafana(800, 600, 32);\nheat.record(player.x, player.y);\nheat.record(deathX, deathY, 5);\n\nconst val = heat.valueAt(x, y);\nconst max = heat.max();`,
-      demo: (ctx, w, h, t) => {
-          const heat = new R.SarintanyMafana(w,h,16);
-          for(let i=0;i<200;i++){
-              const hx=w/2+Math.sin(i*0.3)*100+Math.random()*40;
-              const hy=h/2+Math.cos(i*0.5)*80+Math.random()*40;
-              heat.record(hx,hy);
-          }
-          const max=heat.max()||1;
-          for(let y=0;y<h;y+=16)for(let x=0;x<w;x+=16){
-              const v=heat.valueAt(x,y);
-              if(v>0){const intensity=v/max;ctx.fillStyle=\`rgba(255,\${Math.floor(255*(1-intensity))},0,\${intensity*0.8})\`;ctx.fillRect(x,y,16,16);}
-          }
-      }
-    },
-    { id: 'MpitarikaAI', name: 'MpitarikaAI', cat: 'E', desc: 'AI Director stress system',
-      usage: `const director = new R.MpitarikaAI({maxStress:100, decayRate:5});\ndirector.onSpawnRequest = (stress) => spawnEnemies(stress);\n\ndirector.addStress(20); // player doing well\ndirector.update(dt);\n// Auto-spawns when stress < 30%`,
-      demo: (ctx, w, h, t) => {
-          const dir = new R.MpitarikaAI({maxStress:100,decayRate:8});
-          dir.stress = 50+Math.sin(t*0.5)*40;
-          dir.update(0.016);
-          const pct=dir.stress/100;
-          ctx.fillStyle='#222';ctx.fillRect(w/2-100,h/2-15,200,30);
-          ctx.fillStyle=pct>0.7?'#ff4444':pct>0.3?'#ffff44':'#44ff44';
-          ctx.fillRect(w/2-100,h/2-15,200*pct,30);
-          ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.textAlign='center';
-          ctx.fillText('Stress: ' + dir.stress.toFixed(0) + '%', w / 2, h / 2 + 5);
-          ctx.fillText(pct<0.3?'⚠️ SPAWN REQUEST':'😌 Calm',w/2,h/2+35);
-          ctx.textAlign='left';
-      }
-    },
+var PLUGINS = [
+{id:'Vektora2',name:'Vektora2',cat:'core',desc:'Vecteur 2D optimized',
+usage:'var v = new R.Vektora2(10, 20);\nv.add(new R.Vektora2(5, 3));\nconsole.log(v.x, v.y); // 15, 23\nv.normalize();\nvar d = R.Vektora2.distance(a, b);',
+demo:function(ctx,w,h,t){var cx=w/2,cy=h/2;for(var i=0;i<8;i++){var a=(i/8)*Math.PI*2+t;var vx=Math.cos(a)*100,vy=Math.sin(a)*100;ctx.strokeStyle='#00ff88';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+vx,cy+vy);ctx.stroke();ctx.fillStyle='#00ff88';ctx.beginPath();ctx.arc(cx+vx,cy+vy,4,0,Math.PI*2);ctx.fill();}}},
+
+{id:'Efajoro',name:'Efajoro',cat:'core',desc:'Rectangle AABB collision',
+usage:'var r = new R.Efajoro(10, 20, 100, 50);\nconsole.log(r.left, r.right, r.cx);\nif (r.intersects(other)) {\n  var overlap = r.intersection(other);\n}',
+demo:function(ctx,w,h,t){var x1=w/2-60+Math.sin(t)*40,y1=h/2-30;var x2=w/2-20,y2=h/2-40+Math.cos(t*1.3)*30;ctx.strokeStyle='#00ff88';ctx.strokeRect(x1,y1,80,60);ctx.strokeStyle='#ff4444';ctx.strokeRect(x2,y2,60,80);var ox=Math.max(x1,x2),oy=Math.max(y1,y2);var ow=Math.min(x1+80,x2+60)-ox,oh=Math.min(y1+60,y2+80)-oy;if(ow>0&&oh>0){ctx.fillStyle='rgba(255,255,0,0.3)';ctx.fillRect(ox,oy,ow,oh);}}},
+
+{id:'Boribory',name:'Boribory',cat:'core',desc:'Circle collision detection',
+usage:'var c = new R.Boribory(100, 100, 30);\nif (c.contains(mx, my)) console.log("Inside!");\nif (c.intersects(otherCircle)) { /* hit */ }',
+demo:function(ctx,w,h,t){var x1=w/2+Math.sin(t)*80,y1=h/2,r1=30;var x2=w/2-Math.sin(t)*80,y2=h/2,r2=25;ctx.beginPath();ctx.arc(x1,y1,r1,0,Math.PI*2);ctx.strokeStyle='#00ff88';ctx.stroke();ctx.beginPath();ctx.arc(x2,y2,r2,0,Math.PI*2);ctx.strokeStyle='#ff4444';ctx.stroke();var dx=x2-x1,dy=y2-y1;if(dx*dx+dy*dy<=(r1+r2)*(r1+r2)){ctx.fillStyle='rgba(255,255,0,0.4)';ctx.beginPath();ctx.arc((x1+x2)/2,(y1+y2)/2,10,0,Math.PI*2);ctx.fill();}}},
+
+{id:'Lamina2D',name:'Lamina2D',cat:'core',desc:'Matrice 2D transform',
+usage:'var m = new R.Lamina2D();\nm.translate(100, 50);\nm.rotate(Math.PI / 4);\nm.scale(2, 2);\nvar p = m.transformPoint(10, 0);',
+demo:function(ctx,w,h,t){var cx=w/2,cy=h/2;var sc=1+Math.sin(t*2)*0.3;ctx.save();ctx.translate(cx,cy);ctx.rotate(t);ctx.scale(sc,sc);ctx.strokeStyle='#00ff88';ctx.lineWidth=2;ctx.strokeRect(-40,-40,80,80);ctx.fillStyle='#00ff8833';ctx.fillRect(-40,-40,80,80);ctx.restore();}},
+
+{id:'Z',name:'Z Utils',cat:'core',desc:'Fitahirizana fonctions utilitaires',
+usage:'R.Z.lerp(0, 100, 0.5);     // 50\nR.Z.clamp(150, 0, 100);    // 100\nR.Z.rand(10, 20);\nR.Z.shuffle([1,2,3,4]);\nR.Z.uuid();',
+demo:function(ctx,w,h,t){for(var i=0;i<20;i++){var x=20+Math.random()*(w-40);var y=h*0.3+(h*0.4)*((Math.sin(t+i*0.5)+1)/2);var s=3+Math.abs(Math.sin(t*2+i))*7;ctx.fillStyle='hsl('+(i*18)+',80%,60%)';ctx.beginPath();ctx.arc(x,y,s,0,Math.PI*2);ctx.fill();}}},
+
+{id:'Vondrona',name:'Vondrona (ECS)',cat:'core',desc:'Entity Component System SoA',
+usage:'var ecs = new R.Vondrona(1000);\nvar id = ecs.create();\necs.x[id] = 100;\necs.y[id] = 200;\necs.hp[id] = 50;\necs.setTag(id, 1);\necs.query(1, function(eid) {\n  console.log(ecs.x[eid]);\n});\necs.destroy(id);',
+demo:function(ctx,w,h,t){if(!this._e){this._e=new R.Vondrona(500);for(var i=0;i<100;i++){var id=this._e.create();this._e.x[id]=Math.random()*640;this._e.y[id]=Math.random()*400;this._e.vx[id]=(Math.random()-0.5)*60;this._e.vy[id]=(Math.random()-0.5)*60;}}var e=this._e,dt=0.016;e.forEach(function(id){e.x[id]+=e.vx[id]*dt;e.y[id]+=e.vy[id]*dt;if(e.x[id]<0||e.x[id]>640)e.vx[id]*=-1;if(e.y[id]<0||e.y[id]>400)e.vy[id]*=-1;});e.forEach(function(id){ctx.fillStyle='#00ff88';ctx.fillRect(e.x[id]-2,e.y[id]-2,4,4);});}},
+
+{id:'SakanToerana',name:'SakanToerana',cat:'core',desc:'Spatial Hash Grid O(n)',
+usage:'var grid = new R.SakanToerana(64);\ngrid.insert(entityId, x, y, w, h);\nvar found = grid.query(rx, ry, rw, rh);\nfor (var id of found) { /* check */ }',
+demo:function(ctx,w,h,t){var grid=new R.SakanToerana(64);var ents=[];for(var i=0;i<50;i++){var ex=Math.random()*640,ey=Math.random()*400;ents.push({x:ex,y:ey,w:8,h:8});grid.insert(i,ex,ey,8,8);}var qx=w/2-50+Math.sin(t)*100,qy=h/2-50+Math.cos(t*0.7)*80;var found=grid.query(qx,qy,100,100);ctx.strokeStyle='#222';for(var x=0;x<w;x+=64){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}for(var y=0;y<h;y+=64){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}for(var i=0;i<ents.length;i++){ctx.fillStyle=found.has(i)?'#ffff00':'#00ff8844';ctx.fillRect(ents[i].x,ents[i].y,8,8);}ctx.strokeStyle='#ff4444';ctx.lineWidth=2;ctx.strokeRect(qx,qy,100,100);}},
+
+{id:'Mpampiseho',name:'Mpampiseho',cat:'core',desc:'WebGL2 Batched Renderer',
+usage:'renderer.begin(camera);\nrenderer.drawSprite(x,y,w,h, sx,sy,sw,sh, color, "texKey");\nrenderer.drawRect(x,y,w,h, 0xFFFF00FF);\nrenderer.end();',
+demo:function(ctx,w,h,t){for(var i=0;i<200;i++){var x=(i*37+t*50)%w;var y=(i*53+Math.sin(t+i)*30)%h;ctx.fillStyle='hsla('+(i*3)+',70%,60%,0.7)';ctx.fillRect(x,y,6,6);}}},
+
+{id:'Kamera',name:'Kamera',cat:'core',desc:'Camera follow/shake/deadzone',
+usage:'var cam = new R.Kamera(800, 600);\ncam.follow(player, 0.1);\ncam.setBounds(0, 0, 2000, 1500);\ncam.shake(10, 300);\ncam.update(dtMs);\nvar world = cam.screenToWorld(mx, my);',
+demo:function(ctx,w,h,t){ctx.fillStyle='#1a1a24';for(var x=0;x<w;x+=40)for(var y=0;y<h;y+=40){ctx.fillRect(x+Math.sin(t+x*0.01)*5,y+Math.cos(t+y*0.01)*5,2,2);}var cx=w/2+Math.sin(t)*100,cy=h/2+Math.cos(t*0.7)*80;ctx.strokeStyle='#00ff88';ctx.lineWidth=2;ctx.strokeRect(cx-15,cy-15,30,30);ctx.fillStyle='#00ff8833';ctx.font='11px monospace';ctx.fillText('camera target',cx-35,cy+30);}},
+
+{id:'Fanindry',name:'Fanindry',cat:'core',desc:'Input keyboard/mouse/touch/gamepad',
+usage:'R.Fanindry.init(canvas);\nif (R.Fanindry.isDown("arrowright")) moveRight();\nif (R.Fanindry.justPressed(" ")) jump();\nif (R.Fanindry.mouseJustDown(0)) shoot();\nvar axis = R.Fanindry.axis();',
+demo:function(ctx,w,h,t){var keys=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'];for(var i=0;i<keys.length;i++){var k=keys[i];var down=R&&R.Fanindry&&R.Fanindry.keys&&R.Fanindry.keys.has(k.toLowerCase());ctx.fillStyle=down?'#00ff88':'#333';ctx.fillRect(w/2-120+i*50,h/2-20,40,40);ctx.fillStyle='#fff';ctx.font='9px monospace';ctx.fillText(k.slice(0,4),w/2-118+i*50,h/2+5);}ctx.fillStyle='#888';ctx.font='12px sans-serif';ctx.fillText('Tsindrio ny kitendry...',w/2-80,h/2+50);}},
+
+{id:'FitaovanaVoa',name:'FitaovanaVoa',cat:'A',desc:'Hitbox/Hurtbox + Spatial Hash ✅ FIXED',
+usage:'var combat = new R.FitaovanaVoa(64);\ncombat.addHitbox(attacker, {x:x,y:y,w:40,h:40}, 10, 0);\ncombat.addHurtbox(victim, {x:x,y:y,w:30,h:30}, 1);\ncombat.update(function(hit, hurt) {\n  console.log("Hit!", hit.damage);\n});',
+demo:function(ctx,w,h,t){var combat=new R.FitaovanaVoa(64);var hx=w/2-30+Math.sin(t*2)*60,hy=h/2-20;combat.addHitbox({},{x:hx,y:hy,w:40,h:40},10,0);combat.addHurtbox({},{x:w/2-10,y:h/2-10,w:30,h:30},1);var hit=false;combat.update(function(){hit=true;});ctx.fillStyle=hit?'#ff4444':'#00ff8844';ctx.fillRect(hx,hy,40,40);ctx.fillStyle='#4488ff';ctx.fillRect(w/2-10,h/2-10,30,30);if(hit){ctx.fillStyle='#ffff00';ctx.font='bold 20px sans-serif';ctx.fillText('HIT!',w/2+30,h/2-20);}ctx.fillStyle='#888';ctx.font='11px monospace';ctx.fillText('Team 0 vs Team 1',10,h-10);}},
+
+{id:'FitahirizanaBaiko',name:'FitahirizanaBaiko',cat:'A',desc:'Input Buffer + Coyote Time',
+usage:'var input = new R.FitahirizanaBaiko(0.15, 0.1);\ninput.press("jump");\nif (input.consume("jump")) doJump();\ninput.setGrounded(onGround);\nif (input.canCoyote()) canStillJump = true;',
+demo:function(ctx,w,h,t){var phase=(t%2)/2;var pressed=phase>0.3&&phase<0.35;var consumed=phase>0.3&&phase<0.5;ctx.fillStyle='#333';ctx.fillRect(w/2-150,h/2-10,300,20);ctx.fillStyle=pressed?'#00ff88':consumed?'#ffff0066':'#222';ctx.fillRect(w/2-150,h/2-10,300*phase,20);ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText(pressed?'PRESS':'buffer window',w/2-40,h/2-20);ctx.fillText('coyote: 0.15s',w/2-40,h/2+30);}},
+
+{id:'Fiadiana',name:'Fiadiana',cat:'A',desc:'Weapon arsenal/cooldown/reload',
+usage:'var arsenal = new R.Fiadiana([\n  {name:"Pistol",ammo:12,maxAmmo:12,cooldown:0.3,reloadTime:1.5}\n]);\nif (arsenal.canFire()) arsenal.fire();\narsenal.reload();\narsenal.update(dt);',
+demo:function(ctx,w,h,t){var wp={name:'Pistol',ammo:12,max:12};var ammoLeft=Math.max(0,wp.ammo-Math.floor((t%3)*3));ctx.fillStyle='#222';ctx.fillRect(w/2-100,h/2-30,200,60);ctx.fillStyle='#00ff88';ctx.font='bold 14px monospace';ctx.fillText(wp.name,w/2-80,h/2-10);ctx.fillStyle=ammoLeft>3?'#00ff88':'#ff4444';ctx.fillRect(w/2-80,h/2+5,160*(ammoLeft/wp.max),12);ctx.fillStyle='#fff';ctx.font='10px monospace';ctx.fillText(ammoLeft+'/'+wp.max,w/2-80,h/2+28);}},
+
+{id:'AndroAlina',name:'AndroAlina',cat:'A',desc:'Day/Night cycle ✅ FIXED phase',
+usage:'R.AndroAlina.update(dt);\nvar tint = R.AndroAlina.tint();\nif (R.AndroAlina.isNight()) activateNightVision();\nR.AndroAlina.setTime(0.5); // noon',
+demo:function(ctx,w,h,t){R.AndroAlina._t=(t*10)%R.AndroAlina.dayLength;var p=R.AndroAlina.phase();var nightAmount=0.5+0.5*Math.cos((p-0.5)*Math.PI*2);var brightness=1-nightAmount*0.6;var grad=ctx.createLinearGradient(0,0,0,h);grad.addColorStop(0,'rgb('+(30+brightness*100)+','+(40+brightness*140)+','+(80+brightness*175)+')');grad.addColorStop(1,'rgb('+(20+brightness*60)+','+(30+brightness*80)+','+(50+brightness*100)+')');ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);var sunY=h*0.2+Math.sin((p-0.5)*Math.PI*2)*h*0.3;ctx.fillStyle=p>0.2&&p<0.7?'#ffdd44':'#ddeeff';ctx.beginPath();ctx.arc(w*0.7,sunY,20,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(5,5,25,'+(nightAmount*0.6)+')';ctx.fillRect(0,0,w,h);ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText('Phase: '+(p*100).toFixed(0)+'% | Night: '+R.AndroAlina.isNight(),10,h-10);}},
+
+{id:'BokotraVirtoaly',name:'BokotraVirtoaly',cat:'A',desc:'Custom virtual buttons ABXY',
+usage:'var btn = new R.BokotraVirtoaly();\nbtn.define("fire");\nbtn.press("fire");\nif (btn.justPressed("fire")) shoot();\nbtn.endFrame();',
+demo:function(ctx,w,h,t){var labels=['A','B','X','Y'];var colors=['#44ff44','#ff4444','#4488ff','#ffff44'];for(var i=0;i<4;i++){var active=Math.sin(t*3+i)>0.5;var bx=w/2+Math.cos(i*Math.PI/2)*60;var by=h/2+Math.sin(i*Math.PI/2)*60;ctx.beginPath();ctx.arc(bx,by,25,0,Math.PI*2);ctx.fillStyle=active?colors[i]:colors[i]+'44';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 16px sans-serif';ctx.textAlign='center';ctx.fillText(labels[i],bx,by+6);}ctx.textAlign='left';}},
+
+{id:'FaribolanaMihena',name:'FaribolanaMihena',cat:'B',desc:'BR shrinking zone',
+usage:'var zone = new R.FaribolanaMihena(cx,cy,500,50,120,5);\nzone.update(dt);\nvar dmg = zone.damageIfOutside(px,py,dt);\nconsole.log(zone.radius, zone.progress());',
+demo:function(ctx,w,h,t){var progress=(t%10)/10;var radius=180-(180-30)*progress;ctx.fillStyle='rgba(255,0,0,0.15)';ctx.fillRect(0,0,w,h);ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.arc(w/2,h/2,radius,0,Math.PI*2);ctx.fill();ctx.globalCompositeOperation='source-over';ctx.beginPath();ctx.arc(w/2,h/2,radius,0,Math.PI*2);ctx.strokeStyle='#ff4444';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText('Radius: '+radius.toFixed(0)+' | Progress: '+(progress*100).toFixed(0)+'%',10,h-10);}},
+
+{id:'EndrikaBala',name:'EndrikaBala',cat:'B',desc:'Bullet hell patterns',
+usage:'var bullets = R.EndrikaBala.spiral(12, timeOffset, 200);\nbullets.forEach(function(b) {\n  spawnBullet(x, y, b.angle, b.speed);\n});\nvar aimed = R.EndrikaBala.aimed(ex,ey,px,py,300);',
+demo:function(ctx,w,h,t){var patterns=['spiral','wave','burst'];var pat=patterns[Math.floor(t/3)%3];var bullets;if(pat==='spiral'){bullets=[];for(var i=0;i<12;i++)bullets.push({angle:t*2+i*Math.PI*2/12});}else if(pat==='wave'){bullets=[];for(var i=0;i<8;i++){var tt=i/7-0.5;bullets.push({angle:t*0.5+tt*1.0});}}else{bullets=[];for(var i=0;i<16;i++)bullets.push({angle:t+(Math.random()-0.5)*0.8});}for(var i=0;i<bullets.length;i++){var dist=((t*100)%150);var bx=w/2+Math.cos(bullets[i].angle)*dist;var by=h/2+Math.sin(bullets[i].angle)*dist;if(dist<150){ctx.fillStyle='#ffff44';ctx.beginPath();ctx.arc(bx,by,3,0,Math.PI*2);ctx.fill();}}ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText('Pattern: '+pat,10,h-10);}},
+
+{id:'Fisintonana',name:'Fisintonana',cat:'B',desc:'Dash + i-frames',
+usage:'var dash = new R.Fisintonana(120, 0.18, 0.25, 0.8);\nif (dashBtn && dash.canDash()) dash.start(dirX, dirY);\nvar move = dash.update(dt);\nplayer.x += move.dx;\nif (dash.isInvincible) ignoreDamage();',
+demo:function(ctx,w,h,t){var cycle=t%2;var px=w/4+(cycle>0.1&&cycle<0.5?(cycle-0.1)*375:0);var inv=cycle>=0.1&&cycle<0.35;ctx.fillStyle=inv?'rgba(255,255,255,0.5)':'#00ff88';ctx.fillRect(px-10,h/2-10,20,20);if(inv){ctx.strokeStyle='#fff';ctx.setLineDash([4,4]);ctx.strokeRect(px-12,h/2-12,24,24);ctx.setLineDash([]);}ctx.fillStyle='#888';ctx.font='11px monospace';ctx.fillText('iFrames: '+inv+' | Dash active: '+(cycle>0.1&&cycle<0.5),10,h-10);}},
+
+{id:'IsaMitohy',name:'IsaMitohy',cat:'B',desc:'Combo counter & multiplier',
+usage:'var combo = new R.IsaMitohy(1.5);\nvar score = combo.add(100);\nconsole.log(combo.combo, combo.multiplier);\ncombo.update(dt);\ncombo.reset();',
+demo:function(ctx,w,h,t){var hits=Math.floor(t*3)%20;var mult=1+Math.floor(hits/5)*0.5;ctx.fillStyle='#00ff88';ctx.font='bold 40px sans-serif';ctx.textAlign='center';ctx.fillText(hits+' HITS',w/2,h/2-20);ctx.fillStyle='#ffff44';ctx.font='bold 24px sans-serif';ctx.fillText('x'+mult.toFixed(1),w/2,h/2+20);ctx.textAlign='left';}},
+
+{id:'TantaraFandresena',name:'TantaraFandresena',cat:'B',desc:'Kill feed & leaderboard',
+usage:'var feed = new R.TantaraFandresena(5, 10);\nfeed.addKill("Player1", "Enemy3");\nfeed.addScore("Player1", 50);\nvar ranking = feed.ranking();',
+demo:function(ctx,w,h,t){var names=['Soa','Niry','Hery','Bako','Fy'];var scores=[0,0,0,0,0];var count=Math.min(Math.floor(t*2),15);for(var i=0;i<count;i++){scores[i%5]++;}var sorted=[];for(var i=0;i<5;i++)sorted.push({name:names[i],score:scores[i]});sorted.sort(function(a,b){return b.score-a.score;});ctx.fillStyle='#000a';ctx.fillRect(w/2-100,20,200,sorted.length*22+10);for(var i=0;i<sorted.length;i++){ctx.fillStyle=i===0?'#ffff44':'#ccc';ctx.font='12px monospace';ctx.fillText('#'+(i+1)+' '+sorted[i].name+': '+sorted[i].score,w/2-80,40+i*22);}}},
+
+{id:'KarazanTany',name:'KarazanTany',cat:'C',desc:'Biome generator (noise)',
+usage:'var biome = R.KarazanTany.biomeAt(x, y, seed);\n// "rano"|"fasika"|"ahitra"|"ala"|"oram-panala"\nvar grid = R.KarazanTany.generate(800,600,16,seed);',
+demo:function(ctx,w,h,t){var colors={rano:'#2244aa',fasika:'#ddcc66',ahitra:'#44aa44',ala:'#226622','oram-panala':'#dddddd'};var cs=16;for(var y=0;y<h;y+=cs)for(var x=0;x<w;x+=cs){var n=R.Tabataba.fbm((x+t*10)*0.01,y*0.01,4,42);var b=n<-0.2?'rano':n<0?'fasika':n<0.35?'ahitra':n<0.6?'ala':'oram-panala';ctx.fillStyle=colors[b]||'#333';ctx.fillRect(x,y,cs,cs);}}},
+
+{id:'DrafitraSimba',name:'DrafitraSimba',cat:'C',desc:'Destructible tile grid',
+usage:'var wall = new R.DrafitraSimba(20, 15, 32, 3);\nwall.damage(cx, cy, 1);\nif (wall.isBroken(cx, cy)) { /* passable */ }\nwall.repair(cx, cy);',
+demo:function(ctx,w,h,t){var cols=20,rows=12,cs=32;var hp=new Uint8Array(cols*rows).fill(3);var dmgCount=Math.floor(t*5)%60;for(var i=0;i<dmgCount;i++){var idx=Math.floor(Math.random()*cols*rows);if(hp[idx]>0)hp[idx]--;}for(var y=0;y<rows;y++)for(var x=0;x<cols;x++){var v=hp[y*cols+x];if(v>0){ctx.fillStyle=v===3?'#886644':v===2?'#aa8866':'#ccaa88';ctx.fillRect(x*cs,y*cs,cs-1,cs-1);}}}},
+
+{id:'Anjara',name:'Anjara',cat:'C',desc:'Weighted loot table',
+usage:'var loot = new R.Anjara();\nloot.add("Gold", 50, "common");\nloot.add("Sword", 10, "rare");\nloot.add("Legendary", 1, "epic");\nvar drop = loot.roll();\nvar drops = loot.rollMany(5);',
+demo:function(ctx,w,h,t){var rarColors={common:'#aaa',uncommon:'#44ff44',rare:'#4488ff',legendary:'#ff44ff'};var weights=[50,15,5,1];var rarNames=['common','uncommon','rare','legendary'];var results=[];for(var i=0;i<10;i++){var total=71;var r=Math.random()*total;var acc=0;var picked=0;for(var j=0;j<weights.length;j++){acc+=weights[j];if(r<=acc){picked=j;break;}}results.push(rarNames[picked]);}for(var i=0;i<results.length;i++){ctx.fillStyle=rarColors[results[i]]||'#fff';ctx.fillRect(w/2-100+i*20,h/2-10,18,18);}ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText('10 rolls:',w/2-100,h/2-20);}},
+
+{id:'Lalana',name:'Lalana (A*)',cat:'C',desc:'Pathfinding A*',
+usage:'var path = R.Lalana.find(grid, sx,sy, ex,ey, {diagonal:true});\nif (path) {\n  var smooth = R.Lalana.smooth(path, tileSize);\n}',
+demo:function(ctx,w,h,t){var gw=20,gh=12,cs=32;var grid=[];for(var y=0;y<gh;y++){var row=[];for(var x=0;x<gw;x++)row.push(Math.random()<0.2?1:0);grid.push(row);}grid[1][1]=0;grid[gh-2][gw-2]=0;var path=R.Lalana.find(grid,1,1,gw-2,gh-2,{diagonal:true});for(var y=0;y<gh;y++)for(var x=0;x<gw;x++){if(grid[y][x]){ctx.fillStyle='#333';ctx.fillRect(x*cs,y*cs,cs,cs);}}if(path)for(var i=0;i<path.length;i++){ctx.fillStyle='#00ff8844';ctx.fillRect(path[i].x*cs+4,path[i].y*cs+4,cs-8,cs-8);}ctx.fillStyle='#00ff88';ctx.fillRect(1*cs+8,1*cs+8,16,16);ctx.fillStyle='#ff4444';ctx.fillRect((gw-2)*cs+8,(gh-2)*cs+8,16,16);}},
+
+{id:'Firaketana',name:'Firaketana',cat:'D',desc:'Replay recorder/playback',
+usage:'var replay = new R.Firaketana();\nreplay.start();\nreplay.record({x: player.x, y: player.y});\nreplay.play();\nvar frame = replay.nextFrame();\nvar json = replay.toJSON();',
+demo:function(ctx,w,h,t){var frames=60;var idx=Math.floor(t*30)%frames;ctx.strokeStyle='#00ff8844';ctx.beginPath();for(var i=0;i<frames;i++){var fx=i/frames*w,fy=h/2+Math.sin(i*0.2)*50;if(i===0)ctx.moveTo(fx,fy);else ctx.lineTo(fx,fy);}ctx.stroke();var px=idx/frames*w,py=h/2+Math.sin(idx*0.2)*50;ctx.fillStyle='#00ff88';ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText('Frame: '+idx+'/'+frames,10,h-10);}},
+
+{id:'Ekipa',name:'Ekipa',cat:'D',desc:'Team/Clan system',
+usage:'var teams = new R.Ekipa();\nteams.createTeam("red");\nteams.join("red", playerId);\nteams.addScore("red", 10);\nif (teams.areAllies(p1, p2)) skipFriendlyFire();\nvar standings = teams.standings();',
+demo:function(ctx,w,h,t){var redScore=Math.floor(t*10)%50;var blueScore=Math.floor(t*8)%50;var st=[{id:'Red',score:redScore},{id:'Blue',score:blueScore}];st.sort(function(a,b){return b.score-a.score;});for(var i=0;i<st.length;i++){ctx.fillStyle=st[i].id==='Red'?'#ff4444':'#4488ff';ctx.fillRect(w/2-100,h/2-30+i*40,200*(st[i].score/50),25);ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText(st[i].id+': '+st[i].score,w/2-90,h/2-12+i*40);}}},
+
+{id:'FeoAkaiky',name:'FeoAkaiky',cat:'D',desc:'Proximity audio volume',
+usage:'var vol = R.FeoAkaiky.volumeForDistance(lx,ly,sx,sy,500,50);\nR.FeoAkaiky.playAt("explosion",lx,ly,sx,sy,{volume:0.8});',
+demo:function(ctx,w,h,t){var lx=w/2,ly=h/2;var sx=w/2+Math.sin(t)*150,sy=h/2+Math.cos(t*0.7)*100;var d=Math.hypot(sx-lx,sy-ly);var vol=d<=50?1:d>=200?0:1-(d-50)/150;ctx.beginPath();ctx.arc(sx,sy,200,0,Math.PI*2);ctx.strokeStyle='#ff444433';ctx.stroke();ctx.beginPath();ctx.arc(sx,sy,50,0,Math.PI*2);ctx.strokeStyle='#ff444466';ctx.stroke();ctx.beginPath();ctx.arc(sx,sy,8+vol*15,0,Math.PI*2);ctx.fillStyle='rgba(255,68,68,'+vol+')';ctx.fill();ctx.fillStyle='#00ff88';ctx.fillRect(lx-5,ly-5,10,10);ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText('Volume: '+(vol*100).toFixed(0)+'%',10,h-10);}},
+
+{id:'VonoVono',name:'VonoVono',cat:'E',desc:'Screen juice pack',
+usage:'R.VonoVono.hitstop(game, 60);\nR.VonoVono.flash(scene, 0xFFFFFFFF, 100);\nR.VonoVono.impact(game, scene, 8, 150, 50);',
+demo:function(ctx,w,h,t){var shake=Math.sin(t*20)*Math.max(0,5-t*3);ctx.save();ctx.translate(shake,shake*0.7);ctx.fillStyle='#00ff88';ctx.fillRect(w/2-20,h/2-20,40,40);ctx.restore();var flashAlpha=Math.max(0,1-t*2);if(flashAlpha>0){ctx.fillStyle='rgba(255,255,255,'+flashAlpha+')';ctx.fillRect(0,0,w,h);}ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText('Impact: shake + flash + hitstop',10,h-10);}},
+
+{id:'Fanoratana',name:'Fanoratana',cat:'E',desc:'Typewriter text reveal',
+usage:'var tw = new R.Fanoratana("Salama ô!", 30);\ntw.update(dt);\nconsole.log(tw.visible);\nif (tw.done) showNextDialog();\ntw.skip();',
+demo:function(ctx,w,h,t){var fullText='Salama ô! Tongasoa eto amin\'ny RAKITRAKATRA V4.2.1!';var charsVisible=Math.min(fullText.length,Math.floor(t*25)%60);var visible=fullText.slice(0,charsVisible);ctx.fillStyle='#000a';ctx.fillRect(w/2-220,h/2-30,440,60);ctx.fillStyle='#00ff88';ctx.font='14px monospace';ctx.textAlign='center';ctx.fillText(visible+(Math.sin(t*5)>0?'_':''),w/2,h/2+5);ctx.textAlign='left';}},
+
+{id:'Vovoka',name:'Vovoka',cat:'E',desc:'Particle system',
+usage:'var particles = new R.Vovoka(5000);\nparticles.emit(x, y, {\n  count: 20, speedMin: 50, speedMax: 200,\n  lifeMin: 0.5, lifeMax: 1.5, sizeStart: 8\n});\nparticles.update(dt);\nparticles.render(renderer);',
+demo:function(ctx,w,h,t){for(var i=0;i<30;i++){var age=(t*2+i*0.1)%1;var angle=i*0.5+t;var speed=50+i*3;var px=w/2+Math.cos(angle)*speed*age;var py=h/2+Math.sin(angle)*speed*age+age*age*100;var size=8*(1-age);var alpha=1-age;ctx.fillStyle='rgba(255,255,68,'+alpha+')';ctx.fillRect(px-size/2,py-size/2,size,size);}}},
+
+{id:'Toetrandro',name:'Toetrandro',cat:'E',desc:'Weather rain/snow/storm',
+usage:'var weather = new R.Toetrandro(800, 600);\nweather.setMode("rain", 1.0);\nweather.update(dt);\nweather.render(renderer);',
+demo:function(ctx,w,h,t){var modes=['rain','snow','storm'];var mode=modes[Math.floor(t/4)%3];ctx.fillStyle='#111';ctx.fillRect(0,0,w,h);var count=mode==='snow'?60:120;for(var i=0;i<count;i++){var seed=i*137.5;if(mode==='snow'){var px=(seed*7+t*20)%w,py=(seed*13+t*40)%h;ctx.fillStyle='rgba(255,255,255,0.7)';ctx.fillRect(px,py,3,3);}else{var px=(seed*7+t*10)%w,py=(seed*13+t*300)%h;ctx.strokeStyle='rgba(150,180,255,0.5)';ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px-2,py+12);ctx.stroke();}}if(mode==='storm'&&Math.sin(t*10)>0.95){ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillRect(0,0,w,h);}ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText('Mode: '+mode,10,h-10);}},
+
+{id:'SarintanyMafana',name:'SarintanyMafana',cat:'E',desc:'Analytics heatmap',
+usage:'var heat = new R.SarintanyMafana(800, 600, 32);\nheat.record(player.x, player.y);\nvar val = heat.valueAt(x, y);\nvar max = heat.max();',
+demo:function(ctx,w,h,t){var cs=16;var cols=Math.ceil(w/cs),rows=Math.ceil(h/cs);var grid=new Uint32Array(cols*rows);for(var i=0;i<200;i++){var hx=Math.floor((w/2+Math.sin(i*0.3)*100+Math.random()*40)/cs);var hy=Math.floor((h/2+Math.cos(i*0.5)*80+Math.random()*40)/cs);if(hx>=0&&hx<cols&&hy>=0&&hy<rows)grid[hy*cols+hx]++;}var max=1;for(var i=0;i<grid.length;i++)if(grid[i]>max)max=grid[i];for(var y=0;y<rows;y++)for(var x=0;x<cols;x++){var v=grid[y*cols+x];if(v>0){var intensity=v/max;ctx.fillStyle='rgba(255,'+Math.floor(255*(1-intensity))+',0,'+(intensity*0.8)+')';ctx.fillRect(x*cs,y*cs,cs,cs);}}}},
+
+{id:'MpitarikaAI',name:'MpitarikaAI',cat:'E',desc:'AI Director stress system',
+usage:'var director = new R.MpitarikaAI({maxStress:100});\ndirector.onSpawnRequest = function(stress) { spawnEnemies(stress); };\ndirector.addStress(20);\ndirector.update(dt);',
+demo:function(ctx,w,h,t){var stress=50+Math.sin(t*0.5)*40;var pct=stress/100;ctx.fillStyle='#222';ctx.fillRect(w/2-100,h/2-15,200,30);ctx.fillStyle=pct>0.7?'#ff4444':pct>0.3?'#ffff44':'#44ff44';ctx.fillRect(w/2-100,h/2-15,200*pct,30);ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.textAlign='center';ctx.fillText('Stress: '+stress.toFixed(0)+'%',w/2,h/2+5);ctx.fillText(pct<0.3?'⚠️ SPAWN REQUEST':'😌 Calm',w/2,h/2+35);ctx.textAlign='left';}}
 ];
 
 // ============================================================
 // APP LOGIC
 // ============================================================
-let currentPlugin = null;
-let demoAnimId = null;
-let demoStartTime = 0;
-let activeTab = 'usage';
+var currentPlugin = null;
+var demoAnimId = null;
+var demoStartTime = 0;
+var activeTab = 'usage';
 
-// Build sidebar
-function buildSidebar(filter = '') {
-    const list = document.getElementById('pluginList');
+function buildSidebar(filter) {
+    var list = document.getElementById('pluginList');
     list.innerHTML = '';
-    const f = filter.toLowerCase();
-    PLUGINS.forEach(p => {
-        if (f && !p.name.toLowerCase().includes(f) && !p.desc.toLowerCase().includes(f) && !p.cat.toLowerCase().includes(f)) return;
-        const li = document.createElement('li');
-        li.className = 'plugin-item' + (currentPlugin && currentPlugin.id === p.id ? ' active' : '');
-        const catClass = p.cat === 'core' ? 'cat-core' : `cat-${p.cat}`;
-        li.innerHTML = `<span>${p.name}</span><span class="cat-tag ${catClass}">${p.cat}</span>`;
-        li.onclick = () => selectPlugin(p);
+    var f = (filter || '').toLowerCase();
+    for (var p = 0; p < PLUGINS.length; p++) {
+        var pl = PLUGINS[p];
+        if (f && pl.name.toLowerCase().indexOf(f) === -1 && pl.desc.toLowerCase().indexOf(f) === -1 && pl.cat.toLowerCase().indexOf(f) === -1) continue;
+        var li = document.createElement('li');
+        li.className = 'pi' + (currentPlugin && currentPlugin.id === pl.id ? ' active' : '');
+        var catClass = pl.cat === 'core' ? 'cat-core' : 'cat-' + pl.cat;
+        li.innerHTML = '<span>' + pl.name + '</span><span class="cat-tag ' + catClass + '">' + pl.cat + '</span>';
+        li.setAttribute('data-idx', p);
+        li.onclick = function() { selectPlugin(PLUGINS[parseInt(this.getAttribute('data-idx'))]); };
         list.appendChild(li);
-    });
+    }
 }
 
-// Select plugin
 function selectPlugin(plugin) {
     currentPlugin = plugin;
     buildSidebar(document.getElementById('searchInput').value);
@@ -630,91 +242,83 @@ function selectPlugin(plugin) {
     startDemo();
 }
 
-// Update code display
 function updateCodeDisplay() {
     if (!currentPlugin) return;
-    const el = document.getElementById('codeDisplay');
+    var el = document.getElementById('codeDisplay');
     if (activeTab === 'usage') {
-        el.innerHTML = highlightCode(`// ${currentPlugin.name} — ${currentPlugin.desc}\n\n${currentPlugin.usage}`);
-    } else if (activeTab === 'source') {
-        el.innerHTML = highlightCode(`// Source: R.${currentPlugin.id}\n// Jereo ao amin'ny rakitrakatra.js\n// Line ~${getApproxLine(currentPlugin.id)}`);
-    } else if (activeTab === 'api') {
-        el.innerHTML = highlightCode(getApiRef(currentPlugin));
+        el.innerHTML = highlightCode('// ' + currentPlugin.name + ' — ' + currentPlugin.desc + '\n\n' + currentPlugin.usage);
+    } else {
+        el.innerHTML = highlightCode('// API: R.' + currentPlugin.id + '\n// Category: ' + currentPlugin.cat + '\n// Description: ' + currentPlugin.desc + '\n\n// See usage tab for examples.\n// All APIs accessible via R. namespace');
     }
 }
 
-function getApiRef(p) {
-    return `// API: R.${p.id}\n// Category: ${p.cat}\n// Description: ${p.desc}\n\n// See usage tab for examples.\n// All APIs accessible via R. namespace\n// Example: new R.${p.id}(...)`;
-}
-
-function getApproxLine(id) {
-    const map = {Vektora2:80,Efajoro:180,Boribory:210,Lamina2D:140,Z:30,Vondrona:300,SakanToerana:420,Mpampiseho:500,Kamera:460,Fanindry:550,FitaovanaVoa:1200,FitahirizanaBaiko:1230,Fiadiana:1250,AndroAlina:1280,BokotraVirtoaly:1300,FaribolanaMihena:1320,EndrikaBala:1340,Fisintonana:1360,IsaMitohy:1390,TantaraFandresena:1410,KarazanTany:1440,DrafitraSimba:1460,Anjara:1520,Lalana:700,Firaketana:1560,Ekipa:1580,FeoAkaiky:1610,VonoVono:1630,Fanoratana:1660,Vovoka:650,Toetrandro:680,SarintanyMafana:1720,MpitarikaAI:1740};
-    return map[id] || '???';
-}
-
-// Simple syntax highlighting
 function highlightCode(code) {
     return code
-        .replace(/\/\/.*$/gm, m => `<span class="cmt">${m}</span>`)
-        .replace(/\b(const|let|var|new|return|if|else|for|while|function|class|this|true|false|null|undefined)\b/g, '<span class="kw">$1</span>')
-        .replace(/\b(R\.\w+|\w+)\(/g, '<span class="fn">$1</span>(')
-        .replace(/'[^']*'/g, m => `<span class="str">${m}</span>`)
+        .replace(/\/\/.*$/gm, function(m) { return '<span class="cmt">' + m + '</span>'; })
+        .replace(/\b(var|new|return|if|else|for|while|function|this|true|false|null)\b/g, '<span class="kw">$1</span>')
+        .replace(/\b(R\.\w+)\b/g, '<span class="fn">$1</span>')
+        .replace(/'[^']*'/g, function(m) { return '<span class="str">' + m + '</span>'; })
         .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
 }
 
-// Start demo animation
 function startDemo() {
     if (demoAnimId) cancelAnimationFrame(demoAnimId);
-    const canvas = document.getElementById('demoCanvas');
-    const ctx = canvas.getContext('2d');
+    var canvas = document.getElementById('demoCanvas');
+    var ctx = canvas.getContext('2d');
     demoStartTime = performance.now();
-    
-    function loop() {
-        const t = (performance.now() - demoStartTime) / 1000;
+    var lastFrame = demoStartTime;
+    var frameCount = 0;
+
+    function loop(now) {
+        frameCount++;
+        var t = (now - demoStartTime) / 1000;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#0a0a0f';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
+
         if (currentPlugin && currentPlugin.demo) {
             try {
-                currentPlugin.demo(ctx, canvas.width, canvas.height, t);
+                currentPlugin.demo.call({}, ctx, canvas.width, canvas.height, t);
             } catch(e) {
                 ctx.fillStyle = '#ff4444';
                 ctx.font = '14px monospace';
                 ctx.fillText('Error: ' + e.message, 20, 40);
             }
         }
-        
-        // FPS counter
-        document.getElementById('demoOverlay').textContent = `FPS: ${Math.round(1000/(performance.now()-demoStartTime)*t)||'--'} | t=${t.toFixed(1)}s`;
-        
+
+        if (frameCount % 30 === 0) {
+            var fps = Math.round(1000 / ((now - lastFrame) / 30));
+            document.getElementById('demoOverlay').textContent = 'FPS: ' + fps + ' | t=' + t.toFixed(1) + 's';
+            lastFrame = now;
+            frameCount = 0;
+        }
+
         demoAnimId = requestAnimationFrame(loop);
     }
-    loop();
+    loop(performance.now());
 }
 
 // Tab switching
-document.querySelectorAll('.code-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        activeTab = tab.dataset.tab;
+var tabs = document.querySelectorAll('.code-tab');
+for (var i = 0; i < tabs.length; i++) {
+    tabs[i].onclick = function() {
+        for (var j = 0; j < tabs.length; j++) tabs[j].className = 'code-tab';
+        this.className = 'code-tab active';
+        activeTab = this.getAttribute('data-tab');
         updateCodeDisplay();
-    });
-});
+    };
+}
 
 // Search
-document.getElementById('searchInput').addEventListener('input', (e) => {
-    buildSidebar(e.target.value);
-});
+document.getElementById('searchInput').oninput = function() {
+    buildSidebar(this.value);
+};
 
 // Init
 buildSidebar();
 selectPlugin(PLUGINS[0]);
 
-console.log('%c⚡ RAKITRAKATRA V4.2.1 Plugin Explorer Loaded', 'color:#00ff88;font-size:14px;font-weight:bold');
-console.log(`%c${PLUGINS.length} plugins registered`, 'color:#00ffff');
-</script>
 
+</script>
 </body>
 </html>
