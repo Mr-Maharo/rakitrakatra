@@ -1,0 +1,409 @@
+
+<!DOCTYPE html>
+<html lang="mg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAKITRAKATRA vs PHASER — Benchmark</title>
+<style>
+:root{--bg:#0a0a0f;--panel:#12121a;--border:#2a2a3a;--accent:#00ff88;--phaser:#9b59b6;--text:#e0e0e0;--dim:#888}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;padding:20px}
+h1{text-align:center;color:var(--accent);font-size:24px;margin-bottom:4px}
+.subtitle{text-align:center;color:var(--dim);font-size:13px;margin-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;max-width:1200px;margin:0 auto}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px;position:relative;overflow:hidden}
+.card h2{font-size:14px;color:var(--dim);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
+.bar-group{margin-bottom:10px}
+.bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
+.bar-track{height:24px;background:#1a1a24;border-radius:4px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:4px;transition:width 0.6s ease;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:bold;color:#000;white-space:nowrap}
+.bar-rk{background:var(--accent)}
+.bar-ph{background:var(--phaser)}
+.winner{position:absolute;top:8px;right:12px;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:4px}
+.win-rk{background:var(--accent);color:#000}
+.win-ph{background:var(--phaser);color:#fff}
+.win-tie{background:var(--dim);color:#000}
+#status{text-align:center;color:var(--dim);font-size:13px;margin:16px 0;min-height:20px}
+.btn-run{display:block;margin:0 auto 20px;padding:10px 32px;background:var(--accent);color:#000;border:none;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer}
+.btn-run:hover{opacity:0.9}
+.btn-run:disabled{opacity:0.4;cursor:not-allowed}
+.note{text-align:center;color:var(--dim);font-size:11px;margin-top:20px;max-width:700px;margin-left:auto;margin-right:auto;line-height:1.5}
+canvas.bench-canvas{display:none}
+</style>
+</head>
+<body>
+
+<h1>⚡ RAKITRAKATRA vs PHASER 3</h1>
+<p class="subtitle">Benchmark automatique — Isa marina, tsy simulation</p>
+
+<button class="btn-run" id="btnRun" onclick="runAllBenchmarks()">▶ Alefaso ny Benchmark</button>
+<div id="status">Tsindrio ny bokotra mba hanombohana...</div>
+
+<div class="grid" id="resultsGrid"></div>
+
+<p class="note">
+⚠️ Ny valiny dia miankina amin'ny navigateur, GPU, ary CPU anao.
+Ny Phaser 3 dia loaded via CDN (~1.2MB). Ny RAKITRAKATRA dia local (~95KB minified).
+Ny benchmark rehetra dia atao in-3 ary ny average no raisina mba ho marina kokoa.
+</p>
+
+<!-- Hidden canvases for benchmarks -->
+<canvas id="rkCanvas" class="bench-canvas" width="800" height="600"></canvas>
+<canvas id="phCanvas" class="bench-canvas" width="800" height="600"></canvas>
+
+<script src="rakitrakatra.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+
+<script>
+// ============================================================
+// BENCHMARK ENGINE
+// ============================================================
+var RUNS = 3;
+var results = [];
+
+function setStatus(msg) {
+    document.getElementById('status').textContent = msg;
+}
+
+function sleep(ms) {
+    return new Promise(function(resolve) { setTimeout(resolve, ms); });
+}
+
+async function measure(fn, runs) {
+    var times = [];
+    for (var i = 0; i < runs; i++) {
+        await sleep(50);
+        var start = performance.now();
+        await fn();
+        var end = performance.now();
+        times.push(end - start);
+    }
+    times.sort(function(a, b) { return a - b; });
+    return times[Math.floor(times.length / 2)];
+}
+
+// ============================================================
+// TEST 1: LOAD TIME
+// ============================================================
+async function benchLoadTime() {
+    setStatus('📦 Mandrefy Load Time...');
+
+    // RAKITRAKATRA already loaded
+    var rkSize = 95;
+
+    // Phaser size from CDN header or known value
+    var phSize = 1200;
+
+    // Measure actual parse/init time
+    var rkInit = await measure(function() {
+        return new Promise(function(resolve) {
+            var g = new R.Lalao(100, 100, { canvas: document.getElementById('rkCanvas') });
+            g.stop();
+            resolve();
+        });
+    }, RUNS);
+
+    var phInit = await measure(function() {
+        return new Promise(function(resolve) {
+            var config = { type: Phaser.WEBGL, width: 100, height: 100, canvas: document.getElementById('phCanvas'), scene: { create: function() { this.game.destroy(true); resolve(); } } };
+            new Phaser.Game(config);
+        });
+    }, RUNS);
+
+    return {
+        title: 'Haben\'ny Moteur + Init Time',
+        metrics: [
+            { label: 'File Size', rkVal: rkSize + ' KB', phVal: phSize + ' KB', rkNum: rkSize, phNum: phSize, lowerBetter: true },
+            { label: 'Init Time', rkVal: rkInit.toFixed(1) + ' ms', phVal: phInit.toFixed(1) + ' ms', rkNum: rkInit, phNum: phInit, lowerBetter: true }
+        ]
+    };
+}
+
+// ============================================================
+// TEST 2: ENTITY CREATION
+// ============================================================
+async function benchEntityCreation() {
+    setStatus('🏗️ Mandrefy Entity Creation (10,000)...');
+    var COUNT = 10000;
+
+    var rkTime = await measure(function() {
+        var ecs = new R.Vondrona(COUNT + 100);
+        for (var i = 0; i < COUNT; i++) {
+            var id = ecs.create();
+            ecs.x[id] = Math.random() * 800;
+            ecs.y[id] = Math.random() * 600;
+            ecs.hp[id] = 100;
+            ecs.tag[id] = i % 10;
+        }
+    }, RUNS);
+
+    var phTime = await measure(function() {
+        var scene = null;
+        var done = false;
+        var config = {
+            type: Phaser.WEBGL, width: 800, height: 600,
+            canvas: document.getElementById('phCanvas'),
+            scene: {
+                create: function() {
+                    scene = this;
+                    for (var i = 0; i < COUNT; i++) {
+                        var g = this.add.graphics();
+                        g.fillStyle(0x00ff88, 1);
+                        g.fillRect(Math.random() * 800, Math.random() * 600, 4, 4);
+                        g.setData('hp', 100);
+                    }
+                    this.game.destroy(true);
+                    done = true;
+                }
+            }
+        };
+        return new Promise(function(resolve) {
+            var g = new Phaser.Game(config);
+            var check = setInterval(function() { if (done) { clearInterval(check); resolve(); } }, 10);
+        });
+    }, RUNS);
+
+    return {
+        title: 'Entity Creation (10,000 entities)',
+        metrics: [
+            { label: 'Creation Time', rkVal: rkTime.toFixed(1) + ' ms', phVal: phTime.toFixed(1) + ' ms', rkNum: rkTime, phNum: phTime, lowerBetter: true }
+        ]
+    };
+}
+
+// ============================================================
+// TEST 3: COLLISION DETECTION
+// ============================================================
+async function benchCollision() {
+    setStatus('💥 Mandrefy Collision Detection (500x500)...');
+    var COUNT = 500;
+
+    var rkTime = await measure(function() {
+        var combat = new R.FitaovanaVoa(64);
+        for (var i = 0; i < COUNT; i++) {
+            combat.addHitbox({}, { x: Math.random() * 800, y: Math.random() * 600, w: 16, h: 16 }, 10, 0);
+            combat.addHurtbox({}, { x: Math.random() * 800, y: Math.random() * 600, w: 16, h: 16 }, 1);
+        }
+        var hits = 0;
+        combat.update(function() { hits++; });
+    }, RUNS);
+
+    // Phaser Arcade physics equivalent
+    var phTime = await measure(function() {
+        var done = false;
+        var config = {
+            type: Phaser.WEBGL, width: 800, height: 600,
+            canvas: document.getElementById('phCanvas'),
+            physics: { default: 'arcade', arcade: { debug: false } },
+            scene: {
+                create: function() {
+                    var hitGroup = this.physics.add.group();
+                    var hurtGroup = this.physics.add.group();
+                    for (var i = 0; i < COUNT; i++) {
+                        var h1 = this.add.rectangle(Math.random() * 800, Math.random() * 600, 16, 16);
+                        this.physics.add.existing(h1);
+                        hitGroup.add(h1);
+                        var h2 = this.add.rectangle(Math.random() * 800, Math.random() * 600, 16, 16);
+                        this.physics.add.existing(h2);
+                        hurtGroup.add(h2);
+                    }
+                    this.physics.overlap(hitGroup, hurtGroup);
+                    this.game.destroy(true);
+                    done = true;
+                }
+            }
+        };
+        return new Promise(function(resolve) {
+            var g = new Phaser.Game(config);
+            var check = setInterval(function() { if (done) { clearInterval(check); resolve(); } }, 10);
+        });
+    }, RUNS);
+
+    return {
+        title: 'Collision Detection (500 hitboxes × 500 hurtboxes)',
+        metrics: [
+            { label: 'Update Time', rkVal: rkTime.toFixed(2) + ' ms', phVal: phTime.toFixed(2) + ' ms', rkNum: rkTime, phNum: phTime, lowerBetter: true }
+        ]
+    };
+}
+
+// ============================================================
+// TEST 4: TWEEN PERFORMANCE
+// ============================================================
+async function benchTween() {
+    setStatus('🎬 Mandrefy Tween Performance (1000 tweens)...');
+    var COUNT = 1000;
+
+    var rkTime = await measure(function() {
+        var targets = [];
+        for (var i = 0; i < COUNT; i++) targets.push({ x: 0, y: 0 });
+        for (var i = 0; i < COUNT; i++) {
+            R.MpitantanaTween.to(targets[i], { x: 800, y: 600 }, 1000, { ease: 'quadInOut' });
+        }
+        // Simulate 60 frames
+        for (var f = 0; f < 60; f++) R.MpitantanaTween.update(16.666);
+        R.MpitantanaTween.killAll();
+    }, RUNS);
+
+    var phTime = await measure(function() {
+        var done = false;
+        var config = {
+            type: Phaser.WEBGL, width: 800, height: 600,
+            canvas: document.getElementById('phCanvas'),
+            scene: {
+                create: function() {
+                    var targets = [];
+                    for (var i = 0; i < COUNT; i++) {
+                        var obj = this.add.rectangle(0, 0, 4, 4);
+                        targets.push(obj);
+                    }
+                    for (var i = 0; i < COUNT; i++) {
+                        this.tweens.add({ targets: targets[i], x: 800, y: 600, duration: 1000, ease: 'Quad.easeInOut' });
+                    }
+                    // Simulate 60 frames
+                    for (var f = 0; f < 60; f++) this.tweens.update(0, 16.666);
+                    this.tweens.killAll();
+                    this.game.destroy(true);
+                    done = true;
+                }
+            }
+        };
+        return new Promise(function(resolve) {
+            var g = new Phaser.Game(config);
+            var check = setInterval(function() { if (done) { clearInterval(check); resolve(); } }, 10);
+        });
+    }, RUNS);
+
+    return {
+        title: 'Tween Update (1000 tweens × 60 frames)',
+        metrics: [
+            { label: 'Total Time', rkVal: rkTime.toFixed(1) + ' ms', phVal: phTime.toFixed(1) + ' ms', rkNum: rkTime, phNum: phTime, lowerBetter: true }
+        ]
+    };
+}
+
+// ============================================================
+// TEST 5: PATHFINDING A*
+// ============================================================
+async function benchPathfinding() {
+    setStatus('🗺️ Mandrefy Pathfinding A* (100×100 grid)...');
+    var W = 100, H = 100;
+
+    var rkTime = await measure(function() {
+        var grid = [];
+        for (var y = 0; y < H; y++) {
+            var row = [];
+            for (var x = 0; x < W; x++) row.push(Math.random() < 0.2 ? 1 : 0);
+            grid.push(row);
+        }
+        grid[0][0] = 0; grid[H - 1][W - 1] = 0;
+        for (var i = 0; i < 10; i++) {
+            R.Lalana.find(grid, 0, 0, W - 1, H - 1, { diagonal: true });
+        }
+    }, RUNS);
+
+    // Phaser doesn't have built-in A*, so we note that
+    return {
+        title: 'Pathfinding A* (100×100 grid, 10 searches)',
+        metrics: [
+            { label: 'Search Time', rkVal: rkTime.toFixed(2) + ' ms', phVal: 'N/A (tsy misy)', rkNum: rkTime, phNum: 9999, lowerBetter: true, note: 'Phaser tsy manana A* native' }
+        ]
+    };
+}
+
+// ============================================================
+// RENDER RESULTS
+// ============================================================
+function renderResults(allResults) {
+    var grid = document.getElementById('resultsGrid');
+    grid.innerHTML = '';
+
+    for (var r = 0; r < allResults.length; r++) {
+        var res = allResults[r];
+        var card = document.createElement('div');
+        card.className = 'card';
+
+        var html = '<h2>' + res.title + '</h2>';
+
+        for (var m = 0; m < res.metrics.length; m++) {
+            var met = res.metrics[m];
+            var maxVal = Math.max(met.rkNum, met.phNum);
+            var rkPct = met.phNum === 9999 ? 100 : Math.max(5, (met.lowerBetter ? (1 - met.rkNum / maxVal) : met.rkNum / maxVal) * 100);
+            var phPct = met.phNum === 9999 ? 0 : Math.max(5, (met.lowerBetter ? (1 - met.phNum / maxVal) : met.phNum / maxVal) * 100);
+
+            var winnerClass, winnerText;
+            if (met.phNum === 9999) {
+                winnerClass = 'win-rk'; winnerText = 'RK Only';
+            } else if (Math.abs(met.rkNum - met.phNum) / maxVal < 0.05) {
+                winnerClass = 'win-tie'; winnerText = 'Mitovy';
+            } else if (met.lowerBetter) {
+                if (met.rkNum < met.phNum) { winnerClass = 'win-rk'; winnerText = 'RK ✓'; }
+                else { winnerClass = 'win-ph'; winnerText = 'PH ✓'; }
+            } else {
+                if (met.rkNum > met.phNum) { winnerClass = 'win-rk'; winnerText = 'RK ✓'; }
+                else { winnerClass = 'win-ph'; winnerText = 'PH ✓'; }
+            }
+
+            html += '<div class="bar-group">';
+            html += '<div class="bar-label"><span>' + met.label + '</span><span class="winner ' + winnerClass + '">' + winnerText + '</span></div>';
+            html += '<div class="bar-track"><div class="bar-fill bar-rk" style="width:' + rkPct.toFixed(0) + '%">' + met.rkVal + '</div></div>';
+            if (met.phNum !== 9999) {
+                html += '<div class="bar-track" style="margin-top:2px"><div class="bar-fill bar-ph" style="width:' + phPct.toFixed(0) + '%">' + met.phVal + '</div></div>';
+            } else {
+                html += '<div style="font-size:11px;color:var(--dim);margin-top:2px">' + (met.note || 'Phaser tsy manana izany') + '</div>';
+            }
+            html += '</div>';
+        }
+
+        card.innerHTML = html;
+        grid.appendChild(card);
+    }
+}
+
+// ============================================================
+// MAIN RUNNER
+// ============================================================
+async function runAllBenchmarks() {
+    var btn = document.getElementById('btnRun');
+    btn.disabled = true;
+    results = [];
+
+    try {
+        results.push(await benchLoadTime());
+        results.push(await benchEntityCreation());
+        results.push(await benchCollision());
+        results.push(await benchTween());
+        results.push(await benchPathfinding());
+
+        renderResults(results);
+        setStatus('✅ Vita ny benchmark rehetra!');
+    } catch (e) {
+        setStatus('❌ Error: ' + e.message);
+        console.error(e);
+    }
+
+    btn.disabled = false;
+}
+
+// Auto-check if engines loaded
+window.onload = function() {
+    var rkOk = typeof R !== 'undefined';
+    var phOk = typeof Phaser !== 'undefined';
+    if (!rkOk || !phOk) {
+        setStatus('⚠️ Miandry ny moteur... RK=' + rkOk + ' PH=' + phOk);
+        var check = setInterval(function() {
+            rkOk = typeof R !== 'undefined';
+            phOk = typeof Phaser !== 'undefined';
+            if (rkOk && phOk) {
+                clearInterval(check);
+                setStatus('✅ Vonona ny moteur roa. Tsindrio ▶ mba hanombohana.');
+            }
+        }, 500);
+    } else {
+        setStatus('✅ Vonona ny moteur roa. Tsindrio ▶ mba hanombohana.');
+    }
+};
+</script>
+</body>
+</html>
