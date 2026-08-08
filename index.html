@@ -222,7 +222,7 @@ const PLUGINS = [
       demo: (ctx, w, h, t) => {
           for(let i=0;i<200;i++){
               const x=(i*37+t*50)%w, y=(i*53+Math.sin(t+i)*30)%h;
-              ctx.fillStyle=\`hsla(\${i*3},70%,60%,0.7)\`;
+              ctx.fillStyle = 'hsl(' + (i * 18) + ', 80%, 60%)';
               ctx.fillRect(x,y,6,6);
           }
       }
