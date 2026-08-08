@@ -1467,7 +1467,20 @@ class DrafitraSimba {
     isBroken(cx, cy) { if(cx<0||cy<0||cx>=this.cols||cy>=this.rows)return true;return this.hp[this._idx(cx,cy)]===0; }
     repair(cx, cy) { const i=this._idx(cx,cy);if(i>=0&&i<this.hp.length)this.hp[i]=this.maxHp; }
 }
-const Radar = { scan(x, y, range, entities) { const out=[];for(const e of entities){const d=Z.dist(x,y,e.x,e.y);if(d<=range)out.push({entity:e,dist:d,angle:Math.atan2(e.y-y,e.x-x)};}out.sort((a,b)=>a.dist-b.dist);return out; } };
+const Radar = {
+    scan(x, y, range, entities) {
+        const out = [];
+        for (const e of entities) {
+            const d = Z.dist(x, y, e.x, e.y);
+            if (d <= range) {
+                out.push({ entity: e, dist: d, angle: Math.atan2(e.y - y, e.x - x) });
+            }
+        }
+        out.sort((a, b) => a.dist - b.dist);
+        return out;
+    }
+};
+    
 const FotsakaTsyMifarana = { layerOffset(cameraX, cameraY, factor, wrapWidth = 0) { let x=cameraX*factor,y=cameraY*factor;if(wrapWidth>0)x=((x%wrapWidth)+wrapWidth)%wrapWidth;return{x,y}; } };
 class MpamorontsatsaVahiny {
     constructor(opts) { opts=opts||{};this.total=opts.total||10;this.maxConcurrent=opts.maxConcurrent||5;this.spawnInterval=opts.spawnInterval||[0.5,1.2];this.spawned=0;this.alive=0;this.killed=0;this._timer=0; }
