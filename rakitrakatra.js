@@ -1,23 +1,4 @@
-/**
- * ═══════════════════════════════════════════════════════════
- * RAKITRAKATRA V4.2.1 "ADY GOAVANA - PATCHED"
- * Moteur lalao 2D matihanina - WebGL 2 + Vondrona (ECS)
- * © 2026 MIT Licence
- *
- * FANAMARIHANA VIRAY (v4.2.1):
- *  - FIX: FitaovanaVoa mampiasa Spatial Hash (O(n) collision)
- *  - FIX: AndroAlina tint() phase correction (mazava @ noon)
- *  - FIX: Mpampiseho.flush() GC leak (tsy misy .slice intsony)
- *  - FIX: Tehirizo LZW binary-safe decompression
- *  - 100% TENY GASY, 2D fotsiny ihany
- *
- * Architecture:
- * - WebGL2 Renderer — batched quad rendering, texture-sorted flush
- * - Vondrona (ECS, SoA), sparse-set + free-list ID
- * - Spatial Hash Grid integrated into FitaovanaVoa
- * - 85 Systems & Plugins
- * ═══════════════════════════════════════════════════════════
- */
+
 (function(global) {
 'use strict';
 
@@ -1014,6 +995,9 @@ class Vovoka {
     }
 }
 const Fizika = {
+    // --------------------------------------------------------
+    // FIFANDRAISANA FOTOTRA (geometry tests, tsy misy hetsika)
+    // --------------------------------------------------------
     rectVsRect(ax,ay,aw,ah,bx,by,bw,bh) { return ax<bx+bw && ax+aw>bx && ay<by+bh && ay+ah>by; },
     circleVsCircle(ax,ay,ar,bx,by,br) { const dx=bx-ax,dy=by-ay; return dx*dx+dy*dy<=(ar+br)*(ar+br); },
     circleVsRect(cx,cy,cr,rx,ry,rw,rh) { const nx=Z.clamp(cx,rx,rx+rw), ny=Z.clamp(cy,ry,ry+rh); const dx=cx-nx, dy=cy-ny; return dx*dx+dy*dy<=cr*cr; },
@@ -1038,10 +1022,122 @@ const Fizika = {
     },
     _getAxes(points) { const axes=[]; for(let i=0;i<points.length;i++){const p1=points[i],p2=points[(i+1)%points.length];const nx=-(p2.y-p1.y),ny=p2.x-p1.x;const len=Math.hypot(nx,ny)||1;axes.push({x:nx/len,y:ny/len});} return axes; },
     _project(points, axis) { let min=Infinity,max=-Infinity; for(const p of points){const d=p.x*axis.x+p.y*axis.y;if(d<min)min=d;if(d>max)max=d;} return {min,max}; },
+
+    // --------------------------------------------------------
+    // RESOLUTION AABB (manisy lanja/mass ho an'ny roa tonta,
+    // tsy manosika ny isStatic===true, mizara push araka invMass)
+    // --------------------------------------------------------
     resolveAABB(a, b) {
         const overlapX=Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x), overlapY=Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y);
-        if(overlapX<overlapY){if(a.x<b.x)a.x-=overlapX;else a.x+=overlapX;a.vx=-a.vx*(a.bounce||0);return{axis:'x',overlap:overlapX};}
-        else{if(a.y<b.y)a.y-=overlapY;else a.y+=overlapY;a.vy=-a.vy*(a.bounce||0);return{axis:'y',overlap:overlapY};}
+        if (overlapX<=0 || overlapY<=0) return null;
+        const bStatic = b.isStatic===undefined ? true : !!b.isStatic;
+        const aStatic = !!a.isStatic;
+        if (aStatic && bStatic) return null;
+        const invMassA = aStatic ? 0 : 1/(a.mass||1);
+        const invMassB = bStatic ? 0 : 1/(b.mass||1);
+        const totalInv = invMassA+invMassB;
+        if (totalInv<=0) return null;
+        const bounce = Math.max(a.bounce||0, b.bounce||0);
+        if (overlapX<overlapY) {
+            const push = overlapX/totalInv; const dir = a.x+a.w/2 < b.x+b.w/2 ? -1 : 1;
+            if (!aStatic) { a.x += dir*push*invMassA; a.vx = -a.vx*bounce; }
+            if (!bStatic) { b.x -= dir*push*invMassB; b.vx = -b.vx*bounce; }
+            return {axis:'x', overlap:overlapX};
+        } else {
+            const push = overlapY/totalInv; const dir = a.y+a.h/2 < b.y+b.h/2 ? -1 : 1;
+            if (!aStatic) { a.y += dir*push*invMassA; a.vy = -a.vy*bounce; }
+            if (!bStatic) { b.y -= dir*push*invMassB; b.vy = -b.vy*bounce; }
+            return {axis:'y', overlap:overlapY};
+        }
+    },
+
+    // --------------------------------------------------------
+    // ✅ VAOVAO v4.2.2 — "PHYSICS STEP" TENA MIFAMATOTRA AMIN'NY ECS
+    // Fizika.step(V, dt, opts) dia mandalo ny Vondrona (SoA) manontolo:
+    //   1) Gravity + Semi-Implicit Euler integration (ax/ay -> vx/vy -> x/y)
+    //   2) Friction araka ny V.friction[id] isaky ny entity (damping exponentiel)
+    //   3) Broad-phase amin'ny SakanToerana (Spatial Hash, mitovy amin'ilay
+    //      efa nampiasaina tao amin'ny FitaovanaVoa) mba tsy hanao O(n²)
+    //   4) Narrow-phase AABB + impulse resolution araka ny mass/isStatic/bounce
+    //   5) onCollide(idA, idB, hit) callback rehefa misy fifandraisana
+    //
+    // opts: {
+    //   gravity: 980,           // px/s² (ataovy 0 raha top-down, tsy misy fianjerana)
+    //   maxFallSpeed: 2000,     // hafainganam-pandeha farany (terminal velocity)
+    //   cellSize: 64,           // habaky ny sela ao amin'ny SakanToerana
+    //   iterations: 1,          // fihodinana solver fanampiny (2-3 raha maro mifanindry)
+    //   bounds: {x,y,w,h},      // tsy tsy maintsy, raha misy dia manidy ny sehatra
+    //   onCollide: (idA, idB, hit) => {}
+    // }
+    // Mamerina ny grid nampiasaina (azo averina ampiasaina raha
+    // mila query manokana toy ny "iza no manodidina an'ity entity ity")
+    // --------------------------------------------------------
+    step(V, dt, opts = {}) {
+        const gravity = opts.gravity !== undefined ? opts.gravity : 980;
+        const maxFallSpeed = opts.maxFallSpeed !== undefined ? opts.maxFallSpeed : 2000;
+        const cellSize = opts.cellSize || 64;
+        const iterations = Math.max(1, opts.iterations || 1);
+        const bounds = opts.bounds || null;
+        const onCollide = opts.onCollide || null;
+
+        if (!this._grid || this._grid.cellSize !== cellSize) this._grid = new SakanToerana(cellSize);
+        const grid = this._grid;
+
+        // 1-2) Integration: gravity + acceleration -> velocity -> friction -> position
+        for (let id = 0; id < V.count; id++) {
+            if (!V.alive[id] || !V.active[id] || V.isStatic[id]) continue;
+            V.vx[id] += V.ax[id]*dt;
+            V.vy[id] += (V.ay[id]+gravity)*dt;
+            if (V.vy[id] > maxFallSpeed) V.vy[id] = maxFallSpeed;
+            else if (V.vy[id] < -maxFallSpeed) V.vy[id] = -maxFallSpeed;
+
+            const fr = V.friction[id] || 1;
+            V.vx[id] *= Math.pow(fr, dt*60);
+
+            V.x[id] += V.vx[id]*dt;
+            V.y[id] += V.vy[id]*dt;
+
+            if (bounds) {
+                if (V.x[id] < bounds.x) { V.x[id]=bounds.x; V.vx[id]=-V.vx[id]*(V.bounce[id]||0); }
+                else if (V.x[id]+V.w[id] > bounds.x+bounds.w) { V.x[id]=bounds.x+bounds.w-V.w[id]; V.vx[id]=-V.vx[id]*(V.bounce[id]||0); }
+                if (V.y[id] < bounds.y) { V.y[id]=bounds.y; V.vy[id]=-V.vy[id]*(V.bounce[id]||0); }
+                else if (V.y[id]+V.h[id] > bounds.y+bounds.h) { V.y[id]=bounds.y+bounds.h-V.h[id]; V.vy[id]=-V.vy[id]*(V.bounce[id]||0); }
+            }
+        }
+
+        // 3-4) Broad-phase (spatial hash) + narrow-phase + impulse resolution,
+        // averina in-{iterations} eny mba hampitony ny "jitter" rehefa maro
+        // ny entity mifanindry indray mihodina.
+        for (let it = 0; it < iterations; it++) {
+            grid.clear();
+            for (let id = 0; id < V.count; id++) {
+                if (!V.alive[id] || !V.active[id] || !V.isSolid[id]) continue;
+                grid.insert(id, V.x[id], V.y[id], V.w[id], V.h[id]);
+            }
+            const checked = this._pairSet || (this._pairSet = new Set());
+            checked.clear();
+            for (let id = 0; id < V.count; id++) {
+                if (!V.alive[id] || !V.active[id] || !V.isSolid[id]) continue;
+                const candidates = grid.query(V.x[id], V.y[id], V.w[id], V.h[id]);
+                for (const otherId of candidates) {
+                    if (otherId === id) continue;
+                    const key = otherId < id ? otherId*V.max+id : id*V.max+otherId;
+                    if (checked.has(key)) continue;
+                    checked.add(key);
+                    if (V.isStatic[id] && V.isStatic[otherId]) continue;
+                    if (!this.rectVsRect(V.x[id],V.y[id],V.w[id],V.h[id], V.x[otherId],V.y[otherId],V.w[otherId],V.h[otherId])) continue;
+                    const a = {x:V.x[id],y:V.y[id],w:V.w[id],h:V.h[id],vx:V.vx[id],vy:V.vy[id],mass:V.mass[id],bounce:V.bounce[id],isStatic:!!V.isStatic[id]};
+                    const b = {x:V.x[otherId],y:V.y[otherId],w:V.w[otherId],h:V.h[otherId],vx:V.vx[otherId],vy:V.vy[otherId],mass:V.mass[otherId],bounce:V.bounce[otherId],isStatic:!!V.isStatic[otherId]};
+                    const hit = this.resolveAABB(a, b);
+                    if (hit) {
+                        V.x[id]=a.x; V.y[id]=a.y; V.vx[id]=a.vx; V.vy[id]=a.vy;
+                        V.x[otherId]=b.x; V.y[otherId]=b.y; V.vx[otherId]=b.vx; V.vy[otherId]=b.vy;
+                        if (onCollide) onCollide(id, otherId, hit);
+                    }
+                }
+            }
+        }
+        return grid;
     }
 };
 class Drafitra {
@@ -1476,7 +1572,7 @@ class DrafitraSimba {
     isBroken(cx, cy) { if(cx<0||cy<0||cx>=this.cols||cy>=this.rows)return true;return this.hp[this._idx(cx,cy)]===0; }
     repair(cx, cy) { const i=this._idx(cx,cy);if(i>=0&&i<this.hp.length)this.hp[i]=this.maxHp; }
 }
-const Radar = { scan(x, y, range, entities) { const out=[];for(const e of entities){const d=Z.dist(x,y,e.x,e.y);if(d<=range)out.push({entity:e,dist:d,angle:Math.atan2(e.y-y,e.x-x)};}out.sort((a,b)=>a.dist-b.dist);return out; } };
+const Radar = { scan(x, y, range, entities) { const out=[];for(const e of entities){const d=Z.dist(x,y,e.x,e.y);if(d<=range)out.push({entity:e,dist:d,angle:Math.atan2(e.y-y,e.x-x)});}out.sort((a,b)=>a.dist-b.dist);return out; } };
 const FotsakaTsyMifarana = { layerOffset(cameraX, cameraY, factor, wrapWidth = 0) { let x=cameraX*factor,y=cameraY*factor;if(wrapWidth>0)x=((x%wrapWidth)+wrapWidth)%wrapWidth;return{x,y}; } };
 class MpamorontsatsaVahiny {
     constructor(opts) { opts=opts||{};this.total=opts.total||10;this.maxConcurrent=opts.maxConcurrent||5;this.spawnInterval=opts.spawnInterval||[0.5,1.2];this.spawned=0;this.alive=0;this.killed=0;this._timer=0; }
@@ -1583,7 +1679,7 @@ class FanambaraKely extends Hetsika {
 // EXPORT
 // ============================================================
 const RakitrakatraV4 = {
-    KINOVANA: '4.2.1', ANARANMIAFINA: 'Ady Goavana - Patched',
+    KINOVANA: '4.2.2', ANARANMIAFINA: 'Ady Goavana - Patched',
     Lalao, Sehatra, Vektora2, Vektora3, Lamina2D, Efajoro, Boribory, Lafomaro, Z,
     Vondrona, Mpampiseho, Kamera, Famataranandro, Mpampiditra, Feo, Fanindry, SakanToerana, HazoEfatra,
     Sarimihetsika, Vovoka, Toetrandro, MpitantanaTween, Mpanamora, TsipikaFotoana,
