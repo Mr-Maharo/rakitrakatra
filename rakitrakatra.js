@@ -421,9 +421,6 @@ const Mpanamora = (() => {
     return E;
 })();
 
-// ============================================================
-// 12. Vondrona - ECS (SoA)
-// ============================================================
 class Vondrona {
     constructor(maxEntities = 100000) {
         this.max = maxEntities; this.count = 0; this._nextId = 0; this._freeList = [];
@@ -440,9 +437,9 @@ class Vondrona {
         this.flipX = new Uint8Array(maxEntities); this.flipY = new Uint8Array(maxEntities);
         this.mass = new Float32Array(maxEntities); this.bounce = new Float32Array(maxEntities);
         this.friction = new Float32Array(maxEntities); this.isStatic = new Uint8Array(maxEntities); this.isSolid = new Uint8Array(maxEntities);
-        this.shape = new Uint8Array(maxEntities); // 0=Efajoro(AABB), 1=Boribory(circle, radius=w/2)
-        this.physicsGroup = new Uint8Array(maxEntities); // ✅ VAOVAO v4.3.1: 0-255, ho an'ny Fizika.Group filtering matrix
-        this.ccd = new Uint8Array(maxEntities); // ✅ VAOVAO v4.3.1: 1=CCD active (raycast anti-tunneling, ho an'ny bala haingana)
+        this.shape = new Uint8Array(maxEntities);
+        this.physicsGroup = new Uint8Array(maxEntities);
+        this.ccd = new Uint8Array(maxEntities);
         this.hp = new Float32Array(maxEntities); this.maxHp = new Float32Array(maxEntities);
         this.damage = new Float32Array(maxEntities); this.team = new Uint8Array(maxEntities); this.tag = new Uint16Array(maxEntities);
         this.aiState = new Uint8Array(maxEntities); this.aiTimer = new Float32Array(maxEntities); this.targetId = new Int32Array(maxEntities);
@@ -450,12 +447,47 @@ class Vondrona {
         this.animTime = new Float32Array(maxEntities); this.animSpeed = new Float32Array(maxEntities);
         this.lifetime = new Float32Array(maxEntities); this.age = new Float32Array(maxEntities);
         this._tagIndex = new Map(); this._tagDirty = true;
+        this.endrika = new Uint8Array(maxEntities);
+        this.lanja = new Float32Array(maxEntities);
+        this.elasticite = new Float32Array(maxEntities);
+        this.frictionCoeff = new Float32Array(maxEntities);
+        this.hafainganamFihodinana = new Float32Array(maxEntities);
+        this.torque = new Float32Array(maxEntities);
+        this.momentInertia = new Float32Array(maxEntities);
+        this.matory = new Uint8Array(maxEntities);
+        this.torimasoTimer = new Float32Array(maxEntities);
+        this.kinematika = new Uint8Array(maxEntities);
+        this.sensora = new Uint8Array(maxEntities);
+        this.tsyAfakaMihodina = new Uint8Array(maxEntities);
+        this.fihodinanaVoamarina = new Float32Array(maxEntities);
+        this.sokajyFifandonana = new Uint32Array(maxEntities);
+        this.saronTavaFifandonana = new Uint32Array(maxEntities);
+        this.marika = new Array(maxEntities).fill(null);
+        this.heryX = new Float32Array(maxEntities);
+        this.heryY = new Float32Array(maxEntities);
         this._initDefaults();
     }
     _initDefaults() {
         this.scaleX.fill(1); this.scaleY.fill(1); this.alpha.fill(1); this.color.fill(0xFFFFFFFF);
         this.mass.fill(1); this.friction.fill(0.9); this.hp.fill(1); this.maxHp.fill(1);
         this.animSpeed.fill(1); this.textureId.fill(-1); this.targetId.fill(-1);
+        this.endrika.fill(0);
+        this.lanja.fill(1);
+        this.elasticite.fill(0.2);
+        this.frictionCoeff.fill(0.5);
+        this.hafainganamFihodinana.fill(0);
+        this.torque.fill(0);
+        this.momentInertia.fill(0);
+        this.matory.fill(0);
+        this.torimasoTimer.fill(0);
+        this.kinematika.fill(0);
+        this.sensora.fill(0);
+        this.tsyAfakaMihodina.fill(0);
+        this.fihodinanaVoamarina.fill(0);
+        this.sokajyFifandonana.fill(1);
+        this.saronTavaFifandonana.fill(0xFFFFFFFF);
+        this.heryX.fill(0);
+        this.heryY.fill(0);
     }
     fillDefaults() { this._initDefaults(); }
     create() {
@@ -472,6 +504,24 @@ class Vondrona {
         this.aiState[id]=0; this.aiTimer[id]=0; this.targetId[id]=-1;
         this.animId[id]=-1; this.animFrame[id]=0; this.animTime[id]=0; this.animSpeed[id]=1;
         this.lifetime[id]=0; this.age[id]=0;
+        this.endrika[id]=0;
+        this.lanja[id]=1;
+        this.elasticite[id]=0.2;
+        this.frictionCoeff[id]=0.5;
+        this.hafainganamFihodinana[id]=0;
+        this.torque[id]=0;
+        this.momentInertia[id]=0;
+        this.matory[id]=0;
+        this.torimasoTimer[id]=0;
+        this.kinematika[id]=0;
+        this.sensora[id]=0;
+        this.tsyAfakaMihodina[id]=0;
+        this.fihodinanaVoamarina[id]=0;
+        this.sokajyFifandonana[id]=1;
+        this.saronTavaFifandonana[id]=0xFFFFFFFF;
+        this.marika[id]=null;
+        this.heryX[id]=0;
+        this.heryY[id]=0;
         this._tagDirty = true; return id;
     }
     destroy(id) {
