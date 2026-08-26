@@ -1,4 +1,62 @@
-
+/**
+ * ═══════════════════════════════════════════════════════════
+ * RAKITRAKATRA V4.3.3 "ADY GOAVANA - PATCHED"
+ * Moteur lalao 2D matihanina - WebGL 2 + Vondrona (ECS)
+ * © 2026 MIT Licence
+ *
+ * FANAMARIHANA VAOVAO (v4.3.3) — Ambaratonga 4: WORLD & TOOLING
+ *  1) TILED ADVANCED: tile animations (ts.tiles[].animation),
+ *     layer tint/opacity, object rotation/gid, GID flip flags
+ *     (H/V/D), per-tile custom properties (getTileProperties)
+ *  2) DATAMANAGER: Sehatra.data (DataManager) — set/get/has/remove
+ *     miaraka amin'ny 'changedata' sy 'changedata-<key>' events
+ *     amin'ny scene.events (toy ny Phaser DataManager)
+ *  3) CAMERA FX: camera.fadeIn()/fadeOut()/flash() level API ambony
+ *     (onComplete callback), getOverlayColor() ampiasain'ny Lalao
+ *     loop mba hanosotra overlay eo ambonin'ny efijery manontolo
+ *  4) DEBUG OVERLAY INTERACTIVE: MpitantanaFanamboarana amin'ny
+ *     tabs (Stats/Entities/Physics) tsindriana, entity inspector
+ *     (lisitra + detail fields), physics debug toggle (showColliders)
+ *  5) HMR HOOK: MpitantanaSehatra.hotReplaceScene()/hookHMR() — 
+ *     famerenana ny Scene methods amin'ny instance MISY SAHADY
+ *     (Vite/Webpack dev server), ny "state" (entities, data) voatahiry
+ *
+ * FANAMARIHANA TALOHA (v4.3.2) — Ambaratonga 3: RENDERING
+ *  - SPRITE ROTATION IN-BATCH: drawQuadRotated()/drawSpriteRotated()
+ *  - MULTI-PASS POST-FX CHAINING: usePostFX([...]) ping-pong FBO
+ *  - RENDER TEXTURE: LaminaSary (FBO+texture= texture mahazatra)
+ *  - DYNAMIC LIGHTING: MpitantanaHazavana (PointLight/SpotLight)
+ *
+ * FANAMARIHANA TALOHA (v4.3.1) — Ambaratonga 2: FIZIKA
+ *  - SAT ROTATED SHAPES: Fizika.satMTV()/resolvePolygon()
+ *  - PHYSICS GROUPS: Fizika.Group (filtering matrix)
+ *  - CCD: V.ccd[id] raycast anti-tunneling
+ *  - JOINTS: DistanceJoint, RevoluteJoint, SpringJoint
+ *
+ * FANAMARIHANA TALOHA (v4.3.0) — Ambaratonga 1: FOTOTRA
+ *  - EVENT BUS: Hetsika wildcard; R.Events + Scene.events (auto-off)
+ *  - TIMESCALE: game.timeScale mifehy ny dt rehetra
+ *  - SEED DETERMINISTIC: Kisendrasendra.global
+ *  - PLUGIN SYSTEM: register()+installGlobal()/installScene()
+ *
+ * FANAMARIHANA TALOHA (v4.2.3) — 8 sehatra:
+ *  - FIZIKA: circle-vs-circle/circle-vs-rect impulse, "slide" mode
+ *  - ANIMATION: yoyo, repeat count, repeatDelay, onFrame/onComplete
+ *  - SEHATRA: parallel scenes, sleep/wake, pause/resume, messaging
+ *  - FEO: audio sprite, volume groups malalaka
+ *  - FANINDRY: gamepad multi-pad+justPressed, swipe, pinch
+ *  - DRAFITRA: object layers, multi-tileset
+ *  - MPAMPISEHO: post-FX hook (FBO+screen-quad)
+ *  - TOOLING: debug overlay DOM (FPS graph, memory, mini-console)
+ 
+ *
+ * Architecture:
+ * - WebGL2 Renderer — batched quad rendering, texture-sorted flush
+ * - Vondrona (ECS, SoA), sparse-set + free-list ID
+ * - Spatial Hash Grid integrated into FitaovanaVoa
+ * - 85 Systems & Plugins
+ * ═══════════════════════════════════════════════════════════
+ */
 (function(global) {
 'use strict';
 
@@ -32,19 +90,19 @@ const Z = {
         const r = max - min;
         return ((((v - min) % r) + r) % r) + min;
     },
-    rand: (min, max) => Math.random() * (max - min) + min,
-    randInt: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min,
-    choice: (arr) => arr[Math.floor(Math.random() * arr.length)],
+    rand: (min, max) => Kisendrasendra.global.range(min, max),
+    randInt: (min, max) => Kisendrasendra.global.int(min, max),
+    choice: (arr) => Kisendrasendra.global.choice(arr),
     shuffle: (arr) => {
         const out = arr.slice();
         for (let i = out.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
+            const j = Kisendrasendra.global.int(0, i);
             [out[i], out[j]] = [out[j], out[i]];
         }
         return out;
     },
     uuid: () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-        const r = Math.random() * 16 | 0;
+        const r = Kisendrasendra.global.int(0, 15);
         return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     }),
     approach: (cur, target, step) => {
@@ -223,26 +281,48 @@ class Lafomaro {
 // ============================================================
 // 7-11. Hetsika, Dobo, Kisendrasendra, Tabataba, Mpanamora
 // ============================================================
+// ✅ VAOVAO v4.3.0 — Hetsika (Event Emitter) manohana WILDCARD:
+// on('player.*', fn) dia mandray ny 'player.jump', 'player.die', sns.
+// Ny listener mahazatra ('player.jump' feno) dia mbola mandeha toy ny teo aloha.
 class Hetsika {
-    constructor() { this._listeners = new Map(); }
+    constructor() { this._listeners = new Map(); this._wildcards = []; /* [{pattern:RegExp, raw, fn, once}] */ }
+    _isWildcard(name) { return name.indexOf('*') !== -1; }
+    _wildcardToRegex(pattern) { const esc = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*'); return new RegExp('^'+esc+'$'); }
     on(name, fn, once = false) {
+        if (this._isWildcard(name)) { this._wildcards.push({pattern:this._wildcardToRegex(name), raw:name, fn, once}); return this; }
         if (!this._listeners.has(name)) this._listeners.set(name, []);
         this._listeners.get(name).push({ fn, once }); return this;
     }
     once(name, fn) { return this.on(name, fn, true); }
     off(name, fn) {
+        if (name === undefined) { this._listeners.clear(); this._wildcards.length = 0; return this; }
+        if (this._isWildcard(name)) {
+            if (fn) { const idx = this._wildcards.findIndex(w => w.raw===name && w.fn===fn); if (idx>=0) this._wildcards.splice(idx,1); }
+            else { for (let i=this._wildcards.length-1;i>=0;i--) if (this._wildcards[i].raw===name) this._wildcards.splice(i,1); }
+            return this;
+        }
         const list = this._listeners.get(name); if (!list) return this;
         if (fn) { const idx = list.findIndex(e => e.fn === fn); if (idx >= 0) list.splice(idx, 1); }
         else this._listeners.delete(name); return this;
     }
     emit(name, ...args) {
-        const list = this._listeners.get(name); if (!list) return this;
-        for (let i = list.length - 1; i >= 0; i--) {
-            const e = list[i]; e.fn.apply(this, args); if (e.once) list.splice(i, 1);
-        } return this;
+        const list = this._listeners.get(name);
+        if (list) for (let i = list.length - 1; i >= 0; i--) { const e = list[i]; e.fn.apply(this, args); if (e.once) list.splice(i, 1); }
+        if (this._wildcards.length) {
+            for (let i = this._wildcards.length - 1; i >= 0; i--) {
+                const w = this._wildcards[i];
+                if (w.pattern.test(name)) { w.fn.apply(this, [name, ...args]); if (w.once) this._wildcards.splice(i, 1); }
+            }
+        }
+        return this;
     }
-    removeAll() { this._listeners.clear(); return this; }
+    removeAll() { this._listeners.clear(); this._wildcards.length = 0; return this; }
 }
+// ✅ VAOVAO v4.3.0 — R.Events: EVENT BUS GLOBAL tokana ho an'ny lalao
+// manontolo (ohatra: fifandraisana Scene samihafa, achievements, sound
+// triggers tsy miankina amin'ny sehatra iray). Mitovy amin'ny "Scene.events"
+// fa io kosa dia "local" isaky ny Sehatra, ary off-ina automatique @ shutdown.
+const Events = new Hetsika();
 
 class Dobo {
     constructor(factory, reset = null, initialSize = 32) {
@@ -276,6 +356,14 @@ class Kisendrasendra {
     choice(arr) { return arr[this.int(0, arr.length - 1)]; }
     reset() { this._seed = this._orig; }
 }
+// ✅ VAOVAO v4.3.0 — INSTANCE GLOBAL SEEDED, solon'ny Math.random() any
+// amin'ny Vovoka/Kamera/Dobo/sns rehetra ao anaty engine mihitsy, mba ho
+// tena deterministic ny fandalovan-javatra (replay, multiplayer lockstep).
+// Azo atao seedGlobal(n) mba hametraka seed manokana, ary resetGlobal()
+// mba hamerina ny RNG amin'ny seed voalohany (ohatra: fiandohan'ny scene).
+Kisendrasendra.global = new Kisendrasendra(12345);
+Kisendrasendra.seedGlobal = function(seed) { Kisendrasendra.global = new Kisendrasendra(seed); };
+Kisendrasendra.resetGlobal = function() { Kisendrasendra.global.reset(); };
 
 const Tabataba = {
     _grad: [[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]],
@@ -352,6 +440,9 @@ class Vondrona {
         this.flipX = new Uint8Array(maxEntities); this.flipY = new Uint8Array(maxEntities);
         this.mass = new Float32Array(maxEntities); this.bounce = new Float32Array(maxEntities);
         this.friction = new Float32Array(maxEntities); this.isStatic = new Uint8Array(maxEntities); this.isSolid = new Uint8Array(maxEntities);
+        this.shape = new Uint8Array(maxEntities); // 0=Efajoro(AABB), 1=Boribory(circle, radius=w/2)
+        this.physicsGroup = new Uint8Array(maxEntities); // ✅ VAOVAO v4.3.1: 0-255, ho an'ny Fizika.Group filtering matrix
+        this.ccd = new Uint8Array(maxEntities); // ✅ VAOVAO v4.3.1: 1=CCD active (raycast anti-tunneling, ho an'ny bala haingana)
         this.hp = new Float32Array(maxEntities); this.maxHp = new Float32Array(maxEntities);
         this.damage = new Float32Array(maxEntities); this.team = new Uint8Array(maxEntities); this.tag = new Uint16Array(maxEntities);
         this.aiState = new Uint8Array(maxEntities); this.aiTimer = new Float32Array(maxEntities); this.targetId = new Int32Array(maxEntities);
@@ -376,7 +467,7 @@ class Vondrona {
         this.w[id]=0; this.h[id]=0; this.vx[id]=0; this.vy[id]=0; this.ax[id]=0; this.ay[id]=0;
         this.textureId[id]=-1; this.frameX[id]=0; this.frameY[id]=0; this.frameW[id]=0; this.frameH[id]=0;
         this.color[id]=0xFFFFFFFF; this.alpha[id]=1; this.flipX[id]=0; this.flipY[id]=0;
-        this.mass[id]=1; this.bounce[id]=0; this.friction[id]=0.9; this.isStatic[id]=0; this.isSolid[id]=0;
+        this.mass[id]=1; this.bounce[id]=0; this.friction[id]=0.9; this.isStatic[id]=0; this.isSolid[id]=0; this.shape[id]=0; this.physicsGroup[id]=0; this.ccd[id]=0;
         this.hp[id]=1; this.maxHp[id]=1; this.damage[id]=0; this.team[id]=0; this.tag[id]=0;
         this.aiState[id]=0; this.aiTimer[id]=0; this.targetId[id]=-1;
         this.animId[id]=-1; this.animFrame[id]=0; this.animTime[id]=0; this.animSpeed[id]=1;
@@ -563,9 +654,19 @@ class Mpampiditra extends Hetsika {
     json(key, url) { this._queue.push({type:'json', key, url}); return this; }
     feo(key, url) { this._queue.push({type:'audio', key, url}); return this; }
     spriteSheet(key, url, frameW, frameH) { this._queue.push({type:'spritesheet', key, url, frameW, frameH}); return this; }
+    // ✅ VAOVAO v4.3.4 — WEBFONT LOADER: mampiditra .woff/.woff2/.ttf
+    // amin'ny FontFace API (native, tsy mila library fanampiny). Manana
+    // TIMEOUT (opts.timeout, mahazatra 3000ms) mba tsy hampiala andro
+    // ny fanombohan'ny lalao raha tsy mby CDN ilay font — raha tafiditra
+    // tara na tsy tafiditra mihitsy, dia mandeha ihany ny load() (resolve,
+    // tsy manidina), ka ny UI dia mampiasa font fallback (system font)
+    // mandra-pahatongan'ilay custom font (na mandrakizay raha tena tsy tafiditra).
+    font(key, url, opts = {}) { this._queue.push({type:'font', key, url, weight:opts.weight||'normal', style:opts.style||'normal', timeout:opts.timeout||3000}); return this; }
     get(key) { return this._assets.images[key] || this._assets.json[key] || this._assets.audio[key]; }
     getSary(key) { return this._assets.images[key]; }
     getJson(key) { return this._assets.json[key]; }
+    getFont(key) { return this._assets.fonts[key]; }
+    isFontReady(key) { const f = this._assets.fonts[key]; return !!(f && f.status === 'loaded'); }
     async load() {
         this._total = this._queue.length; this._loaded = 0;
         if (this._total === 0) { this.emit('complete', this._assets); return this._assets; }
@@ -595,6 +696,34 @@ class Mpampiditra extends Hetsika {
                 fetch(item.url).then(r => r.arrayBuffer()).then(buf => { Feo.init(); return Feo.decode(buf); })
                 .then(decodedBuffer => { Feo.addBuffer(item.key, decodedBuffer); this._assets.audio[item.key] = decodedBuffer; done(); })
                 .catch(() => { console.error('Failed to load/decode audio:', item.url); done(); });
+            } else if (item.type === 'font') {
+                // ✅ VAOVAO v4.3.4 — FontFace API + timeout fallback.
+                // Raha tsy misy FontFace ao amin'ity tontolo ity (Node,
+                // browser tranainy), dia mandeha avy hatrany amin'ny
+                // status 'unsupported' (tsy manidina ny load()).
+                if (typeof FontFace === 'undefined') { this._assets.fonts[item.key] = {status:'unsupported'}; done(); return; }
+                const face = new FontFace(item.key, `url(${item.url})`, {weight:item.weight, style:item.style});
+                let settled = false;
+                const timeoutId = setTimeout(() => {
+                    if (settled) return; settled = true;
+                    this._assets.fonts[item.key] = {status:'timeout', face};
+                    console.warn(`Font "${item.key}" tsy tafiditra anatin'ny ${item.timeout}ms — mampiasa fallback font mandra-pahatongany`);
+                    done();
+                    // Tsy manafoana ny fampidirana — raha tafiditra ihany aorian'ny
+                    // timeout, dia hosoratana ao amin'ny document.fonts ihany koa.
+                    face.load().then(loadedFace => { if (typeof document!=='undefined' && document.fonts) document.fonts.add(loadedFace); this._assets.fonts[item.key]={status:'loaded', face:loadedFace}; }).catch(()=>{});
+                }, item.timeout);
+                face.load().then(loadedFace => {
+                    if (settled) return; settled = true; clearTimeout(timeoutId);
+                    if (typeof document !== 'undefined' && document.fonts) document.fonts.add(loadedFace);
+                    this._assets.fonts[item.key] = {status:'loaded', face:loadedFace};
+                    done();
+                }).catch(err => {
+                    if (settled) return; settled = true; clearTimeout(timeoutId);
+                    console.error(`Failed to load font "${item.key}":`, err);
+                    this._assets.fonts[item.key] = {status:'error'};
+                    done();
+                });
             }
         });
     }
@@ -610,6 +739,8 @@ class Mpampiditra extends Hetsika {
 
 const Feo = {
     _ctx: null, _master: null, _sfxGain: null, _musicGain: null, _music: null, _buffers: new Map(),
+    _sprites: new Map(),  // key -> {bufferKey, markers: Map(name -> {start, duration})}
+    _groups: new Map(),   // groupName -> GainNode (fanampiny amin'ny sfx/music: "ui", "ambient", sns)
     init() {
         if (this._ctx) return;
         try {
@@ -622,12 +753,47 @@ const Feo = {
     resume() { if (this._ctx && this._ctx.state === 'suspended') this._ctx.resume().catch(() => {}); },
     decode(buffer) { if (!this._ctx) return Promise.reject(); return this._ctx.decodeAudioData(buffer.slice(0)); },
     addBuffer(key, buffer) { this._buffers.set(key, buffer); },
+
+    // --------------------------------------------------------
+    // ✅ VAOVAO v4.2.3 — AUDIO SPRITE: rakitra WebAudio iray misy
+    // feo fohifohy maromaro, samy manana marker {start, duration}
+    // (segondra). Ohatra: addSprite('sfx_atlas', bufferKey, {
+    //   jump:{start:0, duration:0.3}, coin:{start:0.3, duration:0.2}
+    // }); avy eo playSprite('sfx_atlas', 'jump')
+    // --------------------------------------------------------
+    addSprite(spriteKey, bufferKey, markers) { this._sprites.set(spriteKey, {bufferKey, markers}); },
+    playSprite(spriteKey, markerName, opts = {}) {
+        this.init(); this.resume();
+        const sprite = this._sprites.get(spriteKey); if (!sprite) return null;
+        const marker = sprite.markers[markerName]; if (!marker) return null;
+        const buffer = this._buffers.get(sprite.bufferKey); if (!this._ctx || !buffer) return null;
+        const src = this._ctx.createBufferSource(); src.buffer = buffer; src.playbackRate.value = opts.rate || 1;
+        const gain = this._ctx.createGain(); gain.gain.value = opts.volume != null ? opts.volume : 1;
+        src.connect(gain); gain.connect(this._resolveGroup(opts.group) || this._sfxGain);
+        src.start(this._ctx.currentTime, marker.start, marker.duration);
+        return { source: src, gain, stop: () => { try { src.stop(); } catch(e) {} } };
+    },
+
+    // --------------------------------------------------------
+    // ✅ VAOVAO v4.2.3 — VOLUME GROUPS malalaka (tsy hoe sfx/music
+    // roa ihany intsony): createGroup('ui'), setGroupVolume('ui',.7)
+    // --------------------------------------------------------
+    createGroup(name, initialVolume = 1) {
+        this.init(); if (!this._ctx) return null;
+        if (this._groups.has(name)) return this._groups.get(name);
+        const g = this._ctx.createGain(); g.gain.value = initialVolume; g.connect(this._master);
+        this._groups.set(name, g); return g;
+    },
+    setGroupVolume(name, v) { const g = this._groups.get(name); if (g) g.gain.value = Z.clamp(v,0,1); },
+    _resolveGroup(name) { if (!name) return null; return this._groups.get(name) || this.createGroup(name); },
+
     play(key, opts = {}) {
         this.init(); this.resume();
         const buffer = this._buffers.get(key); if (!this._ctx || !buffer) return null;
         const src = this._ctx.createBufferSource(); src.buffer = buffer; src.playbackRate.value = opts.rate || 1;
         const gain = this._ctx.createGain(); gain.gain.value = opts.volume != null ? opts.volume : 1;
-        src.connect(gain); gain.connect(opts.music ? this._musicGain : this._sfxGain);
+        const dest = opts.group ? this._resolveGroup(opts.group) : (opts.music ? this._musicGain : this._sfxGain);
+        src.connect(gain); gain.connect(dest);
         if (opts.loop) src.loop = true; src.start(opts.offset || 0);
         return { source: src, gain, stop: () => { try { src.stop(); } catch(e) {} } };
     },
@@ -655,6 +821,11 @@ const Fanindry = {
     mouse: { x:0, y:0, worldX:0, worldY:0, dx:0, dy:0, down:[false,false,false], justDown:[false,false,false], justUp:[false,false,false], wheel:0 },
     touches: [], joystick: { active:false, x:0, y:0, dx:0, dy:0, ox:0, oy:0, id:-1 },
     _canvas: null, _init: false,
+    // ✅ VAOVAO v4.2.3 — Touch gesture (swipe & pinch) + Gamepad multi-pad
+    swipe: null, // {dx, dy, dist, angle, direction:'left'|'right'|'up'|'down'} rehefa vita swipe (1 frame monja)
+    pinch: { active:false, scale:1, delta:0, startDist:0 },
+    _gamepadPrevButtons: new Map(), // gamepadIndex -> [bool,...] (frame teo aloha, ho an'ny justPressed)
+    _swipeMinDist: 40,
     init(canvas) {
         if (this._init) {
             if (this._canvas !== canvas) console.warn('Fanindry: singleton conflict — canvas hafa efa nampiasaina.');
@@ -672,10 +843,11 @@ const Fanindry = {
         canvas.addEventListener('contextmenu', e => e.preventDefault());
         canvas.addEventListener('touchstart', e => {
             for (const t of e.changedTouches) {
-                const p = getPos(t); this.touches.push({id:t.identifier, x:p.x, y:p.y, startX:p.x, startY:p.y});
+                const p = getPos(t); this.touches.push({id:t.identifier, x:p.x, y:p.y, startX:p.x, startY:p.y, startT:Date.now()});
                 if (p.x < canvas.width/2 && !this.joystick.active) { this.joystick.active=true; this.joystick.id=t.identifier; this.joystick.ox=p.x; this.joystick.oy=p.y; this.joystick.x=p.x; this.joystick.y=p.y; }
                 else { this.mouse.x=p.x; this.mouse.y=p.y; this.mouse.down[0]=true; this.mouse.justDown[0]=true; }
             }
+            if (this.touches.length === 2) { this.pinch.active=true; this.pinch.startDist=this._touchDist(); this.pinch.scale=1; }
         }, {passive:true});
         window.addEventListener('touchmove', e => {
             for (const t of e.changedTouches) {
@@ -687,15 +859,30 @@ const Fanindry = {
                     this.joystick.dx=(dx/len)*(m/maxR); this.joystick.dy=(dy/len)*(m/maxR);
                 }
             }
+            if (this.pinch.active && this.touches.length === 2) {
+                const d = this._touchDist(); const newScale = d/(this.pinch.startDist||1);
+                this.pinch.delta = newScale - this.pinch.scale; this.pinch.scale = newScale;
+            }
         }, {passive:true});
         window.addEventListener('touchend', e => {
             for (const t of e.changedTouches) {
+                const touch = this.touches.find(tt => tt.id === t.identifier);
+                if (touch) {
+                    const dx=touch.x-touch.startX, dy=touch.y-touch.startY, dist=Math.hypot(dx,dy);
+                    if (dist >= this._swipeMinDist) {
+                        const angle = Math.atan2(dy,dx);
+                        const dir = Math.abs(dx) > Math.abs(dy) ? (dx>0?'right':'left') : (dy>0?'down':'up');
+                        this.swipe = {dx, dy, dist, angle, direction:dir};
+                    }
+                }
                 this.touches = this.touches.filter(tt => tt.id !== t.identifier);
                 if (this.joystick.active && t.identifier === this.joystick.id) { this.joystick.active=false; this.joystick.dx=0; this.joystick.dy=0; this.joystick.id=-1; }
                 else { this.mouse.down[0]=false; this.mouse.justUp[0]=true; }
             }
+            if (this.touches.length < 2) { this.pinch.active=false; this.pinch.delta=0; }
         }, {passive:true});
     },
+    _touchDist() { if (this.touches.length<2) return 0; const [a,b]=this.touches; return Math.hypot(b.x-a.x, b.y-a.y); },
     isDown(key) { return this.keys.has(key.toLowerCase()); },
     isUp(key) { return !this.keys.has(key.toLowerCase()); },
     justPressed(key) { return this._justDownKeys.has(key.toLowerCase()); },
@@ -704,9 +891,22 @@ const Fanindry = {
     mouseDown(btn = 0) { return this.mouse.down[btn]; },
     mouseJustDown(btn = 0) { return this.mouse.justDown[btn]; },
     mouseJustUp(btn = 0) { return this.mouse.justUp[btn]; },
-    getGamepad() { if (!navigator.getGamepads) return null; const pads = navigator.getGamepads(); for (const p of pads) if (p && p.connected) return p; return null; },
-    gamepadAxis(i) { const gp = this.getGamepad(); if (!gp || Math.abs(gp.axes[i]) < 0.2) return 0; return gp.axes[i]; },
-    gamepadButton(i) { const gp = this.getGamepad(); return gp && gp.buttons[i] && gp.buttons[i].pressed; },
+    // --- Gamepad multi-pad + justPressed ---
+    getGamepad(index = 0) { if (!navigator.getGamepads) return null; const pads = navigator.getGamepads(); let n=0; for (const p of pads) { if (p && p.connected) { if (n===index) return p; n++; } } return null; },
+    getAllGamepads() { if (!navigator.getGamepads) return []; return Array.from(navigator.getGamepads()).filter(p => p && p.connected); },
+    gamepadAxis(i, padIndex = 0) { const gp = this.getGamepad(padIndex); if (!gp || Math.abs(gp.axes[i]) < 0.2) return 0; return gp.axes[i]; },
+    gamepadButton(i, padIndex = 0) { const gp = this.getGamepad(padIndex); return !!(gp && gp.buttons[i] && gp.buttons[i].pressed); },
+    gamepadButtonJustPressed(i, padIndex = 0) {
+        const gp = this.getGamepad(padIndex); if (!gp) return false;
+        const prev = this._gamepadPrevButtons.get(padIndex) || [];
+        const now = !!(gp.buttons[i] && gp.buttons[i].pressed);
+        return now && !prev[i];
+    },
+    _updateGamepadState() {
+        for (const gp of this.getAllGamepads()) {
+            this._gamepadPrevButtons.set(gp.index, gp.buttons.map(b => b.pressed));
+        }
+    },
     axis() {
         let x=0, y=0;
         if (this.isDown('arrowleft')||this.isDown('a')||this.isDown('q')) x-=1;
@@ -723,6 +923,8 @@ const Fanindry = {
         this._prevKeys = new Set(this.keys); this._justDownKeys.clear(); this._justUpKeys.clear();
         for (let i = 0; i < 3; i++) { this.mouse.justDown[i]=false; this.mouse.justUp[i]=false; }
         this.mouse.dx=0; this.mouse.dy=0; this.mouse.wheel=0;
+        this.swipe = null; this.pinch.delta = 0;
+        this._updateGamepadState();
     }
 };
 
@@ -731,12 +933,57 @@ class Kamera {
         this.x=0; this.y=0; this.zoom=1; this.rotation=0; this.viewW=w; this.viewH=h;
         this.target=null; this.lerp=0.1; this.deadzone={x:0,y:0,w:0,h:0}; this.bounds=null;
         this._shakeTime=0; this._shakeMag=0; this._shakeX=0; this._shakeY=0; this._matrix=new Lamina2D();
+        // ✅ VAOVAO v4.3.3 — Camera FX level API ambony (fadeIn/fadeOut/flash)
+        this._fade = null; // {fromA, toA, duration, elapsed, color:[r,g,b], onComplete}
+        this._flash = null; // {duration, elapsed, color:[r,g,b]}
+        this._shakeOnComplete = null;
     }
     follow(target, lerp = 0.1) { this.target=target; this.lerp=lerp; return this; }
     setBounds(x, y, w, h) { this.bounds={x,y,w,h}; return this; }
     setDeadzone(x, y, w, h) { this.deadzone={x,y,w,h}; return this; }
-    shake(mag = 10, duration = 300) { this._shakeMag=mag; this._shakeTime=duration; return this; }
+    shake(mag = 10, duration = 300, onComplete = null) { this._shakeMag=mag; this._shakeTime=duration; this._shakeOnComplete=onComplete; return this; }
     lookAt(x, y) { this.x=x-this.viewW/(2*this.zoom); this.y=y-this.viewH/(2*this.zoom); return this; }
+    // --------------------------------------------------------
+    // ✅ VAOVAO v4.3.3 — fadeOut/fadeIn: manosotra overlay color manontolo
+    // ny efijery, mihalefy (alpha 0->1 na 1->0) mandritra ny "duration"
+    // (ms). onComplete: () => {} antsoina rehefa vita ny fihalefena.
+    // Fampiasana: camera.fadeOut(500, 0,0,0, () => scenes.start('next'))
+    // --------------------------------------------------------
+    fadeOut(duration = 500, r = 0, g = 0, b = 0, onComplete = null) {
+        this._fade = { fromA:0, toA:1, duration, elapsed:0, color:[r,g,b], onComplete };
+        return this;
+    }
+    fadeIn(duration = 500, r = 0, g = 0, b = 0, onComplete = null) {
+        this._fade = { fromA:1, toA:0, duration, elapsed:0, color:[r,g,b], onComplete };
+        return this;
+    }
+    // flash(): manisy overlay color mangatsakatsaka avy hatrany (alpha=1)
+    // dia mihalefy hatramin'ny 0 anatin'ny "duration" — ho an'ny hit-flash,
+    // explosion, sns. Tsy mitovy amin'ny fade satria manomboka avy hatrany
+    // amin'ny alpha feno.
+    flash(duration = 250, r = 255, g = 255, b = 255) {
+        this._flash = { duration, elapsed:0, color:[r,g,b] };
+        return this;
+    }
+    // getOverlayColor(): mamerina {r,g,b,a} (0..1) an'ny overlay eo ambonin'ny
+    // efijery ankehitriny (fade+flash mitambatra), na null raha tsy misy na
+    // dia iray aza. Ilaina antsoina AORIAN'ny rendering scene rehetra, ao
+    // amin'ny renderUI() na Lalao._loop mihitsy (drawRect manontolo efijery).
+    getOverlayColor() {
+        let a = 0, color = [0,0,0];
+        if (this._fade) {
+            const t = Z.clamp(this._fade.elapsed/this._fade.duration, 0, 1);
+            const fadeA = Z.lerp(this._fade.fromA, this._fade.toA, t);
+            if (fadeA > a) { a = fadeA; color = this._fade.color; }
+        }
+        if (this._flash) {
+            const t = Z.clamp(this._flash.elapsed/this._flash.duration, 0, 1);
+            const flashA = 1 - t;
+            if (flashA > a) { a = flashA; color = this._flash.color; }
+        }
+        if (a <= 0) return null;
+        return { r:color[0], g:color[1], b:color[2], a };
+    }
     update(dtMs) {
         if (this.target) {
             const tx=this.target.x+(this.target.w||0)/2, ty=this.target.y+(this.target.h||0)/2;
@@ -758,9 +1005,21 @@ class Kamera {
         if (this._shakeTime > 0) {
             this._shakeTime -= dtMs;
             const factor = this._shakeTime > 0 ? 1 : 0;
-            this._shakeX = (Math.random()-0.5)*this._shakeMag*factor;
-            this._shakeY = (Math.random()-0.5)*this._shakeMag*factor;
+            this._shakeX = (Kisendrasendra.global.next()-0.5)*this._shakeMag*factor;
+            this._shakeY = (Kisendrasendra.global.next()-0.5)*this._shakeMag*factor;
+            if (this._shakeTime <= 0 && this._shakeOnComplete) { const cb=this._shakeOnComplete; this._shakeOnComplete=null; cb(); }
         } else { this._shakeX=0; this._shakeY=0; }
+        if (this._fade) {
+            this._fade.elapsed += dtMs;
+            if (this._fade.elapsed >= this._fade.duration) {
+                const cb = this._fade.onComplete; this._fade = null;
+                if (cb) cb();
+            }
+        }
+        if (this._flash) {
+            this._flash.elapsed += dtMs;
+            if (this._flash.elapsed >= this._flash.duration) this._flash = null;
+        }
         this._updateMatrix();
     }
     _updateMatrix() {
@@ -778,6 +1037,151 @@ class Kamera {
 // ============================================================
 // 21. MPAMPISEHO WEBGL2 — ✅ FIX: flush() GC leak resolved
 // ============================================================
+// ============================================================
+// ✅ VAOVAO v4.3.2 — LaminaSary (RenderTexture): FBO+texture azo
+// atao "canvas ao anaty canvas" — mamorona texture azo ovaina
+// amin'ny drawing dynamique (minimap, trail effects, screenshot
+// in-game, mirror/portal). Mifamatotra amin'ny Mpampiseho.
+// ============================================================
+class LaminaSary {
+    constructor(renderer, key, width, height) {
+        this.renderer = renderer; this.key = key; this.width = width; this.height = height;
+        const gl = renderer.gl;
+        this.fbo = gl.createFramebuffer();
+        this.tex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, this.tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.tex, 0);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
+    // clearColor: [r,g,b,a] 0..1, tsy tsy maintsy (raha tsy voatondro,
+    // dia tsy manadio — mahasoa ho an'ny trail-effect izay tokony
+    // hijanona ny sary teo aloha, ka manisa alpha kely fotsiny)
+    clear(r = 0, g = 0, b = 0, a = 0) {
+        const gl = this.renderer.gl;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+        gl.viewport(0,0,this.width,this.height);
+        gl.clearColor(r,g,b,a); gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
+    // draw(fn): fn() dia miantso drawSprite/drawRect/sns ao anatin'ny
+    // Mpampiseho mahazatra, fa ny vokany dia mankany amin'ilay FBO
+    // manokana (tsy amin'ny efijery lehibe). Manao begin()/end() ho
+    // an'ny kamera azo ovaina (opts.camera), sns.
+    draw(fn, camera = null) {
+        const gl = this.renderer.gl;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+        gl.viewport(0,0,this.width,this.height);
+        this.renderer.begin(camera);
+        fn();
+        this.renderer.flush();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.viewport(0,0,this.renderer.width,this.renderer.height);
+    }
+    resize(width, height) {
+        const gl = this.renderer.gl;
+        this.width=width; this.height=height;
+        gl.bindTexture(gl.TEXTURE_2D, this.tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        const t = this.renderer._textures.get(this.key); if (t) { t.width=width; t.height=height; }
+    }
+    destroy() {
+        const gl = this.renderer.gl;
+        gl.deleteFramebuffer(this.fbo); gl.deleteTexture(this.tex);
+        this.renderer._textures.delete(this.key);
+        if (this.renderer._renderTextures) this.renderer._renderTextures.delete(this.key);
+    }
+}
+// ============================================================
+// ✅ VAOVAO v4.3.2 — MpitantanaHazavana (Dynamic Lighting System)
+// Fomba: "light-map" additive mifototra amin'ny LaminaSary (RenderTexture)
+//  1) Manosotra ny efijery manontolo amin'ny "ambient color" (maizina
+//     raha alina, mazava kely raha antoandro — mifamatotra amin'ny
+//     Toetrandro/AndroAlina raha misy)
+//  2) Manisa PointLight/SpotLight tsirairay amin'ny ADDITIVE blend
+//     (mitambatra ny hazavana, tsy manakona)
+//  3) Ny light-map vita dia atao MULTIPLY amin'ny scene efa voahosotra
+//     (drawSprite amin'ny blend 'multiply'), ka ny faritra tsy
+//     voakasiky ny hazavana dia maizina, ny akaikin'ny light dia mazava.
+//
+// PointLight: {x, y, radius, color, intensity}
+// SpotLight: PointLight + {angle, coneAngle} (mamaritra faritra
+//   toy ny "cone" fa tsy boribory feno)
+// ============================================================
+class MpitantanaHazavana {
+    constructor(renderer, width, height) {
+        this.renderer = renderer; this.width = width; this.height = height;
+        this.ambientColor = [0.15, 0.15, 0.25]; // maizina kely mahazatra (alina)
+        this.lights = []; // {type:'point'|'spot', x,y,radius,color:[r,g,b],intensity,angle,coneAngle}
+        this._lightMapKey = '__lightmap_'+Math.random().toString(36).slice(2);
+        this.lightMap = renderer.createRenderTexture(this._lightMapKey, width, height);
+        this._radialTexKey = '__lightRadial_'+Math.random().toString(36).slice(2);
+        this._ensureRadialTexture();
+    }
+    // Sary boribory misy gradient (mazava @ afovoany, mihalefy mankany
+    // amin'ny sisiny) — fototry ny light sprite tsirairay, canvas 2D
+    // fotsiny no fomba tsotra hamoronana azy (tsy shader manokana).
+    _ensureRadialTexture() {
+        if (typeof document === 'undefined') return; // tsy misy DOM (ohatra Node test) = tsy azo atao
+        const size = 128; const c = document.createElement('canvas'); c.width=size; c.height=size;
+        const ctx = c.getContext('2d');
+        const grad = ctx.createRadialGradient(size/2,size/2,0, size/2,size/2,size/2);
+        grad.addColorStop(0, 'rgba(255,255,255,1)'); grad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = grad; ctx.fillRect(0,0,size,size);
+        this.renderer.addTexture(this._radialTexKey, c);
+    }
+    setAmbient(r, g, b) { this.ambientColor = [r,g,b]; }
+    addLight(x, y, radius, color = 0xFFFFFFFF, intensity = 1) {
+        const light = { type:'point', x, y, radius, color, intensity, enabled:true };
+        this.lights.push(light); return light;
+    }
+    addSpotLight(x, y, radius, angle, coneAngle, color = 0xFFFFFFFF, intensity = 1) {
+        const light = { type:'spot', x, y, radius, angle, coneAngle, color, intensity, enabled:true };
+        this.lights.push(light); return light;
+    }
+    removeLight(light) { const i=this.lights.indexOf(light); if (i!==-1) this.lights.splice(i,1); }
+    clear() { this.lights.length = 0; }
+    // Mamorona ny light-map (atao indray mandeha isaky ny frame, alohan'ny
+    // hanondrahana azy amin'ny scene). camera: raha misy, dia manova ny
+    // toeran'ny light mba hifanaraka amin'ny fijerena (world->screen).
+    renderLightMap(camera = null) {
+        const [ar,ag,ab] = this.ambientColor;
+        this.lightMap.clear(ar, ag, ab, 1);
+        if (!this.lights.length) return;
+        this.lightMap.draw(() => {
+            this.renderer.setBlend('additive');
+            for (const light of this.lights) {
+                if (!light.enabled) continue;
+                let sx=light.x, sy=light.y;
+                if (camera) { const p=camera.worldToScreen ? camera.worldToScreen(light.x,light.y) : {x:light.x-camera.x,y:light.y-camera.y}; sx=p.x; sy=p.y; }
+                const r=((light.color>>>24)&0xFF)/255*light.intensity, g=((light.color>>>16)&0xFF)/255*light.intensity, b=((light.color>>>8)&0xFF)/255*light.intensity;
+                const packed = (Math.min(255,r*255)<<24)|(Math.min(255,g*255)<<16)|(Math.min(255,b*255)<<8)|0xFF;
+                if (this.renderer.getTexture(this._radialTexKey)) {
+                    this.renderer.drawSprite(sx-light.radius, sy-light.radius, light.radius*2, light.radius*2, 0,0,128,128, packed>>>0, this._radialTexKey);
+                } else {
+                    // Fallback raha tsy misy DOM (canvas 2D) ho an'ny radial texture:
+                    // boribory tsotra (tsy misy gradient, fa mbola miasa ny additive)
+                    this.renderer.drawRect(sx-light.radius, sy-light.radius, light.radius*2, light.radius*2, packed>>>0);
+                }
+            }
+            this.renderer.setBlend('normal');
+        });
+    }
+    // Manondraka ny light-map amin'ny scene efa voahosotra (MULTIPLY blend):
+    // antsoina AORIAN'ny fandehanan'ny sehatra rehetra, mialoha ny UI.
+    applyToScreen() {
+        this.renderer.setBlend('multiply');
+        this.renderer.drawSprite(0, 0, this.renderer.width, this.renderer.height, 0, 0, this.width, this.height, 0xFFFFFFFF, this._lightMapKey);
+        this.renderer.setBlend('normal');
+    }
+    resize(width, height) { this.width=width; this.height=height; this.lightMap.resize(width, height); }
+    destroy() { this.lightMap.destroy(); }
+}
 class Mpampiseho {
     constructor(canvas, opts = {}) {
         this.canvas = canvas; this.width = canvas.width; this.height = canvas.height;
@@ -852,6 +1256,47 @@ class Mpampiseho {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         const id = this._nextTexId++; this._textures.set(key, {id, gl:tex, width:img.width, height:img.height}); return id;
     }
+    // --------------------------------------------------------
+    // ✅ VAOVAO v4.3.4 — VIDEO TEXTURE: mampiasa <video> HTML5 ho
+    // texture WebGL (ho an'ny cutscenes, sary mihetsika ao anaty
+    // tany, portal effects). Tsy toy ny sary tsotra (addTexture),
+    // ny sary ao amin'ny video dia MIOVA isaky ny frame, ka mila
+    // updateVideoTexture(key) antsoina isaky ny frame (ao anaty
+    // game loop, alohan'ny render) mba hanavao ny texture GPU.
+    // --------------------------------------------------------
+    addVideoTexture(key, videoEl) {
+        const gl = this.gl; const tex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, tex); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+        // Sary "placeholder" (1x1 mainty) mandra-pahatongan'ny frame voalohany
+        // an'ny video, satria mety ho tsy vonona ny videoWidth/videoHeight raha
+        // vao natomboka ny fampidirana (metadata mbola tsy voaray).
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,255]));
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        const id = this._nextTexId++;
+        this._textures.set(key, {id, gl:tex, width:videoEl.videoWidth||1, height:videoEl.videoHeight||1, isVideo:true, videoEl});
+        if (!this._videoTextures) this._videoTextures = new Set();
+        this._videoTextures.add(key);
+        return id;
+    }
+    // Antsoina isaky ny frame (ohatra: ao amin'ny Lalao._loop, mialoha ny
+    // scenes.render()) mba hanavao ny GPU texture amin'ny frame ankehitriny
+    // an'ny <video>. Tsy manao na inona na inona raha efa nijanona/nivadika
+    // ilay video (readyState<2, mety ho buffering).
+    updateVideoTexture(key) {
+        const t = this._textures.get(key); if (!t || !t.isVideo) return false;
+        const v = t.videoEl; if (!v || v.readyState < 2) return false; // HAVE_CURRENT_DATA
+        const gl = this.gl;
+        gl.bindTexture(gl.TEXTURE_2D, t.gl);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, v);
+        if (v.videoWidth && (t.width!==v.videoWidth || t.height!==v.videoHeight)) { t.width=v.videoWidth; t.height=v.videoHeight; }
+        return true;
+    }
+    // Manavao daholo ny video textures rehetra tafiditra tao amin'ny
+    // renderer (fomba tsotra kokoa raha maro video mandeha miaraka).
+    updateAllVideoTextures() { if (this._videoTextures) for (const key of this._videoTextures) this.updateVideoTexture(key); }
     getTexture(key) { return this._textures.get(key); }
     deleteTexture(key) { if (key==='white') return false; const tex=this._textures.get(key); if (!tex) return false; this.gl.deleteTexture(tex.gl); this._textures.delete(key); return true; }
     clear(r=0, g=0, b=0, a=1) { this.gl.clearColor(r,g,b,a); this.gl.clear(this.gl.COLOR_BUFFER_BIT); }
@@ -874,13 +1319,54 @@ class Mpampiseho {
         v[idx+24]=x; v[idx+25]=y+h; v[idx+26]=u0; v[idx+27]=v1; v[idx+28]=r; v[idx+29]=g; v[idx+30]=b; v[idx+31]=a;
         this._quadTex[this._batchCount] = tex; this._batchCount++;
     }
+    // --------------------------------------------------------
+    // ✅ VAOVAO v4.3.2 — QUAD MIHODINA, ao anaty BATCH mihitsy (tsy misy
+    // drawCall fanampiny). Ny rotation dia atao amin'ny CPU (4 teboka
+    // ihany isaky ny sprite, tsy lafo), avy eo apetraka mivantana ao
+    // amin'ny vertexData toy ny quad tsotra — koa mbola tafiditra ao
+    // anaty texture-atlas batching mahazatra. pivotX/pivotY dia 0..1
+    // (0.5,0.5 = afovoany, mahazatra ho an'ny sprite mihodina).
+    // --------------------------------------------------------
+    drawQuadRotated(x, y, w, h, rotation, u0, v0, u1, v1, color, textureKey = 'white', pivotX = 0.5, pivotY = 0.5) {
+        if (!rotation) return this.drawQuad(x, y, w, h, u0, v0, u1, v1, color, textureKey);
+        const tex = this._textures.get(textureKey); if (!tex) return;
+        if (this._batchCount >= this.MAX_BATCH) this.flush();
+        const VERTEX_SIZE = 8; const idx = this._batchCount * 4 * VERTEX_SIZE; const v = this.vertexData;
+        const r=((color>>>24)&0xFF)/255, g=((color>>>16)&0xFF)/255, b=((color>>>8)&0xFF)/255, a=(color&0xFF)/255;
+        const px = x + w*pivotX, py = y + h*pivotY;
+        const cos = Math.cos(rotation), sin = Math.sin(rotation);
+        // 4 teboka lokaly manodidina ny (0,0), rotated, avy eo miverina any
+        // amin'ny toerana eran-tany (world space) miaraka amin'ny pivot.
+        const corners = [
+            [x-px,   y-py  ], [x+w-px, y-py  ],
+            [x+w-px, y+h-py], [x-px,   y+h-py]
+        ];
+        const uvs = [[u0,v0],[u1,v0],[u1,v1],[u0,v1]];
+        for (let i=0;i<4;i++) {
+            const lx=corners[i][0], ly=corners[i][1];
+            const wx = px + lx*cos - ly*sin, wy = py + lx*sin + ly*cos;
+            const o = idx + i*VERTEX_SIZE;
+            v[o]=wx; v[o+1]=wy; v[o+2]=uvs[i][0]; v[o+3]=uvs[i][1]; v[o+4]=r; v[o+5]=g; v[o+6]=b; v[o+7]=a;
+        }
+        this._quadTex[this._batchCount] = tex; this._batchCount++;
+    }
     drawSprite(x, y, w, h, sx, sy, sw, sh, color, textureKey, flipX = false, flipY = false) {
         const tex = this._textures.get(textureKey); if (!tex) return;
         let u0=sx/tex.width, v0=sy/tex.height, u1=(sx+sw)/tex.width, v1=(sy+sh)/tex.height;
         if (flipX) { const t=u0; u0=u1; u1=t; } if (flipY) { const t=v0; v0=v1; v1=t; }
         this.drawQuad(x, y, w, h, u0, v0, u1, v1, color, textureKey);
     }
+    // ✅ VAOVAO v4.3.2 — drawSprite miaraka amin'ny rotation (radians).
+    // Fampiasana: rehefa manisa V.rotation[id] amin'ny entity mihodina
+    // (bala SAT, projectile, ragdoll parts, sns).
+    drawSpriteRotated(x, y, w, h, rotation, sx, sy, sw, sh, color, textureKey, flipX = false, flipY = false, pivotX = 0.5, pivotY = 0.5) {
+        const tex = this._textures.get(textureKey); if (!tex) return;
+        let u0=sx/tex.width, v0=sy/tex.height, u1=(sx+sw)/tex.width, v1=(sy+sh)/tex.height;
+        if (flipX) { const t=u0; u0=u1; u1=t; } if (flipY) { const t=v0; v0=v1; v1=t; }
+        this.drawQuadRotated(x, y, w, h, rotation, u0, v0, u1, v1, color, textureKey, pivotX, pivotY);
+    }
     drawRect(x, y, w, h, color) { this.drawQuad(x, y, w, h, 0, 0, 1, 1, color, 'white'); }
+    drawRectRotated(x, y, w, h, rotation, color, pivotX = 0.5, pivotY = 0.5) { this.drawQuadRotated(x, y, w, h, rotation, 0, 0, 1, 1, color, 'white', pivotX, pivotY); }
     // ✅ FIX: Tsy misy .slice() intsony — mampiasa pre-allocated _order array
     flush() {
         if (this._batchCount === 0) return;
@@ -921,42 +1407,495 @@ sortedIndices.sort((a, b) => texOf[a].id - texOf[b].id);
         this._batchCount = 0;
     }
     end() { this.flush(); }
+    // ✅ VAOVAO v4.3.2 — Blend mode manokana (additive, ho an'ny lighting/
+    // particles glow). setBlend() dia manova ny fomba fitambaran'ny loko
+    // vaovao amin'ilay efa eo; resetBlend() mamerina amin'ny "normal"
+    // (premultiplied alpha, mahazatra ho an'ny sprite tsotra).
+    setBlend(mode = 'additive') {
+        this.flush(); const gl = this.gl;
+        if (mode === 'additive') gl.blendFunc(gl.ONE, gl.ONE);
+        else if (mode === 'multiply') gl.blendFunc(gl.DST_COLOR, gl.ZERO);
+        else gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); // 'normal'
+    }
+    resetBlend() { this.setBlend('normal'); }
     resize(w, h) { this.canvas.width=w; this.canvas.height=h; this.width=w; this.height=h; this.gl.viewport(0,0,w,h); }
+
+    // --------------------------------------------------------
+    // ✅ VAOVAO v4.3.2 — RENDER TEXTURE: mamorona LaminaSary (FBO+texture)
+    // izay azo antsoina toy ny TEXTURE MAHAZATRA (drawSprite/drawQuad
+    // amin'ny textureKey voafaritra), fa ny "sary" ao anatiny dia
+    // azo ovaina amin'ny drawing dynamique (minimap, trail effect,
+    // screenshot in-game). Ampiasaina toy izao:
+    //   const rt = renderer.createRenderTexture('minimap', 128, 128);
+    //   rt.draw(() => { renderer.drawRect(...); }); // hosoratana ao anatiny
+    //   renderer.drawSprite(x,y,128,128, 0,0,128,128, 0xFFFFFFFF, 'minimap');
+    // --------------------------------------------------------
+    createRenderTexture(key, width, height) {
+        const rt = new LaminaSary(this, key, width, height);
+        this._textures.set(key, {id:this._nextTexId++, gl:rt.tex, width, height});
+        if (!this._renderTextures) this._renderTextures = new Map();
+        this._renderTextures.set(key, rt);
+        return rt;
+    }
+    getRenderTexture(key) { return this._renderTextures ? this._renderTextures.get(key) : undefined; }
+
+    // --------------------------------------------------------
+    // ✅ VAOVAO v4.2.3 — POST-FX HOOK TSOTRA (screen-space shader pass)
+    // Tsy pipeline system feno toy ny Phaser (chaining maro, custom
+    // attributes), fa "hook" tokana ampy hametrahana Bloom/CRT/Tint
+    // manontolo ny efijery: mamorona FBO+texture, mamerina ny lalao
+    // ao anatiny (renderScene callback), avy eo manondraka azy amin'ny
+    // fragment shader voatondro (screen quad).
+    //
+    // addPostFX(name, fragmentSource, uniforms?) : mamorona ny pass
+    // usePostFX(name|null) : mametraka izay pass ampiasaina (null=tsy misy)
+    // renderWithPostFX(renderScene) : renderScene() = fiantsoana lalao
+    //   ao anaty (clear+draw+flush), avy eo mametraka ny FX eo ambony
+    // --------------------------------------------------------
+    addPostFX(name, fragmentSource, uniforms = {}) {
+        const gl = this.gl; if (!this._fx) this._fx = new Map();
+        const vsSource = this.isWebGL2
+            ? `#version 300 es\nprecision highp float;\nlayout(location=0) in vec2 a_pos;\nout vec2 v_uv;\nvoid main(){ v_uv=a_pos*0.5+0.5; gl_Position=vec4(a_pos,0,1); }`
+            : `precision highp float;\nattribute vec2 a_pos;\nvarying vec2 v_uv;\nvoid main(){ v_uv=a_pos*0.5+0.5; gl_Position=vec4(a_pos,0,1); }`;
+        const fsWrapped = this.isWebGL2
+            ? `#version 300 es\nprecision highp float;\nin vec2 v_uv;\nuniform sampler2D u_scene;\nuniform float u_time;\nuniform vec2 u_resolution;\nout vec4 fragColor;\n${fragmentSource}`
+            : `precision highp float;\nvarying vec2 v_uv;\nuniform sampler2D u_scene;\nuniform float u_time;\nuniform vec2 u_resolution;\n${fragmentSource}`;
+        const vs = this._compileShader(gl.VERTEX_SHADER, vsSource);
+        const fs = this._compileShader(gl.FRAGMENT_SHADER, fsWrapped);
+        const program = gl.createProgram(); gl.attachShader(program, vs); gl.attachShader(program, fs); gl.linkProgram(program);
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) { console.error('PostFX link error ('+name+'):', gl.getProgramInfoLog(program)); return; }
+        if (!this._fxQuadBuffer) {
+            this._fxQuadBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._fxQuadBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,-1, 1,1, -1,1]), gl.STATIC_DRAW);
+        }
+        this._fx.set(name, {
+            program,
+            u_scene: gl.getUniformLocation(program, 'u_scene'),
+            u_time: gl.getUniformLocation(program, 'u_time'),
+            u_resolution: gl.getUniformLocation(program, 'u_resolution'),
+            customUniforms: uniforms,
+            _locCache: new Map()
+        });
+    }
+    usePostFX(names) { this._activeFX = names ? (Array.isArray(names) ? names.filter(Boolean) : [names]) : []; }
+    setPostFXUniform(name, uniformName, value) {
+        const fx = this._fx && this._fx.get(name); if (!fx) return;
+        fx.customUniforms[uniformName] = value;
+    }
+    // ✅ VAOVAO v4.3.2 — Ping-pong FBO ROA (fboA/fboB), ilaina rehefa
+    // pass maromaro (chain) satria ny output an'ny pass iray no input
+    // an'ny manaraka, ka tsy azo atao raha FBO tokana ihany (mamaky
+    // sy manoratra amin'ny texture iray no fotoana iray).
+    _ensureFXTarget() {
+        const gl = this.gl;
+        if (this._fxTexA && this._fxTexW===this.width && this._fxTexH===this.height) return;
+        this._fxTexW=this.width; this._fxTexH=this.height;
+        const makeTarget = (existingFBO, existingTex) => {
+            const fbo = existingFBO || gl.createFramebuffer();
+            if (existingTex) gl.deleteTexture(existingTex);
+            const tex = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, tex);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            return {fbo, tex};
+        };
+        const a = makeTarget(this._fxFBOA, this._fxTexA); this._fxFBOA=a.fbo; this._fxTexA=a.tex;
+        const b = makeTarget(this._fxFBOB, this._fxTexB); this._fxFBOB=b.fbo; this._fxTexB=b.tex;
+    }
+    _drawFXQuad(fx, sourceTex, timeSeconds) {
+        const gl = this.gl;
+        gl.useProgram(fx.program);
+        gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, sourceTex);
+        gl.uniform1i(fx.u_scene, 0);
+        gl.uniform1f(fx.u_time, timeSeconds);
+        gl.uniform2f(fx.u_resolution, this.width, this.height);
+        for (const key in fx.customUniforms) {
+            let loc = fx._locCache.get(key);
+            if (loc===undefined) { loc = gl.getUniformLocation(fx.program, key); fx._locCache.set(key, loc); }
+            if (loc===null) continue;
+            const val = fx.customUniforms[key];
+            if (typeof val === 'number') gl.uniform1f(loc, val);
+            else if (Array.isArray(val)) { const fn = ['uniform1fv','uniform2fv','uniform3fv','uniform4fv'][val.length-1]; if (fn) gl[fn](loc, val); }
+        }
+        gl.bindBuffer(gl.ARRAY_BUFFER, this._fxQuadBuffer);
+        gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0); gl.enableVertexAttribArray(0);
+        gl.disable(gl.BLEND);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        gl.enable(gl.BLEND);
+    }
+    // renderScene: () => {} — miantso ny drawSprite/drawRect/flush ao anatiny.
+    // Raha tsy misy activeFX voatondro (usePostFX), dia mandeha mivantana ho
+    // an'ny screen (fallback tsy misy overhead).
+    //
+    // ✅ VAOVAO v4.3.2 — MULTI-PASS CHAINING: raha lisitra FX maromaro no
+    // nafindra tamin'ny usePostFX(['bloom','colorgrade','crt']), dia
+    // mandeha misesy (Bloom -> ColorGrade -> CRT), ny output an'ny iray
+    // no input an'ny manaraka (ping-pong fboA<->fboB), ary ny farany
+    // ihany no aseho eo amin'ny screen mivantana (tsy misy FBO fanampiny).
+    renderWithPostFX(renderScene, timeSeconds = 0) {
+        const gl = this.gl;
+        const names = this._activeFX || [];
+        const fxList = names.map(n => this._fx && this._fx.get(n)).filter(Boolean);
+        if (fxList.length === 0) { renderScene(); return; }
+        this._ensureFXTarget();
+        // Pass 0: render ny lalao ao anaty fboA
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this._fxFBOA);
+        gl.viewport(0,0,this.width,this.height);
+        renderScene();
+        this.flush();
+        let srcTex = this._fxTexA, srcFBO = this._fxFBOA, dstTex = this._fxTexB, dstFBO = this._fxFBOB;
+        for (let i = 0; i < fxList.length; i++) {
+            const isLast = i === fxList.length-1;
+            if (isLast) {
+                gl.bindFramebuffer(gl.FRAMEBUFFER, null); // farany = mivantana amin'ny screen
+            } else {
+                gl.bindFramebuffer(gl.FRAMEBUFFER, dstFBO);
+            }
+            gl.viewport(0,0,this.width,this.height);
+            this._drawFXQuad(fxList[i], srcTex, timeSeconds);
+            // Ping-pong: mifanakalo ny src/dst ho an'ny pass manaraka
+            const tmpTex=srcTex, tmpFBO=srcFBO; srcTex=dstTex; srcFBO=dstFBO; dstTex=tmpTex; dstFBO=tmpFBO;
+        }
+        gl.useProgram(this.program); // averina amin'ny quad program mahazatra
+    }
 }
 
 // ============================================================
 // 22-50. Sehatra, Sarimihetsika, Vovoka, Fizika, Drafitra, Lalana, sns.
 // ============================================================
+// ============================================================
+// ✅ VAOVAO v4.3.3 — DataManager: key-value store isaky ny Sehatra,
+// miaraka amin'ny CHANGE EVENTS toy ny Phaser DataManager. Rehefa
+// set(key,val), dia mamoaka event roa amin'ny events an'ilay tompony
+// (scene.events, izay = scene mihitsy satria extends Hetsika):
+//   'changedata'      (key, value, previousValue)
+//   'changedata-<key>' (value, previousValue)  — subscribe amin'ny key iray ihany
+// ============================================================
+class DataManager {
+    constructor(eventEmitter) { this._values = new Map(); this._emitter = eventEmitter; }
+    set(key, value) {
+        const prev = this._values.get(key);
+        this._values.set(key, value);
+        if (this._emitter) { this._emitter.emit('changedata', key, value, prev); this._emitter.emit('changedata-'+key, value, prev); }
+        return this;
+    }
+    get(key) { return this._values.get(key); }
+    has(key) { return this._values.has(key); }
+    remove(key) {
+        const prev = this._values.get(key); const existed = this._values.delete(key);
+        if (existed && this._emitter) { this._emitter.emit('changedata', key, undefined, prev); this._emitter.emit('changedata-'+key, undefined, prev); }
+        return existed;
+    }
+    getAll() { return Object.fromEntries(this._values); }
+    each(fn) { for (const [k,v] of this._values) fn(k,v); }
+    clear() { this._values.clear(); }
+}
 class Sehatra extends Hetsika {
-    constructor(key) { super(); this.key=key; this.active=false; this.visible=true; this.paused=false; }
+    constructor(key) {
+        super(); this.key=key; this.active=false; this.visible=true; this.paused=false;
+        this.events=this; // alias: Scene.events === Scene mihitsy, satria extends Hetsika
+        this.data=new DataManager(this); // ✅ VAOVAO v4.3.3: DataManager feno (set/get/changedata events)
+    }
     init(data) {} create() {} update(dt, dtMs) {} render(renderer, camera, alpha = 1) {} renderUI(renderer) {} shutdown() {} destroy() {}
 }
+// ============================================================
+// ✅ VAOVAO v4.2.3 — MpitantanaSehatra: Scene System feno
+// Manohana ny fandehanan-tsehatra maromaro mifanindran-dalana
+// (ohatra: sehatra lalao + UI overlay), sleep/wake, pause/resume,
+// ary lifecycle feno: preload -> init -> create -> update ->
+// shutdown -> destroy. Ny "sehatra active" iray ihany (linear)
+// dia mbola tantina ho an'ny fampiasana tsotra.
+// ============================================================
 class MpitantanaSehatra {
-    constructor(game) { this.game=game; this._scenes=new Map(); this._active=null; this._pending=null; }
-    add(key, SceneClass) { const scene=new SceneClass(key); scene.game=this.game; this._scenes.set(key, scene); return scene; }
-    start(key, data) {
-        if (this._active) { this._active.shutdown(); this._active.active=false; }
-        this._active = this._scenes.get(key);
-        if (this._active) { this._active.init(data); this._active.create(); this._active.active=true; }
+    constructor(game) { this.game=game; this._scenes=new Map(); this._running=[]; this._active=null; }
+    add(key, SceneClass) {
+        const scene=new SceneClass(key); scene.game=this.game; scene.key=key;
+        scene.active=false; scene.visible=true; scene.paused=false; scene.sleeping=false; scene._loaded=false;
+        this._scenes.set(key, scene); return scene;
     }
+    _boot(scene, data) {
+        if (!scene._loaded) { if (scene.preload) scene.preload(); scene._loaded=true; }
+        if (scene.init) scene.init(data||{});
+        scene.create(data||{});
+        scene.active=true; scene.paused=false; scene.sleeping=false; scene.visible=true;
+    }
+    // start(): manidy ny sehatra "active" nialoha (linear, mitovy amin'ny taloha)
+    start(key, data) {
+        if (this._active) { this._shutdownScene(this._active); }
+        this._running = this._running.filter(s => s !== this._active);
+        this._active = this._scenes.get(key);
+        if (this._active) { this._boot(this._active, data); if (!this._running.includes(this._active)) this._running.push(this._active); }
+    }
+    // launch(): mandefa sehatra vaovao HIARAKA amin'ireo efa mandeha (parallel — ohatra: UI overlay)
+    launch(key, data) {
+        const scene = this._scenes.get(key);
+        if (scene && !this._running.includes(scene)) { this._boot(scene, data); this._running.push(scene); }
+        return scene;
+    }
+    stop(key) {
+        const scene = this._scenes.get(key);
+        if (scene && this._running.includes(scene)) { this._shutdownScene(scene); this._running = this._running.filter(s => s !== scene); if (this._active===scene) this._active=null; }
+    }
+    sleep(key) { const s=this._scenes.get(key); if (s) { s.sleeping=true; if (s.onSleep) s.onSleep(); } }
+    wake(key, data) { const s=this._scenes.get(key); if (s) { s.sleeping=false; if (s.onWake) s.onWake(data); } }
+    pause(key) { const s=this._scenes.get(key); if (s) { s.paused=true; if (s.onPause) s.onPause(); } }
+    resume(key, data) { const s=this._scenes.get(key); if (s) { s.paused=false; if (s.onResume) s.onResume(data); } }
+    // ✅ VAOVAO v4.3.0 — auto-off: rehefa shutdown ny sehatra, dia esorina
+    // avokoa ny listeners rehetra tao amin'ny scene.events (=scene mihitsy,
+    // satria extends Hetsika), mba tsy hisy "listener zombie" mitazona
+    // sahala sy mihazona références rehefa ampiasaina indray ilay Sehatra.
+    _shutdownScene(scene) { if (scene && scene.active) { if (scene.shutdown) scene.shutdown(); scene.active=false; if (scene.removeAll) scene.removeAll(); } }
+    destroyScene(key) { const s=this._scenes.get(key); if (s) { this._shutdownScene(s); if (s.destroy) s.destroy(); this._running=this._running.filter(x=>x!==s); this._scenes.delete(key); } }
     get active() { return this._active; }
-    update(dt, dtMs) { if (this._active && !this._active.paused) this._active.update(dt, dtMs); }
-    render(renderer, camera, alpha = 1) { if (this._active && this._active.visible) this._active.render(renderer, camera, alpha); }
-    renderUI(renderer) { if (this._active && this._active.visible) this._active.renderUI(renderer); }
-}
-class Sarimihetsika {
-    constructor(spritesheet) { this.sheet=spritesheet; this.anims=new Map(); this.current=null; this.frame=0; this.time=0; this.finished=false; }
-    add(name, frames, fps = 12, loop = true) { this.anims.set(name, {frames, fps, loop, duration:1000/fps}); return this; }
-    play(name) { if (this.current===name) return this; this.current=name; this.frame=0; this.time=0; this.finished=false; return this; }
-    update(dtMs) {
-        const anim = this.anims.get(this.current); if (!anim || this.finished) return;
-        this.time += dtMs;
-        while (this.time >= anim.duration) {
-            this.time -= anim.duration; this.frame++;
-            if (this.frame >= anim.frames.length) { if (anim.loop) this.frame=0; else { this.frame=anim.frames.length-1; this.finished=true; } }
+    getScene(key) { return this._scenes.get(key); }
+    isActive(key) { const s=this._scenes.get(key); return !!(s && s.active && !s.sleeping); }
+    // sendMessage: fifandraisana tsotra mezra ny sehatra roa (ohatra: game -> UI overlay)
+    sendMessage(key, event, payload) { const s=this._scenes.get(key); if (s && s.onMessage) s.onMessage(event, payload); }
+    update(dt, dtMs) { for (const s of this._running) if (s.active && !s.paused && !s.sleeping) s.update(dt, dtMs); }
+    render(renderer, camera, alpha = 1) { for (const s of this._running) if (s.active && s.visible && !s.sleeping) s.render(renderer, camera, alpha); }
+    renderUI(renderer) { for (const s of this._running) if (s.active && s.visible && !s.sleeping) s.renderUI(renderer); }
+
+    // --------------------------------------------------------
+    // ✅ VAOVAO v4.3.3 — HMR (Hot Module Replacement) HOOK
+    // Ho an'ny Vite/Webpack dev server: rehefa manova ny code an'ny
+    // Scene class ianao, dia azo atao ny FANAVAOZANA NY METHODS ihany
+    // (create/update/render/shutdown/sns) amin'ny instance MISY SAHADY,
+    // tsy misy fanadiovana ny "state" ankehitriny (entities, position,
+    // score, sns) — tsy toy ny refresh feno an'ny page. Io no tombony
+    // lehibe amin'ny dev experience raha oharina amin'ny fanaovana
+    // refresh isaky ny fanovana kely.
+    //
+    // hotReplaceScene(key, NewSceneClass): mametraka ny prototype
+    // vaovao amin'ny instance efa misy (Object.setPrototypeOf), dia
+    // mamerina antsoina ny create() raha mbola active ilay scene (mba
+    // hametrahana ny listeners/entities vaovao raha nampiana), fa tsy
+    // manadio ny "data" (DataManager) na ny "events" listeners.
+    // --------------------------------------------------------
+    hotReplaceScene(key, NewSceneClass) {
+        const oldScene = this._scenes.get(key);
+        if (!oldScene) { console.warn(`HMR: sehatra "${key}" tsy hita, tsy azo atao ny hot-replace`); return null; }
+        const wasActive = oldScene.active, wasRunning = this._running.includes(oldScene);
+        // Mametraka ny methods vaovao amin'ny instance MISY SAHADY (state
+        // voatahiry: x,y,data,events listeners, sns — tsy very na dia iray aza)
+        Object.setPrototypeOf(oldScene, NewSceneClass.prototype);
+        if (wasActive && oldScene.create) {
+            try { oldScene.create(); } catch (e) { console.error(`HMR: create() error tao amin'ny "${key}":`, e); }
+        }
+        console.log(`🔥 HMR: "${key}" navaozina (state voatahiry)`);
+        return oldScene;
+    }
+    // Fampifandraisana amin'ny Vite (import.meta.hot) na Webpack (module.hot).
+    // Fampiasana ao amin'ny Scene file mihitsy:
+    //   if (import.meta.hot) game.scenes.hookHMR(import.meta.hot, 'game', GameScene);
+    hookHMR(hotAPI, key, SceneClassRef) {
+        if (!hotAPI) return;
+        if (hotAPI.accept) {
+            // Vite-style: hotAPI.accept(callback) miantso ny module vaovao
+            hotAPI.accept((newModule) => {
+                if (!newModule) return;
+                // Mitady ny export voalohany class-type (heuristic tsotra)
+                const NewClass = newModule.default || Object.values(newModule).find(v => typeof v === 'function');
+                if (NewClass) this.hotReplaceScene(key, NewClass);
+            });
+        } else if (hotAPI.dispose && hotAPI.accept) {
+            // Webpack-style (mitovy endrika ihany, fa azo atao manokana)
+            hotAPI.accept();
         }
     }
+}
+// ============================================================
+// ✅ VAOVAO v4.2.3 — Sarimihetsika: Timeline Events feno
+// (onFrame, onComplete, onRepeat, yoyo, repeat count, repeatDelay)
+// ============================================================
+class Sarimihetsika {
+    constructor(spritesheet) { this.sheet=spritesheet; this.anims=new Map(); this.current=null; this.frame=0; this.time=0; this.finished=false; this._dir=1; this._repeatsLeft=0; this._delayT=0; }
+    add(name, frames, opts = {}) {
+        if (typeof opts === 'number') opts = {fps:opts}; // retro-compatibilité: add(name, frames, fps, loop)
+        const fps = opts.fps || 12, loop = opts.loop !== undefined ? opts.loop : true;
+        this.anims.set(name, {
+            frames, fps, loop, duration:1000/fps,
+            yoyo: !!opts.yoyo,
+            repeat: opts.repeat!==undefined ? opts.repeat : (loop ? -1 : 0), // -1 = mandrakizay
+            repeatDelay: opts.repeatDelay || 0, // ms fiatoana isaky ny fiverenana
+            onFrame: opts.onFrame || null,       // (frameIndex, frameValue) => {}
+            onComplete: opts.onComplete || null, // () => {} — antsoina rehefa tapitra tanteraka (tsy loop intsony)
+            onRepeat: opts.onRepeat || null       // (repeatCount) => {}
+        });
+        return this;
+    }
+    play(name, opts = {}) {
+        if (this.current===name && !opts.force) return this;
+        this.current=name; this.frame=0; this.time=0; this.finished=false; this._dir=1; this._delayT=0;
+        const anim = this.anims.get(name);
+        this._repeatsLeft = anim ? anim.repeat : 0;
+        return this;
+    }
+    stop() { this.finished=true; return this; }
+    update(dtMs) {
+        const anim = this.anims.get(this.current); if (!anim || this.finished) return;
+        if (this._delayT > 0) { this._delayT -= dtMs; if (this._delayT > 0) return; }
+        this.time += dtMs;
+        while (this.time >= anim.duration) {
+            this.time -= anim.duration;
+            if (anim.yoyo) {
+                this.frame += this._dir;
+                if (this.frame >= anim.frames.length) { this.frame = anim.frames.length-1; this._dir=-1; this._onEdge(anim); }
+                else if (this.frame < 0) { this.frame = 0; this._dir=1; this._onEdge(anim); }
+            } else {
+                this.frame++;
+                if (this.frame >= anim.frames.length) { this.frame = 0; this._onEdge(anim); if (this.finished) break; }
+            }
+            if (anim.onFrame) anim.onFrame(this.frame, anim.frames[this.frame]);
+        }
+    }
+    _onEdge(anim) {
+        // Vita fihodinana iray (cycle). Mizaha raha mbola misy 'repeat' sisa.
+        if (anim.repeat === -1) { if (anim.onRepeat) anim.onRepeat(-1); if (anim.repeatDelay) this._delayT = anim.repeatDelay; return; }
+        if (this._repeatsLeft > 0) { this._repeatsLeft--; if (anim.onRepeat) anim.onRepeat(this._repeatsLeft); if (anim.repeatDelay) this._delayT = anim.repeatDelay; return; }
+        this.finished = true;
+        if (anim.onComplete) anim.onComplete();
+    }
     getFrame() { const anim=this.anims.get(this.current); if (!anim) return null; return anim.frames[this.frame]; }
+}
+// ============================================================
+// ✅ VAOVAO v4.3.4 — SKELETAL ANIMATION RUNTIME (<15KB)
+// Runtime tsotra ho an'ny character 2D miorina amin'ny bone
+// hierarchy — tsy fanoloana feno an'i Spine/DragonBones (tsy misy
+// IK, mesh deformation, clipping) fa ampy ho an'ny character
+// fototra: sprite tsirairay mifamatotra amin'ny "bone" iray,
+// ny bone tsirairay dia manana reny (parent), rotation/position/
+// scale azo atao KEYFRAME animation, ary ny "world transform" an'ny
+// bone tsirairay dia kajian'ny mandeha manaraka ny hierarchy.
+//
+// Rig JSON mahazatra (mitovy amin'ny fototry ny Spine/DragonBones):
+// {
+//   bones: [ {name, parent, x, y, rotation, scaleX, scaleY, sprite} ],
+//   animations: {
+//     walk: { duration: 800, tracks: {
+//       "leg_L": { rotation: [{t:0,v:0},{t:400,v:0.5},{t:800,v:0}] }
+//     }}
+//   }
+// }
+// ============================================================
+class Taolana2D {
+    constructor(name, opts = {}) {
+        this.name = name; this.parent = null; this.children = [];
+        this.x = opts.x||0; this.y = opts.y||0; this.rotation = opts.rotation||0;
+        this.scaleX = opts.scaleX!==undefined?opts.scaleX:1; this.scaleY = opts.scaleY!==undefined?opts.scaleY:1;
+        this.sprite = opts.sprite||null; // {textureKey, sx,sy,sw,sh, pivotX,pivotY} — azo tsy misy (bone tsotra, tsy misy sary)
+        this.localMatrix = new Lamina2D(); this.worldMatrix = new Lamina2D();
+    }
+    addChild(bone) { bone.parent = this; this.children.push(bone); return bone; }
+    _updateLocal() {
+        this.localMatrix.identity();
+        this.localMatrix.translate(this.x, this.y);
+        this.localMatrix.rotate(this.rotation);
+        this.localMatrix.scale(this.scaleX, this.scaleY);
+    }
+    updateWorld() {
+        this._updateLocal();
+        if (this.parent) { this.worldMatrix.m.set(this.parent.worldMatrix.m); this.worldMatrix.mul(this.localMatrix); }
+        else this.worldMatrix.m.set(this.localMatrix.m);
+        for (const child of this.children) child.updateWorld();
+    }
+}
+class EndrikaTaolana {
+    constructor() { this.bones = new Map(); this.root = null; }
+    // Mamorona ny bone tree manontolo avy amin'ny rig JSON (bones[]
+    // misy {name, parent, x,y,rotation,scaleX,scaleY,sprite}).
+    static fromJSON(rigJson) {
+        const skel = new EndrikaTaolana();
+        for (const b of rigJson.bones) {
+            const bone = new Taolana2D(b.name, b);
+            skel.bones.set(b.name, bone);
+        }
+        for (const b of rigJson.bones) {
+            const bone = skel.bones.get(b.name);
+            if (b.parent && skel.bones.has(b.parent)) skel.bones.get(b.parent).addChild(bone);
+            else if (!skel.root) skel.root = bone; // bone voalohany tsy manana reny = root
+        }
+        if (!skel.root) { const first = rigJson.bones[0]; if (first) skel.root = skel.bones.get(first.name); }
+        return skel;
+    }
+    getBone(name) { return this.bones.get(name); }
+    updateWorld() { if (this.root) this.root.updateWorld(); }
+    // Manondraka ny bone rehetra manana "sprite" (drawSpriteRotated,
+    // mampiasa ny worldMatrix mba hahazoana ny toerana/rotation eran-tany).
+    render(renderer) {
+        for (const bone of this.bones.values()) {
+            if (!bone.sprite) continue;
+            const m = bone.worldMatrix.m;
+            // Manala ny "world position" (m[4],m[5]) sy ny rotation avy
+            // amin'ny matrix (atan2 an'ny colonne voalohany).
+            const worldX = m[4], worldY = m[5];
+            const worldRotation = Math.atan2(m[1], m[0]);
+            const worldScaleX = Math.hypot(m[0], m[1]);
+            const s = bone.sprite;
+            renderer.drawSpriteRotated(
+                worldX - (s.sw||32)*worldScaleX*(s.pivotX!==undefined?s.pivotX:0.5),
+                worldY - (s.sh||32)*worldScaleX*(s.pivotY!==undefined?s.pivotY:0.5),
+                (s.sw||32)*worldScaleX, (s.sh||32)*worldScaleX,
+                worldRotation, s.sx||0, s.sy||0, s.sw||32, s.sh||32,
+                s.color||0xFFFFFFFF, s.textureKey
+            );
+        }
+    }
+}
+// HetsikaTaolana: mitantana ny keyframe animation ho an'ny bone
+// maromaro miaraka (mitovy amin'ny Sarimihetsika fa ho an'ny bone
+// rotation/position/scale, tsy frame index).
+class HetsikaTaolana {
+    constructor(skeleton) { this.skeleton = skeleton; this.animations = new Map(); this.current = null; this.time = 0; this.loop = true; this.speed = 1; this.finished = false; }
+    addAnimation(name, def) { this.animations.set(name, def); return this; }
+    // Ampidiro avy amin'ny rig JSON manontolo (rigJson.animations)
+    static loadAnimations(hetsika, animationsJson) { for (const name in animationsJson) hetsika.addAnimation(name, animationsJson[name]); return hetsika; }
+    play(name, opts = {}) {
+        if (!this.animations.has(name)) { console.warn(`HetsikaTaolana: animation "${name}" tsy hita`); return this; }
+        this.current = name; this.time = 0; this.finished = false;
+        this.loop = opts.loop!==undefined ? opts.loop : true;
+        return this;
+    }
+    // _sampleTrack: mitady ny sanda (interpolated) an'ny track iray
+    // (rotation/x/y/scaleX/scaleY) amin'ny fotoana "t" voafaritra,
+    // mifototra amin'ny keyframe roa manodidina azy (linear interpolation).
+    _sampleTrack(keyframes, t) {
+        if (!keyframes || !keyframes.length) return undefined;
+        if (keyframes.length === 1 || t <= keyframes[0].t) return keyframes[0].v;
+        if (t >= keyframes[keyframes.length-1].t) return keyframes[keyframes.length-1].v;
+        for (let i=0; i<keyframes.length-1; i++) {
+            const a=keyframes[i], b=keyframes[i+1];
+            if (t>=a.t && t<=b.t) { const localT=(t-a.t)/(b.t-a.t); return Z.lerp(a.v,b.v,localT); }
+        }
+        return keyframes[keyframes.length-1].v;
+    }
+    update(dtMs) {
+        if (!this.current || this.finished) return;
+        const anim = this.animations.get(this.current);
+        this.time += dtMs*this.speed;
+        if (this.time >= anim.duration) {
+            if (this.loop) this.time = this.time % anim.duration;
+            else { this.time = anim.duration; this.finished = true; }
+        }
+        for (const boneName in anim.tracks) {
+            const bone = this.skeleton.getBone(boneName); if (!bone) continue;
+            const track = anim.tracks[boneName];
+            if (track.rotation) bone.rotation = this._sampleTrack(track.rotation, this.time);
+            if (track.x !== undefined || track.y !== undefined) {
+                if (track.x) bone.x = this._sampleTrack(track.x, this.time);
+                if (track.y) bone.y = this._sampleTrack(track.y, this.time);
+            }
+            if (track.scaleX) bone.scaleX = this._sampleTrack(track.scaleX, this.time);
+            if (track.scaleY) bone.scaleY = this._sampleTrack(track.scaleY, this.time);
+        }
+        this.skeleton.updateWorld();
+    }
 }
 class Vovoka {
     constructor(maxParticles = 10000) { this.max=maxParticles; this.particles=[]; this.emitters=[]; this._pool=[]; for (let i=0;i<maxParticles;i++) this._pool.push(this._createParticle()); }
@@ -965,15 +1904,15 @@ class Vovoka {
         const count = config.count || 10;
         for (let i=0;i<count;i++) {
             if (this._pool.length===0) break; const p=this._pool.pop();
-            p.x=x+(config.xSpread||0)*(Math.random()-0.5); p.y=y+(config.ySpread||0)*(Math.random()-0.5);
-            const angle=(config.angle||Math.random()*PI2)+(config.angleSpread||0)*(Math.random()-0.5);
+            p.x=x+(config.xSpread||0)*(Kisendrasendra.global.next()-0.5); p.y=y+(config.ySpread||0)*(Kisendrasendra.global.next()-0.5);
+            const angle=(config.angle||Kisendrasendra.global.next()*PI2)+(config.angleSpread||0)*(Kisendrasendra.global.next()-0.5);
             const speed=Z.rand(config.speedMin||50, config.speedMax||200);
             p.vx=Math.cos(angle)*speed; p.vy=Math.sin(angle)*speed;
             p.life=1; p.maxLife=Z.rand(config.lifeMin||0.5, config.lifeMax||1.5);
             p.size=config.sizeStart||8; p.sizeEnd=config.sizeEnd!=null?config.sizeEnd:0;
             p.color=config.color||0xFFFFFFFF; p.colorEnd=config.colorEnd||p.color;
             p.gravity=config.gravity||0; p.friction=config.friction||0.99;
-            p.rotation=Math.random()*PI2; p.vrot=(Math.random()-0.5)*(config.rotSpeed||5);
+            p.rotation=Kisendrasendra.global.next()*PI2; p.vrot=(Kisendrasendra.global.next()-0.5)*(config.rotSpeed||5);
             p.texture=config.texture||'white'; this.particles.push(p);
         }
     }
@@ -993,6 +1932,115 @@ class Vovoka {
             renderer.drawRect(p.x-size/2, p.y-size/2, size, size, packedColor);
         }
     }
+}
+// ============================================================
+// ✅ VAOVAO v4.3.1 — CONSTRAINTS/JOINTS: DistanceJoint, RevoluteJoint,
+// SpringJoint. Ireo dia miasa MIVANTANA amin'ny Vondrona (ECS SoA),
+// mitovy amin'ny fomba fiasan'ny Fizika.step() — tsy mila class OOP
+// isaky ny entity, fa id roa (a, b) fotsiny no ilaina. Ampiasaina
+// ho an'ny ragdoll (constraint maromaro mifamatotra), swing/pendulum
+// (RevoluteJoint), na vehicle suspension (SpringJoint).
+//
+// FANAMARIHANA: joint iray dia azo atao "static anchor" raha b=-1
+// (mifamatotra amin'ny teboka fiorenana fotsiny, tsy entity).
+// ============================================================
+class DistanceJoint {
+    // a, b: entity id (Vondrona). anchorB null raha b=-1 (fiorenana static)
+    constructor(a, b, distance, opts = {}) {
+        this.a=a; this.b=b; this.distance=distance;
+        this.staticAnchor = b===-1 ? {x:opts.anchorX||0, y:opts.anchorY||0} : null;
+        this.stiffness = opts.stiffness!==undefined ? opts.stiffness : 1; // 0..1, 1=rigid tanteraka
+        this.enabled = true;
+    }
+    update(V) {
+        if (!this.enabled) return;
+        const ax=V.x[this.a]+V.w[this.a]/2, ay=V.y[this.a]+V.h[this.a]/2;
+        const bx = this.staticAnchor ? this.staticAnchor.x : V.x[this.b]+V.w[this.b]/2;
+        const by = this.staticAnchor ? this.staticAnchor.y : V.y[this.b]+V.h[this.b]/2;
+        const dx=bx-ax, dy=by-ay; let dist=Math.hypot(dx,dy); if (dist<EPSILON) dist=EPSILON;
+        const diff = (dist-this.distance)/dist * this.stiffness;
+        const nx=dx*diff, ny=dy*diff;
+        const aStatic = !!V.isStatic[this.a], bStatic = this.staticAnchor ? true : !!V.isStatic[this.b];
+        const invA = aStatic?0:1/(V.mass[this.a]||1), invB = bStatic?0:1/(V.mass[this.b]||1);
+        const total = invA+invB; if (total<=0) return;
+        if (!aStatic) { V.x[this.a] += nx*(invA/total); V.y[this.a] += ny*(invA/total); }
+        if (!bStatic && !this.staticAnchor) { V.x[this.b] -= nx*(invB/total); V.y[this.b] -= ny*(invB/total); }
+    }
+}
+class RevoluteJoint {
+    // Mitovy amin'ny DistanceJoint fa manana "pivot point" tsy miova
+    // (rotation azo mihodina malalaka manodidina ny pivot) — swing/pendulum.
+    // pivotOffset: {x,y} avy amin'ny b (na eo amin'ny toerana static raha b=-1)
+    constructor(a, b, opts = {}) {
+        this.a=a; this.b=b;
+        this.staticAnchor = b===-1 ? {x:opts.anchorX||0, y:opts.anchorY||0} : null;
+        this.length = opts.length!==undefined ? opts.length : 50;
+        this.enabled = true;
+    }
+    update(V, dt) {
+        if (!this.enabled) return;
+        // RevoluteJoint = DistanceJoint tsy miova habe (rigid rod, tsy misy stiffness variable)
+        const ax=V.x[this.a]+V.w[this.a]/2, ay=V.y[this.a]+V.h[this.a]/2;
+        const bx = this.staticAnchor ? this.staticAnchor.x : V.x[this.b]+V.w[this.b]/2;
+        const by = this.staticAnchor ? this.staticAnchor.y : V.y[this.b]+V.h[this.b]/2;
+        const dx=ax-bx, dy=ay-by; let dist=Math.hypot(dx,dy); if (dist<EPSILON) dist=EPSILON;
+        const nx=dx/dist, ny=dy/dist;
+        // Mametraka mivantana ny "a" eo amin'ny farin'ny rod (rigid, tsy manaraka mass split
+        // satria matetika ny pivot dia static na "b" lehibe kokoa lavitra — tsotra kokoa toy izao)
+        if (!V.isStatic[this.a]) {
+            V.x[this.a] = bx + nx*this.length - V.w[this.a]/2;
+            V.y[this.a] = by + ny*this.length - V.h[this.a]/2;
+            // Manala ny hafainganam-pandeha manaraka ny radius (tangential velocity ihany no tavela)
+            const vx=V.vx[this.a], vy=V.vy[this.a];
+            const radialV = vx*nx+vy*ny;
+            V.vx[this.a] -= radialV*nx; V.vy[this.a] -= radialV*ny;
+        }
+    }
+}
+class SpringJoint {
+    // Mitovy amin'ny DistanceJoint fa manisa FORCE (Hooke's law: F=-k*x)
+    // fa tsy manova mivantana ny toerana — ho an'ny vehicle suspension,
+    // rubber band effect, na "soft body" tsotra.
+    constructor(a, b, restLength, opts = {}) {
+        this.a=a; this.b=b; this.restLength=restLength;
+        this.staticAnchor = b===-1 ? {x:opts.anchorX||0, y:opts.anchorY||0} : null;
+        this.stiffness = opts.stiffness!==undefined ? opts.stiffness : 200; // "k" ao amin'ny F=-k*x
+        this.damping = opts.damping!==undefined ? opts.damping : 5;
+        this.enabled = true;
+    }
+    update(V, dt) {
+        if (!this.enabled) return;
+        const ax=V.x[this.a]+V.w[this.a]/2, ay=V.y[this.a]+V.h[this.a]/2;
+        const bx = this.staticAnchor ? this.staticAnchor.x : V.x[this.b]+V.w[this.b]/2;
+        const by = this.staticAnchor ? this.staticAnchor.y : V.y[this.b]+V.h[this.b]/2;
+        const dx=bx-ax, dy=by-ay; let dist=Math.hypot(dx,dy); if (dist<EPSILON) dist=EPSILON;
+        const nx=dx/dist, ny=dy/dist;
+        const stretch = dist-this.restLength;
+        const forceMag = stretch*this.stiffness;
+        // Damping: manala ny hafainganam-pandeha manaraka ny axis (tsy hihontsona mandrakizay)
+        if (!V.isStatic[this.a]) {
+            const relVx = -V.vx[this.a], relVy = -V.vy[this.a];
+            const dampForce = (relVx*nx+relVy*ny)*this.damping;
+            const fx=(forceMag+dampForce)*nx, fy=(forceMag+dampForce)*ny;
+            V.vx[this.a] += fx*dt/(V.mass[this.a]||1); V.vy[this.a] += fy*dt/(V.mass[this.a]||1);
+        }
+        if (!this.staticAnchor && !V.isStatic[this.b]) {
+            const relVx = V.vx[this.b], relVy = V.vy[this.b];
+            const dampForce = (relVx*nx+relVy*ny)*this.damping;
+            const fx=-(forceMag+dampForce)*nx, fy=-(forceMag+dampForce)*ny;
+            V.vx[this.b] += fx*dt/(V.mass[this.b]||1); V.vy[this.b] += fy*dt/(V.mass[this.b]||1);
+        }
+    }
+}
+// MpitantanaJoint: mitahiry ny joint rehetra, manova azy indray mihodina
+// (antsoina AORIAN'ny Fizika.step(), mba tsy hifanipaka amin'ny impulse
+// resolution — ny joint dia "position correction" fanampiny).
+class MpitantanaJoint {
+    constructor() { this.joints = []; }
+    add(joint) { this.joints.push(joint); return joint; }
+    remove(joint) { const i=this.joints.indexOf(joint); if (i!==-1) this.joints.splice(i,1); }
+    update(V, dt) { for (const j of this.joints) if (j.enabled) j.update(V, dt); }
+    clear() { this.joints.length = 0; }
 }
 const Fizika = {
     // --------------------------------------------------------
@@ -1024,10 +2072,67 @@ const Fizika = {
     _project(points, axis) { let min=Infinity,max=-Infinity; for(const p of points){const d=p.x*axis.x+p.y*axis.y;if(d<min)min=d;if(d>max)max=d;} return {min,max}; },
 
     // --------------------------------------------------------
+    // ✅ VAOVAO v4.3.1 — SAT MTV (Minimum Translation Vector):
+    // mamerina {axis:{x,y}, overlap} = ilay axis manondro ny lalana
+    // FOHY INDRINDRA hanalana ny fifandonana, na null raha tsy
+    // mifandona. Io no fototry ny "polygon resolution" (endrika
+    // mihodina, ohatra Lafomaro.rect+rotation, na regular(N)).
+    // --------------------------------------------------------
+    satMTV(polyA, polyB) {
+        const ptsA=polyA.worldPoints(), ptsB=polyB.worldPoints();
+        const axesA=this._getAxes(ptsA), axesB=this._getAxes(ptsB);
+        let minOverlap=Infinity, minAxis=null;
+        for (const axis of [...axesA,...axesB]) {
+            const projA=this._project(ptsA,axis), projB=this._project(ptsB,axis);
+            const overlap = Math.min(projA.max,projB.max) - Math.max(projA.min,projB.min);
+            if (overlap<=0) return null; // misy axis tsy mifandona = tsy mety mifandona ny endrika roa
+            if (overlap<minOverlap) { minOverlap=overlap; minAxis=axis; }
+        }
+        // Manamarina ny direction: tokony hanondro AVY amin'ny A MANKANY amin'ny B
+        const centerA={x:0,y:0}, centerB={x:0,y:0};
+        for(const p of ptsA){centerA.x+=p.x/ptsA.length;centerA.y+=p.y/ptsA.length;}
+        for(const p of ptsB){centerB.x+=p.x/ptsB.length;centerB.y+=p.y/ptsB.length;}
+        const dx=centerB.x-centerA.x, dy=centerB.y-centerA.y;
+        if (dx*minAxis.x+dy*minAxis.y<0) minAxis={x:-minAxis.x,y:-minAxis.y};
+        return {axis:minAxis, overlap:minOverlap};
+    },
+    // --------------------------------------------------------
+    // ✅ VAOVAO v4.3.1 — Resolution polygon (endrika mihodina):
+    // a,b dia {poly:Lafomaro, vx,vy,mass,bounce,isStatic}. Mizara
+    // ny push araka ny invMass (mitovy amin'ny resolveAABB), ary
+    // manova mivantana ny poly.x/poly.y (setPos) mba hifanaraka
+    // amin'ny fandehan'ny Lafomaro (dirty-flag caching).
+    // --------------------------------------------------------
+    resolvePolygon(a, b) {
+        const mtv = this.satMTV(a.poly, b.poly); if (!mtv) return null;
+        const bStatic = b.isStatic===undefined ? true : !!b.isStatic;
+        const aStatic = !!a.isStatic;
+        if (aStatic && bStatic) return null;
+        const invMassA = aStatic ? 0 : 1/(a.mass||1);
+        const invMassB = bStatic ? 0 : 1/(b.mass||1);
+        const totalInv = invMassA+invMassB; if (totalInv<=0) return null;
+        const bounce = Math.max(a.bounce||0, b.bounce||0);
+        const pushA = mtv.overlap*(invMassA/totalInv), pushB = mtv.overlap*(invMassB/totalInv);
+        if (!aStatic) {
+            a.poly.setPos(a.poly.x - mtv.axis.x*pushA, a.poly.y - mtv.axis.y*pushA);
+            const vn = a.vx*mtv.axis.x+a.vy*mtv.axis.y;
+            a.vx -= (1+bounce)*vn*mtv.axis.x; a.vy -= (1+bounce)*vn*mtv.axis.y;
+        }
+        if (!bStatic) {
+            b.poly.setPos(b.poly.x + mtv.axis.x*pushB, b.poly.y + mtv.axis.y*pushB);
+            const vn = b.vx*mtv.axis.x+b.vy*mtv.axis.y;
+            b.vx -= (1+bounce)*vn*mtv.axis.x; b.vy -= (1+bounce)*vn*mtv.axis.y;
+        }
+        return {axis:mtv.axis, overlap:mtv.overlap};
+    },
+
+    // --------------------------------------------------------
     // RESOLUTION AABB (manisy lanja/mass ho an'ny roa tonta,
     // tsy manosika ny isStatic===true, mizara push araka invMass)
+    // opts.slide=true : manova ny axis iray ihany (X na Y, ilay kely
+    // indrindra ny overlap), toy ny "slide along wall" amin'ny platformer
     // --------------------------------------------------------
-    resolveAABB(a, b) {
+    resolveAABB(a, b, opts) {
         const overlapX=Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x), overlapY=Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y);
         if (overlapX<=0 || overlapY<=0) return null;
         const bStatic = b.isStatic===undefined ? true : !!b.isStatic;
@@ -1038,17 +2143,65 @@ const Fizika = {
         const totalInv = invMassA+invMassB;
         if (totalInv<=0) return null;
         const bounce = Math.max(a.bounce||0, b.bounce||0);
+        const slide = opts && opts.slide;
         if (overlapX<overlapY) {
             const push = overlapX/totalInv; const dir = a.x+a.w/2 < b.x+b.w/2 ? -1 : 1;
-            if (!aStatic) { a.x += dir*push*invMassA; a.vx = -a.vx*bounce; }
-            if (!bStatic) { b.x -= dir*push*invMassB; b.vx = -b.vx*bounce; }
+            if (!aStatic) { a.x += dir*push*invMassA; a.vx = slide ? 0 : -a.vx*bounce; }
+            if (!bStatic) { b.x -= dir*push*invMassB; b.vx = slide ? 0 : -b.vx*bounce; }
             return {axis:'x', overlap:overlapX};
         } else {
             const push = overlapY/totalInv; const dir = a.y+a.h/2 < b.y+b.h/2 ? -1 : 1;
-            if (!aStatic) { a.y += dir*push*invMassA; a.vy = -a.vy*bounce; }
-            if (!bStatic) { b.y -= dir*push*invMassB; b.vy = -b.vy*bounce; }
+            if (!aStatic) { a.y += dir*push*invMassA; a.vy = slide ? 0 : -a.vy*bounce; }
+            if (!bStatic) { b.y -= dir*push*invMassB; b.vy = slide ? 0 : -b.vy*bounce; }
             return {axis:'y', overlap:overlapY};
         }
+    },
+
+    // --------------------------------------------------------
+    // RESOLUTION BORIBORY vs BORIBORY (circle-circle, mampiasa
+    // radius=w/2 an'ny entity). Manisy impulse manaraka ny normale
+    // (tsy toy ny AABB izay X/Y ihany — eto dia azimut feno)
+    // --------------------------------------------------------
+    resolveCircle(a, b) {
+        const ar=a.w/2, br=b.w/2, acx=a.x+ar, acy=a.y+ar, bcx=b.x+br, bcy=b.y+br;
+        const dx=bcx-acx, dy=bcy-acy; let dist=Math.hypot(dx,dy);
+        const minDist=ar+br; if (dist>=minDist) return null;
+        const bStatic = b.isStatic===undefined ? true : !!b.isStatic;
+        const aStatic = !!a.isStatic;
+        if (aStatic && bStatic) return null;
+        const invMassA = aStatic ? 0 : 1/(a.mass||1);
+        const invMassB = bStatic ? 0 : 1/(b.mass||1);
+        const totalInv = invMassA+invMassB; if (totalInv<=0) return null;
+        if (dist<EPSILON) { dist=EPSILON; }
+        const nx=dx/dist, ny=dy/dist, overlap=minDist-dist;
+        if (!aStatic) { a.x -= nx*overlap*(invMassA/totalInv); a.y -= ny*overlap*(invMassA/totalInv); }
+        if (!bStatic) { b.x += nx*overlap*(invMassB/totalInv); b.y += ny*overlap*(invMassB/totalInv); }
+        // Impulse manaraka ny normale (elastic, manisy bounce)
+        const bounce = Math.max(a.bounce||0, b.bounce||0);
+        const rvx=(b.vx||0)-(a.vx||0), rvy=(b.vy||0)-(a.vy||0);
+        const velAlongNormal = rvx*nx+rvy*ny;
+        if (velAlongNormal>0) return {axis:'n', overlap}; // efa mihataka
+        const j = -(1+bounce)*velAlongNormal/totalInv;
+        if (!aStatic) { a.vx -= j*invMassA*nx; a.vy -= j*invMassA*ny; }
+        if (!bStatic) { b.vx += j*invMassB*nx; b.vy += j*invMassB*ny; }
+        return {axis:'n', overlap};
+    },
+
+    // --------------------------------------------------------
+    // Fifandraisana samihafa araka ny shape (0=rect,1=circle) —
+    // ampiasain'ny Fizika.step() rehefa manisa collision pair
+    // --------------------------------------------------------
+    testPair(a, b) {
+        if (a.shape===1 && b.shape===1) return this.circleVsCircle(a.x+a.w/2,a.y+a.w/2,a.w/2, b.x+b.w/2,b.y+b.w/2,b.w/2);
+        if (a.shape===1) return this.circleVsRect(a.x+a.w/2,a.y+a.w/2,a.w/2, b.x,b.y,b.w,b.h);
+        if (b.shape===1) return this.circleVsRect(b.x+b.w/2,b.y+b.w/2,b.w/2, a.x,a.y,a.w,a.h);
+        return this.rectVsRect(a.x,a.y,a.w,a.h, b.x,b.y,b.w,b.h);
+    },
+    resolvePair(a, b, opts) {
+        if (a.shape===1 && b.shape===1) return this.resolveCircle(a, b);
+        // Circle vs Rect: heverina ho AABB tsotra (mifanaraka amin'ny
+        // habaky ny bounding-box an'ny circle), ampy ho an'ny platformer/arcade
+        return this.resolveAABB(a, b, opts);
     },
 
     // --------------------------------------------------------
@@ -1072,6 +2225,41 @@ const Fizika = {
     // Mamerina ny grid nampiasaina (azo averina ampiasaina raha
     // mila query manokana toy ny "iza no manodidina an'ity entity ity")
     // --------------------------------------------------------
+    // --------------------------------------------------------
+    // ✅ VAOVAO v4.3.1 — PHYSICS GROUPS: collision filtering matrix,
+    // mitovy amin'ny "Arcade Physics Groups" an'i Phaser. Mamorona
+    // anarana group (ohatra 'player','enemy','projectile') ho id
+    // (0-255) mifamatotra amin'ny V.physicsGroup[id], ary mamaritra
+    // MANAO COLLISION ve ny group roa (allow/deny matrix). Raha tsy
+    // misy rule voafaritra mihitsy, dia MIFANDONA ny rehetra
+    // (default = mahazatra, mitovy amin'ny tsy nampiasana Group).
+    // --------------------------------------------------------
+    Group: {
+        _names: new Map(),   // name -> id (0-255)
+        _nextId: 1,          // 0 = "default", tsy voatokana
+        _rules: new Map(),   // "idA:idB" (idA<=idB) -> boolean
+        define(name) {
+            if (this._names.has(name)) return this._names.get(name);
+            const id = this._nextId++; this._names.set(name, id); return id;
+        },
+        id(name) { return this._names.get(name); },
+        _key(a, b) { return a<=b ? a+':'+b : b+':'+a; },
+        // setCollision('player','enemy', true|false) : mamaritra raha
+        // mifandona ve ny group roa ireo. Azo atao 'A' ihany koa raha
+        // mikasika ny tenany ihany ny group (ohatra: projectile vs projectile)
+        setCollision(nameA, nameB, canCollide = true) {
+            const a = typeof nameA==='string' ? this.define(nameA) : nameA;
+            const b = typeof nameB==='string' ? this.define(nameB) : nameB;
+            this._rules.set(this._key(a,b), canCollide);
+        },
+        canCollide(groupA, groupB) {
+            if (groupA===0 || groupB===0) return true; // "default" group = mifandona amin'ny rehetra
+            const rule = this._rules.get(this._key(groupA,groupB));
+            return rule===undefined ? true : rule; // tsy misy rule voafaritra = mifandona (default)
+        },
+        reset() { this._names.clear(); this._rules.clear(); this._nextId=1; }
+    },
+
     step(V, dt, opts = {}) {
         const gravity = opts.gravity !== undefined ? opts.gravity : 980;
         const maxFallSpeed = opts.maxFallSpeed !== undefined ? opts.maxFallSpeed : 2000;
@@ -1094,8 +2282,40 @@ const Fizika = {
             const fr = V.friction[id] || 1;
             V.vx[id] *= Math.pow(fr, dt*60);
 
-            V.x[id] += V.vx[id]*dt;
-            V.y[id] += V.vy[id]*dt;
+            const moveX = V.vx[id]*dt, moveY = V.vy[id]*dt;
+
+            // ✅ VAOVAO v4.3.1 — CCD (Continuous Collision Detection):
+            // raha mihoatra ny habeny ny fandehanan'ilay entity amin'ity
+            // frame ity (tena haingana, ohatra bala), dia raycast hatramin'ny
+            // toerana vaovao mba tsy "hitapaka" rindrina manify (tunneling).
+            // Ilaina ihany raha V.ccd[id]=1 (tsy mahazatra, fa entity voafaritra
+            // manokana, satria mandany kokoa ny raycast noho ny AABB tsotra).
+            if (V.ccd[id] && V.isSolid[id]) {
+                const dist = Math.hypot(moveX, moveY);
+                const minDim = Math.min(V.w[id]||1, V.h[id]||1);
+                if (dist > minDim) {
+                    const cx = V.x[id]+V.w[id]/2, cy = V.y[id]+V.h[id]/2;
+                    const dirX = moveX/dist, dirY = moveY/dist;
+                    let closestT = 1, closestId = -1;
+                    for (let oid = 0; oid < V.count; oid++) {
+                        if (oid===id || !V.alive[oid] || !V.active[oid] || !V.isSolid[oid] || V.ccd[oid]) continue;
+                        if (!this.Group.canCollide(V.physicsGroup[id], V.physicsGroup[oid])) continue;
+                        const hit = this.rayRect(cx, cy, moveX, moveY, V.x[oid], V.y[oid], V.w[oid], V.h[oid]);
+                        if (hit && hit.t>=0 && hit.t<closestT) { closestT=hit.t; closestId=oid; }
+                    }
+                    if (closestId>=0) {
+                        // Mijanona kely alohan'ny hit point (tsy mandalo, tsy mitsotra ao anaty)
+                        const safeT = Math.max(0, closestT - (minDim/2)/dist);
+                        V.x[id] += moveX*safeT; V.y[id] += moveY*safeT;
+                        V.vx[id]=0; V.vy[id]=0;
+                        if (onCollide) onCollide(id, closestId, {axis:'ccd', overlap:0});
+                        continue; // tsy manao ny fametrahana x/y mahazatra intsony, vita ny handling
+                    }
+                }
+            }
+
+            V.x[id] += moveX;
+            V.y[id] += moveY;
 
             if (bounds) {
                 if (V.x[id] < bounds.x) { V.x[id]=bounds.x; V.vx[id]=-V.vx[id]*(V.bounce[id]||0); }
@@ -1125,10 +2345,13 @@ const Fizika = {
                     if (checked.has(key)) continue;
                     checked.add(key);
                     if (V.isStatic[id] && V.isStatic[otherId]) continue;
-                    if (!this.rectVsRect(V.x[id],V.y[id],V.w[id],V.h[id], V.x[otherId],V.y[otherId],V.w[otherId],V.h[otherId])) continue;
-                    const a = {x:V.x[id],y:V.y[id],w:V.w[id],h:V.h[id],vx:V.vx[id],vy:V.vy[id],mass:V.mass[id],bounce:V.bounce[id],isStatic:!!V.isStatic[id]};
-                    const b = {x:V.x[otherId],y:V.y[otherId],w:V.w[otherId],h:V.h[otherId],vx:V.vx[otherId],vy:V.vy[otherId],mass:V.mass[otherId],bounce:V.bounce[otherId],isStatic:!!V.isStatic[otherId]};
-                    const hit = this.resolveAABB(a, b);
+                    // ✅ Physics Groups filter: raha voafaritra fa TSY mifandona
+                    // ireo group roa ireo, dia tsy manao geometry test intsony.
+                    if (!this.Group.canCollide(V.physicsGroup[id], V.physicsGroup[otherId])) continue;
+                    const a = {x:V.x[id],y:V.y[id],w:V.w[id],h:V.h[id],vx:V.vx[id],vy:V.vy[id],mass:V.mass[id],bounce:V.bounce[id],isStatic:!!V.isStatic[id],shape:V.shape[id]};
+                    const b = {x:V.x[otherId],y:V.y[otherId],w:V.w[otherId],h:V.h[otherId],vx:V.vx[otherId],vy:V.vy[otherId],mass:V.mass[otherId],bounce:V.bounce[otherId],isStatic:!!V.isStatic[otherId],shape:V.shape[otherId]};
+                    if (!this.testPair(a, b)) continue;
+                    const hit = this.resolvePair(a, b, opts);
                     if (hit) {
                         V.x[id]=a.x; V.y[id]=a.y; V.vx[id]=a.vx; V.vy[id]=a.vy;
                         V.x[otherId]=b.x; V.y[otherId]=b.y; V.vx[otherId]=b.vx; V.vy[otherId]=b.vy;
@@ -1141,24 +2364,135 @@ const Fizika = {
     }
 };
 class Drafitra {
-    constructor(opts = {}) { this.tileSize=opts.tileSize||32; this.width=opts.width||20; this.height=opts.height||15; this.layers=[]; this.tilesets=[]; }
-    addLayer(name, data, opts = {}) { this.layers.push({name,data,visible:opts.visible!==false,solid:opts.solid||false,properties:opts.properties||{}}); return this; }
-    static fromTiled(json, tilesetKey) {
+    constructor(opts = {}) { this.tileSize=opts.tileSize||32; this.width=opts.width||20; this.height=opts.height||15; this.layers=[]; this.tilesets=[]; this.objects=[]; this.tileAnimations=new Map(); this._animTime=0; }
+    addLayer(name, data, opts = {}) { this.layers.push({name,data,visible:opts.visible!==false,solid:opts.solid||false,properties:opts.properties||{},tint:opts.tint!==undefined?opts.tint:0xFFFFFFFF,opacity:opts.opacity!==undefined?opts.opacity:1}); return this; }
+    // --------------------------------------------------------
+    // ✅ VAOVAO v4.3.3 — fromTiled TENA FENO:
+    //  - TILE ANIMATIONS: ts.tiles[].animation (frame-list voafaritra
+    //    tao amin'ny Tiled Tileset Editor) — tehirizina ao amin'ny
+    //    this.tileAnimations (localTileId -> [{tileid,duration}])
+    //  - LAYER TINT/OPACITY: layer.tintcolor (#RRGGBB) sy layer.opacity
+    //  - OBJECT ROTATION/SCALE: obj.rotation (degrees), obj.gid (raha
+    //    "tile object", misy width/height=scaled size)
+    //  - GID FLIP FLAGS: ny 3 bit ambony indrindra amin'ny GID (32-bit)
+    //    dia horizontal/vertical/diagonal flip, tsiny an'ny Tiled rehefa
+    //    "mihodina" tile tsirairay ao anaty tilelayer (tsy object)
+    //  - CUSTOM PROPERTIES: efa vita (_propsToObj), fa ampiana eto koa
+    //    ho an'ny tileset.tiles[].properties (per-tile metadata, ohatra
+    //    "damage":10 amin'ny tile "spike")
+    // --------------------------------------------------------
+    static fromTiled(json, tilesetKeyOrMap) {
         const map=new Drafitra({tileSize:json.tilewidth,width:json.width,height:json.height});
-        for(const layer of json.layers||[]){if(layer.type==='tilelayer'){const grid=[];for(let y=0;y<layer.height;y++)grid.push(layer.data.slice(y*layer.width,(y+1)*layer.width));const props=layer.properties||[];const solid=props.find(p=>p.name==='solid'&&p.value);map.addLayer(layer.name,grid,{solid:!!solid,visible:layer.visible!==false});}}
-        if(tilesetKey&&json.tilesets&&json.tilesets[0])map.tilesets.push({key:tilesetKey,columns:json.tilesets[0].columns,firstGid:json.tilesets[0].firstgid});
+        for(const layer of json.layers||[]){
+            if(layer.type==='tilelayer'){
+                const grid=[];for(let y=0;y<layer.height;y++)grid.push(layer.data.slice(y*layer.width,(y+1)*layer.width));
+                const props=layer.properties||[];const solid=props.find(p=>p.name==='solid'&&p.value);
+                const tint = layer.tintcolor ? Drafitra._hexToColor(layer.tintcolor) : 0xFFFFFFFF;
+                map.addLayer(layer.name,grid,{solid:!!solid,visible:layer.visible!==false,properties:Drafitra._propsToObj(props),tint,opacity:layer.opacity!==undefined?layer.opacity:1});
+            } else if (layer.type==='objectgroup') {
+                for (const obj of layer.objects||[]) {
+                    map.objects.push({
+                        id: obj.id, name: obj.name||'', type: obj.type||obj.class||'',
+                        x: obj.x, y: obj.y, w: obj.width||0, h: obj.height||0,
+                        rotation: (obj.rotation||0)*Math.PI/180, // degrees->radians
+                        gid: obj.gid||0, // >0 raha "tile object" (sprite voafidy avy amin'ny tileset)
+                        point: !!obj.point, ellipse: !!obj.ellipse,
+                        layer: layer.name,
+                        properties: Drafitra._propsToObj(obj.properties||[])
+                    });
+                }
+            }
+        }
+        // tilesetKeyOrMap: string (tileset iray) NA object {tilesetName: rendererKey, ...} (maromaro)
+        if (json.tilesets && json.tilesets.length) {
+            for (const ts of json.tilesets) {
+                const name = ts.name || (ts.source ? ts.source.replace(/\.[^.]+$/,'') : null);
+                let rendererKey = null;
+                if (typeof tilesetKeyOrMap === 'string') rendererKey = tilesetKeyOrMap;
+                else if (tilesetKeyOrMap && name) rendererKey = tilesetKeyOrMap[name];
+                if (!rendererKey) continue;
+                const columns = ts.columns || (ts.imagewidth && ts.tilewidth ? Math.floor(ts.imagewidth/ts.tilewidth) : 0);
+                map.tilesets.push({key:rendererKey, columns, firstGid:ts.firstgid, tileCount: ts.tilecount||0});
+                // Tile animations + per-tile custom properties (ts.tiles[])
+                for (const tileDef of ts.tiles||[]) {
+                    const globalId = ts.firstgid + tileDef.id;
+                    if (tileDef.animation && tileDef.animation.length) {
+                        map.tileAnimations.set(globalId, tileDef.animation.map(f => ({tileid: ts.firstgid+f.tileid, duration: f.duration})));
+                    }
+                    if (tileDef.properties && tileDef.properties.length) {
+                        if (!map._tileProperties) map._tileProperties = new Map();
+                        map._tileProperties.set(globalId, Drafitra._propsToObj(tileDef.properties));
+                    }
+                }
+            }
+        }
         return map;
     }
+    static _propsToObj(propsArr) { const o={}; for (const p of propsArr||[]) o[p.name]=p.value; return o; }
+    static _hexToColor(hex) { hex=hex.replace('#',''); if(hex.length===6)hex+='FF'; return parseInt(hex,16)>>>0; }
+    // GID flip flags (Tiled): 3 bit ambony amin'ny 32-bit GID
+    static FLIP_H = 0x80000000;
+    static FLIP_V = 0x40000000;
+    static FLIP_D = 0x20000000;
+    static decodeGid(rawGid) {
+        return {
+            gid: rawGid & ~(Drafitra.FLIP_H|Drafitra.FLIP_V|Drafitra.FLIP_D),
+            flipH: !!(rawGid & Drafitra.FLIP_H),
+            flipV: !!(rawGid & Drafitra.FLIP_V),
+            flipD: !!(rawGid & Drafitra.FLIP_D)
+        };
+    }
+    getTileProperties(gid) { return this._tileProperties ? (this._tileProperties.get(gid)||null) : null; }
+    // Mitady tileset mifanaraka amin'ity GID ity (raha maro tileset, ny GID
+    // farany latsaka amin'ny firstGid no ilay tokony ho izy)
+    _tilesetForGid(gid) {
+        let best=null;
+        for (const ts of this.tilesets) if (gid>=ts.firstGid && (!best || ts.firstGid>best.firstGid)) best=ts;
+        return best;
+    }
+    getObjectsByType(type) { return this.objects.filter(o=>o.type===type); }
+    getObjectByName(name) { return this.objects.find(o=>o.name===name); }
     getTile(layerName, x, y) { const layer=this.layers.find(l=>l.name===layerName); if(!layer)return 0; const tx=Math.floor(x/this.tileSize),ty=Math.floor(y/this.tileSize); if(ty<0||ty>=layer.data.length)return 0; if(tx<0||tx>=layer.data[ty].length)return 0; return layer.data[ty][tx]; }
     setTile(layerName, x, y, value) { const layer=this.layers.find(l=>l.name===layerName); if(!layer)return; const tx=Math.floor(x/this.tileSize),ty=Math.floor(y/this.tileSize); if(ty>=0&&ty<layer.data.length&&tx>=0&&tx<layer.data[ty].length)layer.data[ty][tx]=value; }
     isSolidAt(x, y) { for(const layer of this.layers){if(!layer.solid)continue;const tx=Math.floor(x/this.tileSize),ty=Math.floor(y/this.tileSize);if(ty>=0&&ty<layer.data.length&&tx>=0&&tx<layer.data[ty].length&&layer.data[ty][tx]!==0)return true;} return false; }
+    // ✅ VAOVAO v4.3.3 — Ilaina antsoina isaky ny frame (mialoha ny render())
+    // mba hampandehanana ny tile animations (mizaha ny fotoana lasa,
+    // manova ny "displayed tile" ho an'ny GID voafaritra animation).
+    updateAnimations(dtMs) {
+        if (!this.tileAnimations.size) return;
+        this._animTime += dtMs;
+        if (!this._animFrameCache) this._animFrameCache = new Map();
+        for (const [gid, frames] of this.tileAnimations) {
+            const totalDur = frames.reduce((s,f)=>s+f.duration,0);
+            let t = this._animTime % totalDur;
+            for (const f of frames) { if (t < f.duration) { this._animFrameCache.set(gid, f.tileid); break; } t -= f.duration; }
+        }
+    }
     render(renderer, camera, tilesetKey) {
         const t=this.tileSize, bounds=camera.getBounds();
         const x0=Math.max(0,Math.floor(bounds.x/t)), y0=Math.max(0,Math.floor(bounds.y/t));
         const x1=Math.min(this.width,Math.ceil(bounds.right/t)+1), y1=Math.min(this.height,Math.ceil(bounds.bottom/t)+1);
-        const tileset=this.tilesets.find(ts=>ts.key===tilesetKey); const ts=renderer.getTexture(tilesetKey);
-        if(!ts||!tileset) return;
-        for(const layer of this.layers){if(!layer.visible)continue;for(let y=y0;y<y1;y++){if(!layer.data[y])continue;for(let x=x0;x<x1;x++){const tileId=layer.data[y][x];if(!tileId||tileId===0)continue;const idx=tileId-tileset.firstGid;const col=idx%tileset.columns;const row=Math.floor(idx/tileset.columns);renderer.drawSprite(x*t,y*t,t,t,col*t,row*t,t,t,0xFFFFFFFF,tilesetKey);}}}
+        // Raha tsy voatondro ny tilesetKey, mampiasa ny multi-tileset resolution (_tilesetForGid)
+        const singleTileset = tilesetKey ? this.tilesets.find(ts=>ts.key===tilesetKey) : null;
+        for(const layer of this.layers){if(!layer.visible)continue;
+            const layerColor = Drafitra._packLayerColor(layer.tint, layer.opacity);
+            for(let y=y0;y<y1;y++){if(!layer.data[y])continue;for(let x=x0;x<x1;x++){
+            const rawGid=layer.data[y][x];if(!rawGid||rawGid===0)continue;
+            const {gid, flipH, flipV} = Drafitra.decodeGid(rawGid);
+            // Tile animation override: raha ity GID ity dia manana animation
+            // voafaritra, dia asehoy ny "frame ankehitriny" fa tsy ny GID tsotra.
+            const displayGid = (this._animFrameCache && this._animFrameCache.get(gid)) || gid;
+            const tileset = singleTileset || this._tilesetForGid(displayGid);
+            if (!tileset) continue;
+            const ts = renderer.getTexture(tileset.key); if (!ts) continue;
+            const idx=displayGid-tileset.firstGid;const col=idx%tileset.columns;const row=Math.floor(idx/tileset.columns);
+            renderer.drawSprite(x*t,y*t,t,t,col*t,row*t,t,t,layerColor,tileset.key,flipH,flipV);
+        }}}
+    }
+    static _packLayerColor(tint, opacity) {
+        const r=(tint>>>24)&0xFF, g=(tint>>>16)&0xFF, b=(tint>>>8)&0xFF, baseA=tint&0xFF;
+        const a = Math.round(baseA*Z.clamp(opacity,0,1));
+        return ((r<<24)|(g<<16)|(b<<8)|a)>>>0;
     }
 }
 const Lalana = {
@@ -1269,11 +2603,11 @@ Teny.add('en', {hello:'Hello {name}!',start:'Start',pause:'Pause',quit:'Quit'});
 class Toetrandro {
     constructor(w = 800, h = 600) { this.width=w; this.height=h; this.mode='none'; this.particles=[]; this.wind=0; this.lightning=0; }
     setMode(mode, intensity = 1) { this.mode=mode; this.particles=[]; const count=mode==='snow'?100*intensity:200*intensity; for(let i=0;i<count;i++)this.particles.push(this._createParticle()); }
-    _createParticle() { return {x:Math.random()*this.width, y:Math.random()*this.height, speed:this.mode==='snow'?Z.rand(20,60):Z.rand(300,600), size:this.mode==='snow'?Z.rand(2,5):Z.rand(1,2), length:this.mode==='snow'?0:Z.rand(10,20), phase:Math.random()*PI2}; }
+    _createParticle() { return {x:Kisendrasendra.global.next()*this.width, y:Kisendrasendra.global.next()*this.height, speed:this.mode==='snow'?Z.rand(20,60):Z.rand(300,600), size:this.mode==='snow'?Z.rand(2,5):Z.rand(1,2), length:this.mode==='snow'?0:Z.rand(10,20), phase:Kisendrasendra.global.next()*PI2}; }
     update(dt) {
         this.wind=Math.sin(performance.now()*0.0003)*50;
-        for(const p of this.particles){if(this.mode==='snow'){p.y+=p.speed*dt;p.x+=Math.sin(p.phase+=0.02*dt)*30*dt+this.wind*0.3*dt;}else if(this.mode==='rain'){p.y+=p.speed*dt;p.x+=this.wind*dt;}if(p.y>this.height+20){p.y=-20;p.x=Math.random()*this.width;}if(p.x>this.width+20)p.x=-20;if(p.x<-20)p.x=this.width+20;}
-        if(this.mode==='storm'){if(Math.random()<0.005){this.lightning=1;Feo.mamorona('explode');}if(this.lightning>0)this.lightning-=dt*3;}
+        for(const p of this.particles){if(this.mode==='snow'){p.y+=p.speed*dt;p.x+=Math.sin(p.phase+=0.02*dt)*30*dt+this.wind*0.3*dt;}else if(this.mode==='rain'){p.y+=p.speed*dt;p.x+=this.wind*dt;}if(p.y>this.height+20){p.y=-20;p.x=Kisendrasendra.global.next()*this.width;}if(p.x>this.width+20)p.x=-20;if(p.x<-20)p.x=this.width+20;}
+        if(this.mode==='storm'){if(Kisendrasendra.global.next()<0.005){this.lightning=1;Feo.mamorona('explode');}if(this.lightning>0)this.lightning-=dt*3;}
     }
     render(renderer) {
         if(this.mode==='none')return; const color=this.mode==='snow'?0xDDFFFFFF:0xAADDFFFF;
@@ -1290,9 +2624,147 @@ class DebugDrafitra {
     point(x,y,color=0xFFFF00FF) { if(!this.enabled)return; this.renderer.drawRect(x-2,y-2,4,4,color); }
 }
 class Antontanisa {
-    constructor() { this.fps=0; this.frameTime=0; this._frames=0; this._time=0; this.entityCount=0; this.drawCalls=0; }
-    update(dtMs) { this._frames++; this._time+=dtMs; this.frameTime=dtMs; if(this._time>=1000){this.fps=Math.round(this._frames*1000/this._time);this._frames=0;this._time=0;} }
+    constructor() { this.fps=0; this.frameTime=0; this._frames=0; this._time=0; this.entityCount=0; this.drawCalls=0; this._fpsHistory=[]; this._maxHistory=90; }
+    update(dtMs) {
+        this._frames++; this._time+=dtMs; this.frameTime=dtMs;
+        if(this._time>=1000){this.fps=Math.round(this._frames*1000/this._time);this._frames=0;this._time=0;this._fpsHistory.push(this.fps);if(this._fpsHistory.length>this._maxHistory)this._fpsHistory.shift();}
+    }
     render(renderer) {}
+}
+
+// ============================================================
+// ✅ VAOVAO v4.2.3 — MpitantanaFanamboarana (Debug Overlay DOM)
+// "DevTools" kely miorina eo ambonin'ny lalao mihitsy: FPS/frame-time
+// graph, isan'ny entity, drawCalls, memory heap JS (raha misy
+// performance.memory), ary console.log kely azo ampiasaina na dia
+// tsy misy F12 aza (ilaina indrindra amin'ny mobile debugging).
+// Tsy fanoloana ny Phaser DevTools (izay browser extension feno),
+// fa fitaovana ao anaty lalao mihitsy, tsy misy dependency.
+// ============================================================
+// ============================================================
+// ✅ VAOVAO v4.3.3 — MpitantanaFanamboarana INTERACTIVE:
+// Tabs 3 (Stats/Entities/Physics), entity inspector azo tsindriana
+// mba hijery ny fields (x,y,vx,vy,mass,...) an'ny entity ID iray,
+// ary "physics debug toggle" (showColliders) izay ampiasain'ny
+// Sehatra.render() raha te-hampiseho ny AABB/circle collider eo
+// ambonin'ny sprite. Tsy fanoloana ny Phaser DevTools browser
+// extension, fa "on-screen inspector" ao anaty lalao mihitsy.
+// ============================================================
+class MpitantanaFanamboarana {
+    constructor(opts = {}) {
+        this.visible = opts.visible !== false;
+        this._logs = []; this._maxLogs = opts.maxLogs || 30;
+        this._el = null; this._logEl = null; this._statsEl = null; this._graphEl = null;
+        this._tabs = ['Stats','Entities','Physics']; this._activeTab = 'Stats';
+        this._tabButtons = {}; this._entityListEl = null; this._entityDetailEl = null; this._physicsToggleEl = null;
+        this.showColliders = false;    // ✅ physics debug toggle: raha true, Sehatra.render() mety hampiseho collider outline
+        this.selectedEntity = -1;      // entity ID voafidy ao amin'ny inspector (-1 = tsy misy)
+        this._vondrona = opts.vondrona || null; // Vondrona ECS reference, ho an'ny entity inspector
+        if (typeof document !== 'undefined') this._buildDOM();
+    }
+    setVondrona(V) { this._vondrona = V; }
+    _buildDOM() {
+        const el = document.createElement('div');
+        el.style.cssText = 'position:fixed;top:4px;left:4px;z-index:99999;font:11px monospace;background:rgba(0,0,0,0.85);color:#0f0;padding:6px 8px;border-radius:4px;pointer-events:auto;max-width:300px;line-height:1.4;user-select:none;';
+        // Tabs
+        const tabBar = document.createElement('div'); tabBar.style.cssText='display:flex;gap:4px;margin-bottom:4px;';
+        for (const tab of this._tabs) {
+            const btn = document.createElement('button');
+            btn.textContent = tab;
+            btn.style.cssText = 'font:10px monospace;background:#222;color:#0f0;border:1px solid #0f0;border-radius:2px;padding:2px 6px;cursor:pointer;';
+            btn.onclick = () => this.setTab(tab);
+            tabBar.appendChild(btn); this._tabButtons[tab] = btn;
+        }
+        el.appendChild(tabBar);
+        // Stats panel
+        this._statsEl = document.createElement('div');
+        this._graphEl = document.createElement('canvas'); this._graphEl.width=120; this._graphEl.height=30; this._graphEl.style.cssText='display:block;margin-top:4px;';
+        this._logEl = document.createElement('div'); this._logEl.style.cssText='margin-top:4px;color:#ccc;max-height:120px;overflow:hidden;white-space:pre;';
+        // Entities panel
+        this._entityListEl = document.createElement('div'); this._entityListEl.style.cssText='max-height:100px;overflow-y:auto;display:none;';
+        this._entityDetailEl = document.createElement('div'); this._entityDetailEl.style.cssText='margin-top:4px;color:#0ff;white-space:pre;display:none;';
+        // Physics panel
+        this._physicsToggleEl = document.createElement('label'); this._physicsToggleEl.style.cssText='display:none;align-items:center;gap:4px;cursor:pointer;';
+        const checkbox = document.createElement('input'); checkbox.type='checkbox';
+        checkbox.onchange = (e) => { this.showColliders = e.target.checked; };
+        const label = document.createElement('span'); label.textContent = 'Asehoy ny Collider (AABB/Circle)';
+        this._physicsToggleEl.appendChild(checkbox); this._physicsToggleEl.appendChild(label);
+        this._physicsCheckbox = checkbox;
+
+        el.appendChild(this._statsEl); el.appendChild(this._graphEl); el.appendChild(this._logEl);
+        el.appendChild(this._entityListEl); el.appendChild(this._entityDetailEl);
+        el.appendChild(this._physicsToggleEl);
+        document.body && document.body.appendChild(el);
+        this._el = el;
+        this._applyTabVisibility();
+    }
+    setTab(name) {
+        if (!this._tabs.includes(name)) return;
+        this._activeTab = name; this._applyTabVisibility();
+    }
+    _applyTabVisibility() {
+        if (!this._el) return;
+        const isStats = this._activeTab==='Stats', isEntities = this._activeTab==='Entities', isPhysics = this._activeTab==='Physics';
+        this._statsEl.style.display = isStats ? 'block' : 'none';
+        this._graphEl.style.display = isStats ? 'block' : 'none';
+        this._logEl.style.display = isStats ? 'block' : 'none';
+        this._entityListEl.style.display = isEntities ? 'block' : 'none';
+        this._entityDetailEl.style.display = (isEntities && this.selectedEntity>=0) ? 'block' : 'none';
+        this._physicsToggleEl.style.display = isPhysics ? 'flex' : 'none';
+        for (const tab in this._tabButtons) this._tabButtons[tab].style.background = tab===this._activeTab ? '#0f5' : '#222';
+        for (const tab in this._tabButtons) this._tabButtons[tab].style.color = tab===this._activeTab ? '#000' : '#0f0';
+    }
+    selectEntity(id) { this.selectedEntity = id; this._applyTabVisibility(); this._renderEntityDetail(); }
+    _renderEntityList() {
+        if (!this._vondrona || this._activeTab!=='Entities') return;
+        const V = this._vondrona; const rows = [];
+        for (let id=0; id<V.count; id++) {
+            if (!V.alive[id]) continue;
+            rows.push(`<div data-id="${id}" style="cursor:pointer;padding:1px 2px;${id===this.selectedEntity?'background:#050;':''}">#${id} (${V.x[id].toFixed(0)},${V.y[id].toFixed(0)})</div>`);
+        }
+        this._entityListEl.innerHTML = rows.join('');
+        // Fampiasana event delegation (tsindrio ny lisitra mba hisafidianana entity)
+        this._entityListEl.onclick = (e) => {
+            const target = e.target.closest ? e.target.closest('[data-id]') : null;
+            if (target) this.selectEntity(parseInt(target.getAttribute('data-id'), 10));
+        };
+    }
+    _renderEntityDetail() {
+        if (!this._vondrona || this.selectedEntity<0) return;
+        const V = this._vondrona, id = this.selectedEntity;
+        if (!V.alive[id]) { this._entityDetailEl.textContent = `#${id}: tsy velona intsony`; return; }
+        this._entityDetailEl.textContent =
+            `#${id}\nx:${V.x[id].toFixed(1)} y:${V.y[id].toFixed(1)}\n`+
+            `vx:${V.vx[id].toFixed(1)} vy:${V.vy[id].toFixed(1)}\n`+
+            `w:${V.w[id]} h:${V.h[id]} mass:${V.mass[id]}\n`+
+            `isStatic:${!!V.isStatic[id]} isSolid:${!!V.isSolid[id]}\n`+
+            `group:${V.physicsGroup[id]} shape:${V.shape[id]}`;
+    }
+    log(msg) {
+        this._logs.push(String(msg)); if (this._logs.length > this._maxLogs) this._logs.shift();
+    }
+    toggle() { this.visible = !this.visible; if (this._el) this._el.style.display = this.visible ? 'block' : 'none'; }
+    // stats: Antontanisa | {fps, frameTime, entityCount, drawCalls}
+    update(stats) {
+        if (!this.visible || !this._el) return;
+        const mem = (typeof performance !== 'undefined' && performance.memory)
+            ? (performance.memory.usedJSHeapSize/1048576).toFixed(1)+' Mo / '+(performance.memory.jsHeapSizeLimit/1048576).toFixed(0)+' Mo'
+            : 'tsy hita';
+        this._statsEl.textContent =
+            `FPS: ${stats.fps} (${stats.frameTime.toFixed(1)}ms)\n`+
+            `Entity: ${stats.entityCount}  DrawCalls: ${stats.drawCalls}\n`+
+            `Heap: ${mem}`;
+        if (stats._fpsHistory && this._graphEl.getContext) {
+            const ctx = this._graphEl.getContext('2d'); const w=this._graphEl.width, h=this._graphEl.height;
+            ctx.clearRect(0,0,w,h); ctx.fillStyle='#0f0';
+            const hist = stats._fpsHistory, n = hist.length, bw = w/Math.max(n,1);
+            for (let i=0;i<n;i++) { const barH = Z.clamp(hist[i]/60,0,1)*h; ctx.fillRect(i*bw, h-barH, Math.max(1,bw-1), barH); }
+        }
+        this._logEl.textContent = this._logs.join('\n');
+        this._renderEntityList();
+        this._renderEntityDetail();
+    }
+    destroy() { if (this._el && this._el.parentNode) this._el.parentNode.removeChild(this._el); }
 }
 class TsipikaFotoana {
     constructor() { this.events=[]; this.time=0; this.index=0; this.finished=false; }
@@ -1348,7 +2820,7 @@ class Zavona {
 class MpitantanaEfitra { constructor(renderer){this.renderer=renderer;this.effects=[];} add(effect){this.effects.push(effect);} apply(inputTex){let current=inputTex;for(const effect of this.effects)current=effect.apply(current);return current;} }
 class EfitraTaloha { constructor(intensity=0.5){this.intensity=intensity;} apply(tex){return tex;} }
 class Famirapiratana { constructor(threshold=0.8,intensity=1){this.threshold=threshold;this.intensity=intensity;} apply(tex){return tex;} }
-class Hozongozona { constructor(){this.intensity=0;this.duration=0;this.time=0;this.offsetX=0;this.offsetY=0;} trigger(intensity,duration){this.intensity=intensity;this.duration=duration;this.time=0;} update(dt){if(this.time<this.duration){this.time+=dt*1000;const factor=1-this.time/this.duration;this.offsetX=(Math.random()-0.5)*this.intensity*factor;this.offsetY=(Math.random()-0.5)*this.intensity*factor;}else{this.offsetX=0;this.offsetY=0;}} }
+class Hozongozona { constructor(){this.intensity=0;this.duration=0;this.time=0;this.offsetX=0;this.offsetY=0;} trigger(intensity,duration){this.intensity=intensity;this.duration=duration;this.time=0;} update(dt){if(this.time<this.duration){this.time+=dt*1000;const factor=1-this.time/this.duration;this.offsetX=(Kisendrasendra.global.next()-0.5)*this.intensity*factor;this.offsetY=(Kisendrasendra.global.next()-0.5)*this.intensity*factor;}else{this.offsetX=0;this.offsetY=0;}} }
 class Entana {
     constructor(size = 20) { this.size=size;this.slots=new Array(size).fill(null); }
     add(item) { for(let i=0;i<this.size;i++){if(this.slots[i]&&this.slots[i].id===item.id){this.slots[i].qty+=item.qty||1;return true;}}for(let i=0;i<this.size;i++){if(!this.slots[i]){this.slots[i]={...item,qty:item.qty||1};return true;}}return false; }
@@ -1369,10 +2841,94 @@ class JoystickVirtoaly {
         else{const t=touches.find(tt=>tt.id===this.touchId);if(t){const dx=t.x-this.ox,dy=t.y-this.oy,len=Math.hypot(dx,dy)||1,m=Math.min(len,this.radius);this.dx=(dx/len)*(m/this.radius);this.dy=(dy/len)*(m/this.radius);}else{this.active=false;this.dx=0;this.dy=0;this.touchId=-1;}}
     }
 }
+// ============================================================
+// ✅ VAOVAO v4.3.0 — PLUGIN SYSTEM MATOTRA (Plugin Cache toy an'i Phaser)
+// Lifecycle feno: init(game) -> start() -> update(dt) -> destroy()
+// Roa karazana fametrahana:
+//  - installGlobal(key, PluginClass, opts) : instance TOKANA, mandrakariva
+//    miasa (mitovy amin'ny system global toy ny Feo/Fanindry)
+//  - installScene(scene, key, PluginClass, opts) : instance an'ny scene
+//    tokana, destroy() automatique @ scene shutdown (mifamatotra amin'ny
+//    MpitantanaSehatra._shutdownScene)
+//
+// Endriky ny Plugin (class na factory object), rehetra opsionaly:
+//   { name, version, init(game){}, start(){}, update(dt){}, destroy(){} }
+// ============================================================
 class MpitantanaFanampiny {
-    constructor() { this.plugins=new Map(); }
-    install(plugin) { if(this.plugins.has(plugin.name)){console.warn(`Plugin "${plugin.name}" already installed`);return false;}try{plugin.install();plugin.installed=true;this.plugins.set(plugin.name,plugin);console.log(`Plugin "${plugin.name}" v${plugin.version} installed`);return true;}catch(e){console.error(`Failed to install plugin "${plugin.name}":`,e);return false;} }
-    uninstall(name) { const plugin=this.plugins.get(name);if(plugin){if(plugin.uninstall)plugin.uninstall();this.plugins.delete(name);} }
+    constructor(game) {
+        this.game = game || null;
+        this._registry = new Map();   // name -> PluginClass (registered, mbola tsy miasa)
+        this.plugins = new Map();     // name -> instance (global, miasa)
+        this._sceneCache = new WeakMap(); // scene -> Map(name -> instance)
+    }
+    // Mametraka ny "class" ao anaty registry, azo installGlobal/installScene
+    // avy eo amin'ny fotoana hafa (mitovy amin'ny PluginCache.register an'i Phaser)
+    register(name, PluginClass) { this._registry.set(name, PluginClass); return this; }
+
+    _instantiate(PluginClass, opts) {
+        const inst = typeof PluginClass === 'function' ? new PluginClass(opts) : Object.create(PluginClass);
+        if (typeof PluginClass !== 'function' && opts) Object.assign(inst, opts);
+        return inst;
+    }
+
+    installGlobal(name, PluginClassOrNull, opts = {}) {
+        if (this.plugins.has(name)) { console.warn(`Plugin global "${name}" efa installed`); return this.plugins.get(name); }
+        const PluginClass = PluginClassOrNull || this._registry.get(name);
+        if (!PluginClass) { console.error(`Plugin "${name}" tsy hita (register() aloha)`); return null; }
+        const inst = this._instantiate(PluginClass, opts);
+        inst.name = name; inst.game = this.game;
+        try {
+            if (inst.init) inst.init(this.game);
+            if (inst.start) inst.start();
+            this.plugins.set(name, inst);
+            return inst;
+        } catch (e) { console.error(`Plugin global "${name}" init error:`, e); return null; }
+    }
+    uninstallGlobal(name) { const p=this.plugins.get(name); if (p) { if (p.destroy) p.destroy(); this.plugins.delete(name); } }
+    getGlobal(name) { return this.plugins.get(name); }
+    updateGlobal(dt) { for (const p of this.plugins.values()) if (p.update) p.update(dt); }
+
+    // Scene-scoped: ny plugin dia miasa ho an'ilay scene voatondro ihany,
+    // ary destroy()-ina rehefa ny scene mihitsy no vita shutdown.
+    installScene(scene, name, PluginClassOrNull, opts = {}) {
+        if (!this._sceneCache.has(scene)) this._sceneCache.set(scene, new Map());
+        const cache = this._sceneCache.get(scene);
+        if (cache.has(name)) { console.warn(`Plugin "${name}" efa installed amin'ity scene ity`); return cache.get(name); }
+        const PluginClass = PluginClassOrNull || this._registry.get(name);
+        if (!PluginClass) { console.error(`Plugin "${name}" tsy hita (register() aloha)`); return null; }
+        const inst = this._instantiate(PluginClass, opts);
+        inst.name = name; inst.game = this.game; inst.scene = scene;
+        try {
+            if (inst.init) inst.init(this.game, scene);
+            if (inst.start) inst.start();
+            cache.set(name, inst);
+            // Fampifamatorana amin'ny lifecycle an'ny Sehatra: rehefa
+            // shutdown ilay scene, dia destroy() daholo ny plugin an-scene.
+            const origShutdown = scene.shutdown ? scene.shutdown.bind(scene) : null;
+            if (!scene._pluginHookInstalled) {
+                scene._pluginHookInstalled = true;
+                scene.shutdown = () => {
+                    if (origShutdown) origShutdown();
+                    const c = this._sceneCache.get(scene);
+                    if (c) { for (const pl of c.values()) if (pl.destroy) pl.destroy(); c.clear(); }
+                };
+            }
+            return inst;
+        } catch (e) { console.error(`Plugin scene "${name}" init error:`, e); return null; }
+    }
+    getScenePlugin(scene, name) { const c=this._sceneCache.get(scene); return c ? c.get(name) : undefined; }
+    updateScenePlugins(scene, dt) { const c=this._sceneCache.get(scene); if (c) for (const p of c.values()) if (p.update) p.update(dt); }
+
+    // --- Retro-compatibilité amin'ny API taloha (install/uninstall/get/list) ---
+    install(plugin) {
+        if (this.plugins.has(plugin.name)) { console.warn(`Plugin "${plugin.name}" already installed`); return false; }
+        try {
+            if (plugin.install) plugin.install(); else if (plugin.init) plugin.init(this.game);
+            plugin.installed = true; this.plugins.set(plugin.name, plugin);
+            return true;
+        } catch (e) { console.error(`Failed to install plugin "${plugin.name}":`, e); return false; }
+    }
+    uninstall(name) { const plugin=this.plugins.get(name); if (plugin) { if (plugin.uninstall) plugin.uninstall(); else if (plugin.destroy) plugin.destroy(); this.plugins.delete(name); } }
     get(name) { return this.plugins.get(name); }
     list() { return Array.from(this.plugins.keys()); }
 }
@@ -1389,13 +2945,20 @@ class Lalao {
         this.camera=new Kamera(width,height);this.timer=new Famataranandro();this.loader=new Mpampiditra();
         this.scenes=new MpitantanaSehatra(this);this.stats=new Antontanisa();this.debug=new DebugDrafitra(this.renderer);
         this.particles=new Vovoka();this.weather=new Toetrandro(width,height);this.save=new Tehirizo(opts.gameKey);
-        this.plugins=new MpitantanaFanampiny();
+        this.plugins=new MpitantanaFanampiny(this);
         Fanindry.init(this.canvas); Feo.init();
         this._running=false;this._paused=false;this._lastTime=0;this._accumulator=0;this._fixedDt=1/60;
+        // ✅ VAOVAO v4.3.0 — TIMESCALE: mifehy ny dt REHETRA (physics, anim,
+        // tween, particles, weather, camera) indray mandeha. 1=mahazatra,
+        // 0.5=slow-motion antsasany, 0=pause tanteraka (fa mbola misy
+        // render+input, tsy toy ny pause() izay manajanona ny update rehetra).
+        this.timeScale = 1;
         this._loop=this._loop.bind(this);
         this._designAspect=width/height;
         if(opts.responsive)this._attachResizeObserver();
     }
+    setTimeScale(v) { this.timeScale = Math.max(0, v); }
+    getTimeScale() { return this.timeScale; }
     _attachResizeObserver() {
         const handleResize=()=>{const parent=this.canvas.parentElement||document.body;const rect=parent.getBoundingClientRect();if(rect.width<=0||rect.height<=0)return;let newW=rect.width,newH=newW/this._designAspect;if(newH>rect.height){newH=rect.height;newW=newH*this._designAspect;}this.canvas.style.width=Math.round(newW)+'px';this.canvas.style.height=Math.round(newH)+'px';};
         if(typeof ResizeObserver!=='undefined'){this._resizeObserver=new ResizeObserver(handleResize);this._resizeObserver.observe(this.canvas.parentElement||document.body);}else{window.addEventListener('resize',handleResize);window.addEventListener('orientationchange',handleResize);}
@@ -1407,8 +2970,11 @@ class Lalao {
     resume() { this._paused=false; }
     _loop(now) {
         if(!this._running)return; requestAnimationFrame(this._loop);
-        const dtMs=Math.min(now-this._lastTime,100);this._lastTime=now;const dt=dtMs/1000;
-        this.stats.update(dtMs);
+        const dtMsRaw=Math.min(now-this._lastTime,100);this._lastTime=now;
+        // ✅ TimeScale: ny dt "scaled" no ampiasaina amin'ny simulation rehetra,
+        // fa ny stats.update dia mampiasa ny dt tsy voafehy mba ho marina ny FPS.
+        const dtMs=dtMsRaw*this.timeScale; const dt=dtMs/1000;
+        this.stats.update(dtMsRaw);
         if(!this._paused){
             this._accumulator+=dt;const MAX_STEPS=5;let steps=0;
             while(this._accumulator>=this._fixedDt&&steps<MAX_STEPS){this.timer.update(this._fixedDt*1000);this.particles.update(this._fixedDt);this.weather.update(this._fixedDt);this.scenes.update(this._fixedDt,this._fixedDt*1000);this.camera.update(this._fixedDt*1000);this._accumulator-=this._fixedDt;steps++;}
@@ -1420,7 +2986,13 @@ class Lalao {
         this.renderer.clear(0.1,0.1,0.15,1);this.renderer.begin(this.camera);
         this.scenes.render(this.renderer,this.camera,alpha);this.particles.render(this.renderer);this.weather.render(this.renderer);
         this.renderer.end();
-        this.renderer.begin(null);this.scenes.renderUI(this.renderer);this.renderer.end();
+        this.renderer.begin(null);this.scenes.renderUI(this.renderer);
+        // ✅ VAOVAO v4.3.3 — Camera FX overlay (fadeIn/fadeOut/flash):
+        // manosotra rectangle manontolo efijery, aorian'ny UI rehetra,
+        // mba hisarona ny zavatra rehetra (fade to black, sns).
+        const overlay = this.camera.getOverlayColor();
+        if (overlay) { const packed=((overlay.r&0xFF)<<24)|((overlay.g&0xFF)<<16)|((overlay.b&0xFF)<<8)|Math.round(overlay.a*255); this.renderer.drawRect(0,0,this.width,this.height,packed>>>0); }
+        this.renderer.end();
         Fanindry._endFrame();
     }
     stop() { this._running=false; }
@@ -1523,7 +3095,7 @@ const EndrikaBala = {
     spiral(count, tOffset, speed) { const out=[];for(let i=0;i<count;i++)out.push({angle:tOffset+(i*PI2/count),speed});return out; },
     wave(baseAngle, count, spread, speed) { const out=[];for(let i=0;i<count;i++){const t=count===1?0:(i/(count-1))-0.5;out.push({angle:baseAngle+t*spread,speed});}return out; },
     aimed(fromX, fromY, toX, toY, speed) { return [{angle:Math.atan2(toY-fromY,toX-fromX),speed}]; },
-    burst(baseAngle, count, jitter, speed) { const out=[];for(let i=0;i<count;i++)out.push({angle:baseAngle+(Math.random()-0.5)*jitter,speed});return out; }
+    burst(baseAngle, count, jitter, speed) { const out=[];for(let i=0;i<count;i++)out.push({angle:baseAngle+(Kisendrasendra.global.next()-0.5)*jitter,speed});return out; }
 };
 class Fisintonana {
     constructor(distance = 120, duration = 0.18, iframeTime = 0.25, cooldown = 0.8) { this.distance=distance;this.duration=duration;this.iframeTime=iframeTime;this.cooldown=cooldown;this._cd=0;this._active=false;this._t=0;this._iframeT=0;this.dx=0;this.dy=0; }
@@ -1583,7 +3155,7 @@ class MpamorontsatsaVahiny {
 class Anjara {
     constructor() { this.entries=[]; }
     add(item, weight, rarity) { this.entries.push({item,weight:weight||1,rarity:rarity||'common'});return this; }
-    roll() { const total=this.entries.reduce((s,e)=>s+e.weight,0);if(total<=0)return null;let r=Math.random()*total;for(const e of this.entries){r-=e.weight;if(r<=0)return e;}return this.entries[this.entries.length-1]||null; }
+    roll() { const total=this.entries.reduce((s,e)=>s+e.weight,0);if(total<=0)return null;let r=Kisendrasendra.global.next()*total;for(const e of this.entries){r-=e.weight;if(r<=0)return e;}return this.entries[this.entries.length-1]||null; }
     rollMany(n) { const out=[];for(let i=0;i<n;i++)out.push(this.roll());return out; }
 }
 class Vavahady {
@@ -1679,13 +3251,14 @@ class FanambaraKely extends Hetsika {
 // EXPORT
 // ============================================================
 const RakitrakatraV4 = {
-    KINOVANA: '4.2.2', ANARANMIAFINA: 'Ady Goavana - Patched',
+    KINOVANA: '4.3.3', ANARANMIAFINA: 'Ady Goavana - Patched',
     Lalao, Sehatra, Vektora2, Vektora3, Lamina2D, Efajoro, Boribory, Lafomaro, Z,
     Vondrona, Mpampiseho, Kamera, Famataranandro, Mpampiditra, Feo, Fanindry, SakanToerana, HazoEfatra,
     Sarimihetsika, Vovoka, Toetrandro, MpitantanaTween, Mpanamora, TsipikaFotoana,
     Fizika, Drafitra, Lalana, Fivoarana, Fitondrantena, Taolana, Piolaka, Rano, Entana, MpitantanaIraka, MpitantanaResaka,
-    Fandraisana, Sarintany, Zavona, JoystickVirtoaly,
-    Dobo, Kisendrasendra, Tabataba, Tehirizo, Teny, Antontanisa, DebugDrafitra, MpitantanaFanampiny,
+    Fandraisana, Sarintany, Zavona, JoystickVirtoaly, MpitantanaSehatra,
+    Dobo, Kisendrasendra, Tabataba, Tehirizo, Teny, Antontanisa, DebugDrafitra, MpitantanaFanampiny, MpitantanaFanamboarana,
+    Hetsika, Events, DistanceJoint, RevoluteJoint, SpringJoint, MpitantanaJoint, LaminaSary, MpitantanaHazavana, DataManager,
     MpitantanaEfitra, EfitraTaloha, Famirapiratana, Hozongozona,
     FitaovanaVoa, FitahirizanaBaiko, Fiadiana, AndroAlina, BokotraVirtoaly,
     FaribolanaMihena, EndrikaBala, Fisintonana, IsaMitohy, TantaraFandresena, FanampianaKendrena, Fijerena,
