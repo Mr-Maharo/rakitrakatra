@@ -1,4 +1,5 @@
 //by Maharo
+//fieiZika JS
                                
 kajyFifandonanaBoriboryVsBoribory: function(v, idA, idB) {
     const centreAx = v.x[idA] + v.sakany[idA] / 2;
@@ -1593,3 +1594,5 @@ fikarohanaFaritra: function(vondrona, faritraX, faritraY, faritraW, faritraH, si
     }
     return hits;
 },
+
+  
