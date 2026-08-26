@@ -1,68 +1,13 @@
-/**
- * ═══════════════════════════════════════════════════════════
- * RAKITRAKATRA V4.3.3 "ADY GOAVANA - PATCHED"
- * Moteur lalao 2D matihanina - WebGL 2 + Vondrona (ECS)
- * © 2026 MIT Licence
- *
- * FANAMARIHANA VAOVAO (v4.3.3) — Ambaratonga 4: WORLD & TOOLING
- *  1) TILED ADVANCED: tile animations (ts.tiles[].animation),
- *     layer tint/opacity, object rotation/gid, GID flip flags
- *     (H/V/D), per-tile custom properties (getTileProperties)
- *  2) DATAMANAGER: Sehatra.data (DataManager) — set/get/has/remove
- *     miaraka amin'ny 'changedata' sy 'changedata-<key>' events
- *     amin'ny scene.events (toy ny Phaser DataManager)
- *  3) CAMERA FX: camera.fadeIn()/fadeOut()/flash() level API ambony
- *     (onComplete callback), getOverlayColor() ampiasain'ny Lalao
- *     loop mba hanosotra overlay eo ambonin'ny efijery manontolo
- *  4) DEBUG OVERLAY INTERACTIVE: MpitantanaFanamboarana amin'ny
- *     tabs (Stats/Entities/Physics) tsindriana, entity inspector
- *     (lisitra + detail fields), physics debug toggle (showColliders)
- *  5) HMR HOOK: MpitantanaSehatra.hotReplaceScene()/hookHMR() — 
- *     famerenana ny Scene methods amin'ny instance MISY SAHADY
- *     (Vite/Webpack dev server), ny "state" (entities, data) voatahiry
- *
- * FANAMARIHANA TALOHA (v4.3.2) — Ambaratonga 3: RENDERING
- *  - SPRITE ROTATION IN-BATCH: drawQuadRotated()/drawSpriteRotated()
- *  - MULTI-PASS POST-FX CHAINING: usePostFX([...]) ping-pong FBO
- *  - RENDER TEXTURE: LaminaSary (FBO+texture= texture mahazatra)
- *  - DYNAMIC LIGHTING: MpitantanaHazavana (PointLight/SpotLight)
- *
- * FANAMARIHANA TALOHA (v4.3.1) — Ambaratonga 2: FIZIKA
- *  - SAT ROTATED SHAPES: Fizika.satMTV()/resolvePolygon()
- *  - PHYSICS GROUPS: Fizika.Group (filtering matrix)
- *  - CCD: V.ccd[id] raycast anti-tunneling
- *  - JOINTS: DistanceJoint, RevoluteJoint, SpringJoint
- *
- * FANAMARIHANA TALOHA (v4.3.0) — Ambaratonga 1: FOTOTRA
- *  - EVENT BUS: Hetsika wildcard; R.Events + Scene.events (auto-off)
- *  - TIMESCALE: game.timeScale mifehy ny dt rehetra
- *  - SEED DETERMINISTIC: Kisendrasendra.global
- *  - PLUGIN SYSTEM: register()+installGlobal()/installScene()
- *
- * FANAMARIHANA TALOHA (v4.2.3) — 8 sehatra:
- *  - FIZIKA: circle-vs-circle/circle-vs-rect impulse, "slide" mode
- *  - ANIMATION: yoyo, repeat count, repeatDelay, onFrame/onComplete
- *  - SEHATRA: parallel scenes, sleep/wake, pause/resume, messaging
- *  - FEO: audio sprite, volume groups malalaka
- *  - FANINDRY: gamepad multi-pad+justPressed, swipe, pinch
- *  - DRAFITRA: object layers, multi-tileset
- *  - MPAMPISEHO: post-FX hook (FBO+screen-quad)
- *  - TOOLING: debug overlay DOM (FPS graph, memory, mini-console)
- 
- *
- * Architecture:
- * - WebGL2 Renderer — batched quad rendering, texture-sorted flush
- * - Vondrona (ECS, SoA), sparse-set + free-list ID
- * - Spatial Hash Grid integrated into FitaovanaVoa
- * - 85 Systems & Plugins
- * ═══════════════════════════════════════════════════════════
- */
+//by Maharo
+//Rakitrakatra JS
+                                                                                                                
+   
 (function(global) {
 'use strict';
 
-// ============================================================
-// CONSTANTES SY UTILITAIRES FOTOTRA
-// ============================================================
+                                                               
+                                    
+                                                               
 const PI = Math.PI;
 const PI2 = PI * 2;
 const HALF_PI = PI / 2;
@@ -123,9 +68,9 @@ const Z = {
     }
 };
 
-// ============================================================
-// 1-6. MATEMATIKA (Vektora2, Vektora3, Lamina2D, Efajoro, Boribory, Lafomaro)
-// ============================================================
+                                                               
+                                                                              
+                                                               
 class Vektora2 {
     constructor(x = 0, y = 0) { this.x = x; this.y = y; }
     set(x, y) { this.x = x; this.y = y; return this; }
@@ -278,14 +223,14 @@ class Lafomaro {
     }
 }
 
-// ============================================================
-// 7-11. Hetsika, Dobo, Kisendrasendra, Tabataba, Mpanamora
-// ============================================================
-// ✅ VAOVAO v4.3.0 — Hetsika (Event Emitter) manohana WILDCARD:
-// on('player.*', fn) dia mandray ny 'player.jump', 'player.die', sns.
-// Ny listener mahazatra ('player.jump' feno) dia mbola mandeha toy ny teo aloha.
+                                                               
+                                                           
+                                                               
+                                                               
+                                                                      
+                                                                                 
 class Hetsika {
-    constructor() { this._listeners = new Map(); this._wildcards = []; /* [{pattern:RegExp, raw, fn, once}] */ }
+    constructor() { this._listeners = new Map(); this._wildcards = [];                                         }
     _isWildcard(name) { return name.indexOf('*') !== -1; }
     _wildcardToRegex(pattern) { const esc = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*'); return new RegExp('^'+esc+'$'); }
     on(name, fn, once = false) {
@@ -318,10 +263,10 @@ class Hetsika {
     }
     removeAll() { this._listeners.clear(); this._wildcards.length = 0; return this; }
 }
-// ✅ VAOVAO v4.3.0 — R.Events: EVENT BUS GLOBAL tokana ho an'ny lalao
-// manontolo (ohatra: fifandraisana Scene samihafa, achievements, sound
-// triggers tsy miankina amin'ny sehatra iray). Mitovy amin'ny "Scene.events"
-// fa io kosa dia "local" isaky ny Sehatra, ary off-ina automatique @ shutdown.
+                                                                     
+                                                                       
+                                                                             
+                                                                               
 const Events = new Hetsika();
 
 class Dobo {
@@ -356,11 +301,11 @@ class Kisendrasendra {
     choice(arr) { return arr[this.int(0, arr.length - 1)]; }
     reset() { this._seed = this._orig; }
 }
-// ✅ VAOVAO v4.3.0 — INSTANCE GLOBAL SEEDED, solon'ny Math.random() any
-// amin'ny Vovoka/Kamera/Dobo/sns rehetra ao anaty engine mihitsy, mba ho
-// tena deterministic ny fandalovan-javatra (replay, multiplayer lockstep).
-// Azo atao seedGlobal(n) mba hametraka seed manokana, ary resetGlobal()
-// mba hamerina ny RNG amin'ny seed voalohany (ohatra: fiandohan'ny scene).
+                                                                       
+                                                                         
+                                                                           
+                                                                        
+                                                                           
 Kisendrasendra.global = new Kisendrasendra(12345);
 Kisendrasendra.seedGlobal = function(seed) { Kisendrasendra.global = new Kisendrasendra(seed); };
 Kisendrasendra.resetGlobal = function() { Kisendrasendra.global.reset(); };
@@ -567,9 +512,9 @@ class Vondrona {
     queryMask(predicate, fn) { for (let i = 0; i < this.count; i++) if (this.alive[i] && predicate(i)) fn(i); }
 }
 
-// ============================================================
-// 13. SPATIAL HASH GRID
-// ============================================================
+                                                               
+                        
+                                                               
 class SakanToerana {
     constructor(cellSize = 64) { this.cellSize = cellSize; this.cells = new Map(); this._querySet = new Set(); }
     clear() { this.cells.clear(); this._querySet.clear(); }
@@ -595,9 +540,9 @@ class SakanToerana {
     queryPoint(x, y) { return this.query(x-1, y-1, 2, 2); }
 }
 
-// ============================================================
-// 14-20. HazoEfatra, Famataranandro, Tween, Mpampiditra, Feo, Fanindry, Kamera
-// ============================================================
+                                                               
+                                                                               
+                                                               
 class HazoEfatra {
     constructor(bounds, maxObj = 8, maxDepth = 5, depth = 0) {
         this.bounds = bounds; this.maxObj = maxObj; this.maxDepth = maxDepth; this.depth = depth;
@@ -707,13 +652,13 @@ class Mpampiditra extends Hetsika {
     json(key, url) { this._queue.push({type:'json', key, url}); return this; }
     feo(key, url) { this._queue.push({type:'audio', key, url}); return this; }
     spriteSheet(key, url, frameW, frameH) { this._queue.push({type:'spritesheet', key, url, frameW, frameH}); return this; }
-    // ✅ VAOVAO v4.3.4 — WEBFONT LOADER: mampiditra .woff/.woff2/.ttf
-    // amin'ny FontFace API (native, tsy mila library fanampiny). Manana
-    // TIMEOUT (opts.timeout, mahazatra 3000ms) mba tsy hampiala andro
-    // ny fanombohan'ny lalao raha tsy mby CDN ilay font — raha tafiditra
-    // tara na tsy tafiditra mihitsy, dia mandeha ihany ny load() (resolve,
-    // tsy manidina), ka ny UI dia mampiasa font fallback (system font)
-    // mandra-pahatongan'ilay custom font (na mandrakizay raha tena tsy tafiditra).
+                                                                     
+                                                                        
+                                                                      
+                                                                         
+                                                                           
+                                                                       
+                                                                                   
     font(key, url, opts = {}) { this._queue.push({type:'font', key, url, weight:opts.weight||'normal', style:opts.style||'normal', timeout:opts.timeout||3000}); return this; }
     get(key) { return this._assets.images[key] || this._assets.json[key] || this._assets.audio[key]; }
     getSary(key) { return this._assets.images[key]; }
@@ -750,10 +695,10 @@ class Mpampiditra extends Hetsika {
                 .then(decodedBuffer => { Feo.addBuffer(item.key, decodedBuffer); this._assets.audio[item.key] = decodedBuffer; done(); })
                 .catch(() => { console.error('Failed to load/decode audio:', item.url); done(); });
             } else if (item.type === 'font') {
-                // ✅ VAOVAO v4.3.4 — FontFace API + timeout fallback.
-                // Raha tsy misy FontFace ao amin'ity tontolo ity (Node,
-                // browser tranainy), dia mandeha avy hatrany amin'ny
-                // status 'unsupported' (tsy manidina ny load()).
+                                                                     
+                                                                        
+                                                                     
+                                                                 
                 if (typeof FontFace === 'undefined') { this._assets.fonts[item.key] = {status:'unsupported'}; done(); return; }
                 const face = new FontFace(item.key, `url(${item.url})`, {weight:item.weight, style:item.style});
                 let settled = false;
@@ -762,8 +707,8 @@ class Mpampiditra extends Hetsika {
                     this._assets.fonts[item.key] = {status:'timeout', face};
                     console.warn(`Font "${item.key}" tsy tafiditra anatin'ny ${item.timeout}ms — mampiasa fallback font mandra-pahatongany`);
                     done();
-                    // Tsy manafoana ny fampidirana — raha tafiditra ihany aorian'ny
-                    // timeout, dia hosoratana ao amin'ny document.fonts ihany koa.
+                                                                                    
+                                                                                   
                     face.load().then(loadedFace => { if (typeof document!=='undefined' && document.fonts) document.fonts.add(loadedFace); this._assets.fonts[item.key]={status:'loaded', face:loadedFace}; }).catch(()=>{});
                 }, item.timeout);
                 face.load().then(loadedFace => {
@@ -792,8 +737,8 @@ class Mpampiditra extends Hetsika {
 
 const Feo = {
     _ctx: null, _master: null, _sfxGain: null, _musicGain: null, _music: null, _buffers: new Map(),
-    _sprites: new Map(),  // key -> {bufferKey, markers: Map(name -> {start, duration})}
-    _groups: new Map(),   // groupName -> GainNode (fanampiny amin'ny sfx/music: "ui", "ambient", sns)
+    _sprites: new Map(),                                                                
+    _groups: new Map(),                                                                               
     init() {
         if (this._ctx) return;
         try {
@@ -807,13 +752,13 @@ const Feo = {
     decode(buffer) { if (!this._ctx) return Promise.reject(); return this._ctx.decodeAudioData(buffer.slice(0)); },
     addBuffer(key, buffer) { this._buffers.set(key, buffer); },
 
-    // --------------------------------------------------------
-    // ✅ VAOVAO v4.2.3 — AUDIO SPRITE: rakitra WebAudio iray misy
-    // feo fohifohy maromaro, samy manana marker {start, duration}
-    // (segondra). Ohatra: addSprite('sfx_atlas', bufferKey, {
-    //   jump:{start:0, duration:0.3}, coin:{start:0.3, duration:0.2}
-    // }); avy eo playSprite('sfx_atlas', 'jump')
-    // --------------------------------------------------------
+                                                               
+                                                                 
+                                                                  
+                                                              
+                                                                     
+                                                 
+                                                               
     addSprite(spriteKey, bufferKey, markers) { this._sprites.set(spriteKey, {bufferKey, markers}); },
     playSprite(spriteKey, markerName, opts = {}) {
         this.init(); this.resume();
@@ -827,10 +772,10 @@ const Feo = {
         return { source: src, gain, stop: () => { try { src.stop(); } catch(e) {} } };
     },
 
-    // --------------------------------------------------------
-    // ✅ VAOVAO v4.2.3 — VOLUME GROUPS malalaka (tsy hoe sfx/music
-    // roa ihany intsony): createGroup('ui'), setGroupVolume('ui',.7)
-    // --------------------------------------------------------
+                                                               
+                                                                  
+                                                                     
+                                                               
     createGroup(name, initialVolume = 1) {
         this.init(); if (!this._ctx) return null;
         if (this._groups.has(name)) return this._groups.get(name);
@@ -874,10 +819,10 @@ const Fanindry = {
     mouse: { x:0, y:0, worldX:0, worldY:0, dx:0, dy:0, down:[false,false,false], justDown:[false,false,false], justUp:[false,false,false], wheel:0 },
     touches: [], joystick: { active:false, x:0, y:0, dx:0, dy:0, ox:0, oy:0, id:-1 },
     _canvas: null, _init: false,
-    // ✅ VAOVAO v4.2.3 — Touch gesture (swipe & pinch) + Gamepad multi-pad
-    swipe: null, // {dx, dy, dist, angle, direction:'left'|'right'|'up'|'down'} rehefa vita swipe (1 frame monja)
+                                                                          
+    swipe: null,                                                                                                 
     pinch: { active:false, scale:1, delta:0, startDist:0 },
-    _gamepadPrevButtons: new Map(), // gamepadIndex -> [bool,...] (frame teo aloha, ho an'ny justPressed)
+    _gamepadPrevButtons: new Map(),                                                                      
     _swipeMinDist: 40,
     init(canvas) {
         if (this._init) {
@@ -944,7 +889,7 @@ const Fanindry = {
     mouseDown(btn = 0) { return this.mouse.down[btn]; },
     mouseJustDown(btn = 0) { return this.mouse.justDown[btn]; },
     mouseJustUp(btn = 0) { return this.mouse.justUp[btn]; },
-    // --- Gamepad multi-pad + justPressed ---
+                                              
     getGamepad(index = 0) { if (!navigator.getGamepads) return null; const pads = navigator.getGamepads(); let n=0; for (const p of pads) { if (p && p.connected) { if (n===index) return p; n++; } } return null; },
     getAllGamepads() { if (!navigator.getGamepads) return []; return Array.from(navigator.getGamepads()).filter(p => p && p.connected); },
     gamepadAxis(i, padIndex = 0) { const gp = this.getGamepad(padIndex); if (!gp || Math.abs(gp.axes[i]) < 0.2) return 0; return gp.axes[i]; },
@@ -986,9 +931,9 @@ class Kamera {
         this.x=0; this.y=0; this.zoom=1; this.rotation=0; this.viewW=w; this.viewH=h;
         this.target=null; this.lerp=0.1; this.deadzone={x:0,y:0,w:0,h:0}; this.bounds=null;
         this._shakeTime=0; this._shakeMag=0; this._shakeX=0; this._shakeY=0; this._matrix=new Lamina2D();
-        // ✅ VAOVAO v4.3.3 — Camera FX level API ambony (fadeIn/fadeOut/flash)
-        this._fade = null; // {fromA, toA, duration, elapsed, color:[r,g,b], onComplete}
-        this._flash = null; // {duration, elapsed, color:[r,g,b]}
+                                                                              
+        this._fade = null;                                                              
+        this._flash = null;                                      
         this._shakeOnComplete = null;
     }
     follow(target, lerp = 0.1) { this.target=target; this.lerp=lerp; return this; }
@@ -996,12 +941,12 @@ class Kamera {
     setDeadzone(x, y, w, h) { this.deadzone={x,y,w,h}; return this; }
     shake(mag = 10, duration = 300, onComplete = null) { this._shakeMag=mag; this._shakeTime=duration; this._shakeOnComplete=onComplete; return this; }
     lookAt(x, y) { this.x=x-this.viewW/(2*this.zoom); this.y=y-this.viewH/(2*this.zoom); return this; }
-    // --------------------------------------------------------
-    // ✅ VAOVAO v4.3.3 — fadeOut/fadeIn: manosotra overlay color manontolo
-    // ny efijery, mihalefy (alpha 0->1 na 1->0) mandritra ny "duration"
-    // (ms). onComplete: () => {} antsoina rehefa vita ny fihalefena.
-    // Fampiasana: camera.fadeOut(500, 0,0,0, () => scenes.start('next'))
-    // --------------------------------------------------------
+                                                               
+                                                                          
+                                                                        
+                                                                     
+                                                                         
+                                                               
     fadeOut(duration = 500, r = 0, g = 0, b = 0, onComplete = null) {
         this._fade = { fromA:0, toA:1, duration, elapsed:0, color:[r,g,b], onComplete };
         return this;
@@ -1010,18 +955,18 @@ class Kamera {
         this._fade = { fromA:1, toA:0, duration, elapsed:0, color:[r,g,b], onComplete };
         return this;
     }
-    // flash(): manisy overlay color mangatsakatsaka avy hatrany (alpha=1)
-    // dia mihalefy hatramin'ny 0 anatin'ny "duration" — ho an'ny hit-flash,
-    // explosion, sns. Tsy mitovy amin'ny fade satria manomboka avy hatrany
-    // amin'ny alpha feno.
+                                                                          
+                                                                            
+                                                                           
+                          
     flash(duration = 250, r = 255, g = 255, b = 255) {
         this._flash = { duration, elapsed:0, color:[r,g,b] };
         return this;
     }
-    // getOverlayColor(): mamerina {r,g,b,a} (0..1) an'ny overlay eo ambonin'ny
-    // efijery ankehitriny (fade+flash mitambatra), na null raha tsy misy na
-    // dia iray aza. Ilaina antsoina AORIAN'ny rendering scene rehetra, ao
-    // amin'ny renderUI() na Lalao._loop mihitsy (drawRect manontolo efijery).
+                                                                               
+                                                                            
+                                                                          
+                                                                              
     getOverlayColor() {
         let a = 0, color = [0,0,0];
         if (this._fade) {
@@ -1087,15 +1032,15 @@ class Kamera {
     getBounds() { const vw=this.viewW/this.zoom, vh=this.viewH/this.zoom; return new Efajoro(this.x, this.y, vw, vh); }
 }
 
-// ============================================================
-// 21. MPAMPISEHO WEBGL2 — ✅ FIX: flush() GC leak resolved
-// ============================================================
-// ============================================================
-// ✅ VAOVAO v4.3.2 — LaminaSary (RenderTexture): FBO+texture azo
-// atao "canvas ao anaty canvas" — mamorona texture azo ovaina
-// amin'ny drawing dynamique (minimap, trail effects, screenshot
-// in-game, mirror/portal). Mifamatotra amin'ny Mpampiseho.
-// ============================================================
+                                                               
+                                                          
+                                                               
+                                                               
+                                                                
+                                                              
+                                                                
+                                                           
+                                                               
 class LaminaSary {
     constructor(renderer, key, width, height) {
         this.renderer = renderer; this.key = key; this.width = width; this.height = height;
@@ -1112,9 +1057,9 @@ class LaminaSary {
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.tex, 0);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
-    // clearColor: [r,g,b,a] 0..1, tsy tsy maintsy (raha tsy voatondro,
-    // dia tsy manadio — mahasoa ho an'ny trail-effect izay tokony
-    // hijanona ny sary teo aloha, ka manisa alpha kely fotsiny)
+                                                                       
+                                                                  
+                                                                
     clear(r = 0, g = 0, b = 0, a = 0) {
         const gl = this.renderer.gl;
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
@@ -1122,10 +1067,10 @@ class LaminaSary {
         gl.clearColor(r,g,b,a); gl.clear(gl.COLOR_BUFFER_BIT);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
-    // draw(fn): fn() dia miantso drawSprite/drawRect/sns ao anatin'ny
-    // Mpampiseho mahazatra, fa ny vokany dia mankany amin'ilay FBO
-    // manokana (tsy amin'ny efijery lehibe). Manao begin()/end() ho
-    // an'ny kamera azo ovaina (opts.camera), sns.
+                                                                      
+                                                                   
+                                                                    
+                                                  
     draw(fn, camera = null) {
         const gl = this.renderer.gl;
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
@@ -1150,37 +1095,37 @@ class LaminaSary {
         if (this.renderer._renderTextures) this.renderer._renderTextures.delete(this.key);
     }
 }
-// ============================================================
-// ✅ VAOVAO v4.3.2 — MpitantanaHazavana (Dynamic Lighting System)
-// Fomba: "light-map" additive mifototra amin'ny LaminaSary (RenderTexture)
-//  1) Manosotra ny efijery manontolo amin'ny "ambient color" (maizina
-//     raha alina, mazava kely raha antoandro — mifamatotra amin'ny
-//     Toetrandro/AndroAlina raha misy)
-//  2) Manisa PointLight/SpotLight tsirairay amin'ny ADDITIVE blend
-//     (mitambatra ny hazavana, tsy manakona)
-//  3) Ny light-map vita dia atao MULTIPLY amin'ny scene efa voahosotra
-//     (drawSprite amin'ny blend 'multiply'), ka ny faritra tsy
-//     voakasiky ny hazavana dia maizina, ny akaikin'ny light dia mazava.
-//
-// PointLight: {x, y, radius, color, intensity}
-// SpotLight: PointLight + {angle, coneAngle} (mamaritra faritra
-//   toy ny "cone" fa tsy boribory feno)
-// ============================================================
+                                                               
+                                                                 
+                                                                           
+                                                                      
+                                                                   
+                                       
+                                                                   
+                                             
+                                                                       
+                                                               
+                                                                         
+  
+                                               
+                                                                
+                                        
+                                                               
 class MpitantanaHazavana {
     constructor(renderer, width, height) {
         this.renderer = renderer; this.width = width; this.height = height;
-        this.ambientColor = [0.15, 0.15, 0.25]; // maizina kely mahazatra (alina)
-        this.lights = []; // {type:'point'|'spot', x,y,radius,color:[r,g,b],intensity,angle,coneAngle}
+        this.ambientColor = [0.15, 0.15, 0.25];                                  
+        this.lights = [];                                                                             
         this._lightMapKey = '__lightmap_'+Math.random().toString(36).slice(2);
         this.lightMap = renderer.createRenderTexture(this._lightMapKey, width, height);
         this._radialTexKey = '__lightRadial_'+Math.random().toString(36).slice(2);
         this._ensureRadialTexture();
     }
-    // Sary boribory misy gradient (mazava @ afovoany, mihalefy mankany
-    // amin'ny sisiny) — fototry ny light sprite tsirairay, canvas 2D
-    // fotsiny no fomba tsotra hamoronana azy (tsy shader manokana).
+                                                                       
+                                                                     
+                                                                    
     _ensureRadialTexture() {
-        if (typeof document === 'undefined') return; // tsy misy DOM (ohatra Node test) = tsy azo atao
+        if (typeof document === 'undefined') return;                                                  
         const size = 128; const c = document.createElement('canvas'); c.width=size; c.height=size;
         const ctx = c.getContext('2d');
         const grad = ctx.createRadialGradient(size/2,size/2,0, size/2,size/2,size/2);
@@ -1199,9 +1144,9 @@ class MpitantanaHazavana {
     }
     removeLight(light) { const i=this.lights.indexOf(light); if (i!==-1) this.lights.splice(i,1); }
     clear() { this.lights.length = 0; }
-    // Mamorona ny light-map (atao indray mandeha isaky ny frame, alohan'ny
-    // hanondrahana azy amin'ny scene). camera: raha misy, dia manova ny
-    // toeran'ny light mba hifanaraka amin'ny fijerena (world->screen).
+                                                                           
+                                                                        
+                                                                       
     renderLightMap(camera = null) {
         const [ar,ag,ab] = this.ambientColor;
         this.lightMap.clear(ar, ag, ab, 1);
@@ -1217,16 +1162,16 @@ class MpitantanaHazavana {
                 if (this.renderer.getTexture(this._radialTexKey)) {
                     this.renderer.drawSprite(sx-light.radius, sy-light.radius, light.radius*2, light.radius*2, 0,0,128,128, packed>>>0, this._radialTexKey);
                 } else {
-                    // Fallback raha tsy misy DOM (canvas 2D) ho an'ny radial texture:
-                    // boribory tsotra (tsy misy gradient, fa mbola miasa ny additive)
+                                                                                      
+                                                                                      
                     this.renderer.drawRect(sx-light.radius, sy-light.radius, light.radius*2, light.radius*2, packed>>>0);
                 }
             }
             this.renderer.setBlend('normal');
         });
     }
-    // Manondraka ny light-map amin'ny scene efa voahosotra (MULTIPLY blend):
-    // antsoina AORIAN'ny fandehanan'ny sehatra rehetra, mialoha ny UI.
+                                                                             
+                                                                       
     applyToScreen() {
         this.renderer.setBlend('multiply');
         this.renderer.drawSprite(0, 0, this.renderer.width, this.renderer.height, 0, 0, this.width, this.height, 0xFFFFFFFF, this._lightMapKey);
@@ -1309,20 +1254,20 @@ class Mpampiseho {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         const id = this._nextTexId++; this._textures.set(key, {id, gl:tex, width:img.width, height:img.height}); return id;
     }
-    // --------------------------------------------------------
-    // ✅ VAOVAO v4.3.4 — VIDEO TEXTURE: mampiasa <video> HTML5 ho
-    // texture WebGL (ho an'ny cutscenes, sary mihetsika ao anaty
-    // tany, portal effects). Tsy toy ny sary tsotra (addTexture),
-    // ny sary ao amin'ny video dia MIOVA isaky ny frame, ka mila
-    // updateVideoTexture(key) antsoina isaky ny frame (ao anaty
-    // game loop, alohan'ny render) mba hanavao ny texture GPU.
-    // --------------------------------------------------------
+                                                               
+                                                                 
+                                                                 
+                                                                  
+                                                                 
+                                                                
+                                                               
+                                                               
     addVideoTexture(key, videoEl) {
         const gl = this.gl; const tex = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, tex); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-        // Sary "placeholder" (1x1 mainty) mandra-pahatongan'ny frame voalohany
-        // an'ny video, satria mety ho tsy vonona ny videoWidth/videoHeight raha
-        // vao natomboka ny fampidirana (metadata mbola tsy voaray).
+                                                                               
+                                                                                
+                                                                    
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,255]));
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -1334,21 +1279,21 @@ class Mpampiseho {
         this._videoTextures.add(key);
         return id;
     }
-    // Antsoina isaky ny frame (ohatra: ao amin'ny Lalao._loop, mialoha ny
-    // scenes.render()) mba hanavao ny GPU texture amin'ny frame ankehitriny
-    // an'ny <video>. Tsy manao na inona na inona raha efa nijanona/nivadika
-    // ilay video (readyState<2, mety ho buffering).
+                                                                          
+                                                                            
+                                                                            
+                                                    
     updateVideoTexture(key) {
         const t = this._textures.get(key); if (!t || !t.isVideo) return false;
-        const v = t.videoEl; if (!v || v.readyState < 2) return false; // HAVE_CURRENT_DATA
+        const v = t.videoEl; if (!v || v.readyState < 2) return false;                     
         const gl = this.gl;
         gl.bindTexture(gl.TEXTURE_2D, t.gl);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, v);
         if (v.videoWidth && (t.width!==v.videoWidth || t.height!==v.videoHeight)) { t.width=v.videoWidth; t.height=v.videoHeight; }
         return true;
     }
-    // Manavao daholo ny video textures rehetra tafiditra tao amin'ny
-    // renderer (fomba tsotra kokoa raha maro video mandeha miaraka).
+                                                                     
+                                                                     
     updateAllVideoTextures() { if (this._videoTextures) for (const key of this._videoTextures) this.updateVideoTexture(key); }
     getTexture(key) { return this._textures.get(key); }
     deleteTexture(key) { if (key==='white') return false; const tex=this._textures.get(key); if (!tex) return false; this.gl.deleteTexture(tex.gl); this._textures.delete(key); return true; }
@@ -1372,14 +1317,14 @@ class Mpampiseho {
         v[idx+24]=x; v[idx+25]=y+h; v[idx+26]=u0; v[idx+27]=v1; v[idx+28]=r; v[idx+29]=g; v[idx+30]=b; v[idx+31]=a;
         this._quadTex[this._batchCount] = tex; this._batchCount++;
     }
-    // --------------------------------------------------------
-    // ✅ VAOVAO v4.3.2 — QUAD MIHODINA, ao anaty BATCH mihitsy (tsy misy
-    // drawCall fanampiny). Ny rotation dia atao amin'ny CPU (4 teboka
-    // ihany isaky ny sprite, tsy lafo), avy eo apetraka mivantana ao
-    // amin'ny vertexData toy ny quad tsotra — koa mbola tafiditra ao
-    // anaty texture-atlas batching mahazatra. pivotX/pivotY dia 0..1
-    // (0.5,0.5 = afovoany, mahazatra ho an'ny sprite mihodina).
-    // --------------------------------------------------------
+                                                               
+                                                                        
+                                                                      
+                                                                     
+                                                                     
+                                                                     
+                                                                
+                                                               
     drawQuadRotated(x, y, w, h, rotation, u0, v0, u1, v1, color, textureKey = 'white', pivotX = 0.5, pivotY = 0.5) {
         if (!rotation) return this.drawQuad(x, y, w, h, u0, v0, u1, v1, color, textureKey);
         const tex = this._textures.get(textureKey); if (!tex) return;
@@ -1388,8 +1333,8 @@ class Mpampiseho {
         const r=((color>>>24)&0xFF)/255, g=((color>>>16)&0xFF)/255, b=((color>>>8)&0xFF)/255, a=(color&0xFF)/255;
         const px = x + w*pivotX, py = y + h*pivotY;
         const cos = Math.cos(rotation), sin = Math.sin(rotation);
-        // 4 teboka lokaly manodidina ny (0,0), rotated, avy eo miverina any
-        // amin'ny toerana eran-tany (world space) miaraka amin'ny pivot.
+                                                                            
+                                                                         
         const corners = [
             [x-px,   y-py  ], [x+w-px, y-py  ],
             [x+w-px, y+h-py], [x-px,   y+h-py]
@@ -1409,9 +1354,9 @@ class Mpampiseho {
         if (flipX) { const t=u0; u0=u1; u1=t; } if (flipY) { const t=v0; v0=v1; v1=t; }
         this.drawQuad(x, y, w, h, u0, v0, u1, v1, color, textureKey);
     }
-    // ✅ VAOVAO v4.3.2 — drawSprite miaraka amin'ny rotation (radians).
-    // Fampiasana: rehefa manisa V.rotation[id] amin'ny entity mihodina
-    // (bala SAT, projectile, ragdoll parts, sns).
+                                                                       
+                                                                       
+                                                  
     drawSpriteRotated(x, y, w, h, rotation, sx, sy, sw, sh, color, textureKey, flipX = false, flipY = false, pivotX = 0.5, pivotY = 0.5) {
         const tex = this._textures.get(textureKey); if (!tex) return;
         let u0=sx/tex.width, v0=sy/tex.height, u1=(sx+sw)/tex.width, v1=(sy+sh)/tex.height;
@@ -1420,18 +1365,18 @@ class Mpampiseho {
     }
     drawRect(x, y, w, h, color) { this.drawQuad(x, y, w, h, 0, 0, 1, 1, color, 'white'); }
     drawRectRotated(x, y, w, h, rotation, color, pivotX = 0.5, pivotY = 0.5) { this.drawQuadRotated(x, y, w, h, rotation, 0, 0, 1, 1, color, 'white', pivotX, pivotY); }
-    // ✅ FIX: Tsy misy .slice() intsony — mampiasa pre-allocated _order array
+                                                                             
     flush() {
         if (this._batchCount === 0) return;
         const gl = this.gl; const n = this._batchCount;
         const VERTEX_SIZE = 8; const QUAD_FLOATS = VERTEX_SIZE * 4;
         const texOf = this._quadTex;
-        // ✅ FIX: Reuse pre-allocated array instead of slice()
+                                                              
         const order = this._order;
         for (let i = 0; i < n; i++) order[i] = i;
-        // Sort only the first n elements in-place using a custom sort on indices
-        // Note: We can't use .sort() on partial array without slice, so we use a simple approach:
-        // Create a temporary sorted index list without allocation
+                                                                                 
+                                                                                                  
+                                                                  
         const sortedIndices = this._sortedIndices;
 sortedIndices.length = 0;
 for (let i = 0; i < n; i++) sortedIndices.push(i);
@@ -1460,29 +1405,29 @@ sortedIndices.sort((a, b) => texOf[a].id - texOf[b].id);
         this._batchCount = 0;
     }
     end() { this.flush(); }
-    // ✅ VAOVAO v4.3.2 — Blend mode manokana (additive, ho an'ny lighting/
-    // particles glow). setBlend() dia manova ny fomba fitambaran'ny loko
-    // vaovao amin'ilay efa eo; resetBlend() mamerina amin'ny "normal"
-    // (premultiplied alpha, mahazatra ho an'ny sprite tsotra).
+                                                                          
+                                                                         
+                                                                      
+                                                               
     setBlend(mode = 'additive') {
         this.flush(); const gl = this.gl;
         if (mode === 'additive') gl.blendFunc(gl.ONE, gl.ONE);
         else if (mode === 'multiply') gl.blendFunc(gl.DST_COLOR, gl.ZERO);
-        else gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); // 'normal'
+        else gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);            
     }
     resetBlend() { this.setBlend('normal'); }
     resize(w, h) { this.canvas.width=w; this.canvas.height=h; this.width=w; this.height=h; this.gl.viewport(0,0,w,h); }
 
-    // --------------------------------------------------------
-    // ✅ VAOVAO v4.3.2 — RENDER TEXTURE: mamorona LaminaSary (FBO+texture)
-    // izay azo antsoina toy ny TEXTURE MAHAZATRA (drawSprite/drawQuad
-    // amin'ny textureKey voafaritra), fa ny "sary" ao anatiny dia
-    // azo ovaina amin'ny drawing dynamique (minimap, trail effect,
-    // screenshot in-game). Ampiasaina toy izao:
-    //   const rt = renderer.createRenderTexture('minimap', 128, 128);
-    //   rt.draw(() => { renderer.drawRect(...); }); // hosoratana ao anatiny
-    //   renderer.drawSprite(x,y,128,128, 0,0,128,128, 0xFFFFFFFF, 'minimap');
-    // --------------------------------------------------------
+                                                               
+                                                                          
+                                                                      
+                                                                  
+                                                                   
+                                                
+                                                                      
+                                                                             
+                                                                              
+                                                               
     createRenderTexture(key, width, height) {
         const rt = new LaminaSary(this, key, width, height);
         this._textures.set(key, {id:this._nextTexId++, gl:rt.tex, width, height});
@@ -1492,19 +1437,19 @@ sortedIndices.sort((a, b) => texOf[a].id - texOf[b].id);
     }
     getRenderTexture(key) { return this._renderTextures ? this._renderTextures.get(key) : undefined; }
 
-    // --------------------------------------------------------
-    // ✅ VAOVAO v4.2.3 — POST-FX HOOK TSOTRA (screen-space shader pass)
-    // Tsy pipeline system feno toy ny Phaser (chaining maro, custom
-    // attributes), fa "hook" tokana ampy hametrahana Bloom/CRT/Tint
-    // manontolo ny efijery: mamorona FBO+texture, mamerina ny lalao
-    // ao anatiny (renderScene callback), avy eo manondraka azy amin'ny
-    // fragment shader voatondro (screen quad).
-    //
-    // addPostFX(name, fragmentSource, uniforms?) : mamorona ny pass
-    // usePostFX(name|null) : mametraka izay pass ampiasaina (null=tsy misy)
-    // renderWithPostFX(renderScene) : renderScene() = fiantsoana lalao
-    //   ao anaty (clear+draw+flush), avy eo mametraka ny FX eo ambony
-    // --------------------------------------------------------
+                                                               
+                                                                       
+                                                                    
+                                                                    
+                                                                    
+                                                                       
+                                               
+      
+                                                                    
+                                                                            
+                                                                       
+                                                                      
+                                                               
     addPostFX(name, fragmentSource, uniforms = {}) {
         const gl = this.gl; if (!this._fx) this._fx = new Map();
         const vsSource = this.isWebGL2
@@ -1536,10 +1481,10 @@ sortedIndices.sort((a, b) => texOf[a].id - texOf[b].id);
         const fx = this._fx && this._fx.get(name); if (!fx) return;
         fx.customUniforms[uniformName] = value;
     }
-    // ✅ VAOVAO v4.3.2 — Ping-pong FBO ROA (fboA/fboB), ilaina rehefa
-    // pass maromaro (chain) satria ny output an'ny pass iray no input
-    // an'ny manaraka, ka tsy azo atao raha FBO tokana ihany (mamaky
-    // sy manoratra amin'ny texture iray no fotoana iray).
+                                                                     
+                                                                      
+                                                                    
+                                                          
     _ensureFXTarget() {
         const gl = this.gl;
         if (this._fxTexA && this._fxTexW===this.width && this._fxTexH===this.height) return;
@@ -1583,22 +1528,22 @@ sortedIndices.sort((a, b) => texOf[a].id - texOf[b].id);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
         gl.enable(gl.BLEND);
     }
-    // renderScene: () => {} — miantso ny drawSprite/drawRect/flush ao anatiny.
-    // Raha tsy misy activeFX voatondro (usePostFX), dia mandeha mivantana ho
-    // an'ny screen (fallback tsy misy overhead).
-    //
-    // ✅ VAOVAO v4.3.2 — MULTI-PASS CHAINING: raha lisitra FX maromaro no
-    // nafindra tamin'ny usePostFX(['bloom','colorgrade','crt']), dia
-    // mandeha misesy (Bloom -> ColorGrade -> CRT), ny output an'ny iray
-    // no input an'ny manaraka (ping-pong fboA<->fboB), ary ny farany
-    // ihany no aseho eo amin'ny screen mivantana (tsy misy FBO fanampiny).
+                                                                               
+                                                                             
+                                                 
+      
+                                                                         
+                                                                     
+                                                                        
+                                                                     
+                                                                           
     renderWithPostFX(renderScene, timeSeconds = 0) {
         const gl = this.gl;
         const names = this._activeFX || [];
         const fxList = names.map(n => this._fx && this._fx.get(n)).filter(Boolean);
         if (fxList.length === 0) { renderScene(); return; }
         this._ensureFXTarget();
-        // Pass 0: render ny lalao ao anaty fboA
+                                                
         gl.bindFramebuffer(gl.FRAMEBUFFER, this._fxFBOA);
         gl.viewport(0,0,this.width,this.height);
         renderScene();
@@ -1607,30 +1552,30 @@ sortedIndices.sort((a, b) => texOf[a].id - texOf[b].id);
         for (let i = 0; i < fxList.length; i++) {
             const isLast = i === fxList.length-1;
             if (isLast) {
-                gl.bindFramebuffer(gl.FRAMEBUFFER, null); // farany = mivantana amin'ny screen
+                gl.bindFramebuffer(gl.FRAMEBUFFER, null);                                     
             } else {
                 gl.bindFramebuffer(gl.FRAMEBUFFER, dstFBO);
             }
             gl.viewport(0,0,this.width,this.height);
             this._drawFXQuad(fxList[i], srcTex, timeSeconds);
-            // Ping-pong: mifanakalo ny src/dst ho an'ny pass manaraka
+                                                                      
             const tmpTex=srcTex, tmpFBO=srcFBO; srcTex=dstTex; srcFBO=dstFBO; dstTex=tmpTex; dstFBO=tmpFBO;
         }
-        gl.useProgram(this.program); // averina amin'ny quad program mahazatra
+        gl.useProgram(this.program);                                          
     }
 }
 
-// ============================================================
-// 22-50. Sehatra, Sarimihetsika, Vovoka, Fizika, Drafitra, Lalana, sns.
-// ============================================================
-// ============================================================
-// ✅ VAOVAO v4.3.3 — DataManager: key-value store isaky ny Sehatra,
-// miaraka amin'ny CHANGE EVENTS toy ny Phaser DataManager. Rehefa
-// set(key,val), dia mamoaka event roa amin'ny events an'ilay tompony
-// (scene.events, izay = scene mihitsy satria extends Hetsika):
-//   'changedata'      (key, value, previousValue)
-//   'changedata-<key>' (value, previousValue)  — subscribe amin'ny key iray ihany
-// ============================================================
+                                                               
+                                                                        
+                                                               
+                                                               
+                                                                   
+                                                                  
+                                                                     
+                                                               
+                                                  
+                                                                                  
+                                                               
 class DataManager {
     constructor(eventEmitter) { this._values = new Map(); this._emitter = eventEmitter; }
     set(key, value) {
@@ -1653,19 +1598,19 @@ class DataManager {
 class Sehatra extends Hetsika {
     constructor(key) {
         super(); this.key=key; this.active=false; this.visible=true; this.paused=false;
-        this.events=this; // alias: Scene.events === Scene mihitsy, satria extends Hetsika
-        this.data=new DataManager(this); // ✅ VAOVAO v4.3.3: DataManager feno (set/get/changedata events)
+        this.events=this;                                                                 
+        this.data=new DataManager(this);                                                                 
     }
     init(data) {} create() {} update(dt, dtMs) {} render(renderer, camera, alpha = 1) {} renderUI(renderer) {} shutdown() {} destroy() {}
 }
-// ============================================================
-// ✅ VAOVAO v4.2.3 — MpitantanaSehatra: Scene System feno
-// Manohana ny fandehanan-tsehatra maromaro mifanindran-dalana
-// (ohatra: sehatra lalao + UI overlay), sleep/wake, pause/resume,
-// ary lifecycle feno: preload -> init -> create -> update ->
-// shutdown -> destroy. Ny "sehatra active" iray ihany (linear)
-// dia mbola tantina ho an'ny fampiasana tsotra.
-// ============================================================
+                                                               
+                                                         
+                                                              
+                                                                  
+                                                             
+                                                               
+                                                
+                                                               
 class MpitantanaSehatra {
     constructor(game) { this.game=game; this._scenes=new Map(); this._running=[]; this._active=null; }
     add(key, SceneClass) {
@@ -1679,14 +1624,14 @@ class MpitantanaSehatra {
         scene.create(data||{});
         scene.active=true; scene.paused=false; scene.sleeping=false; scene.visible=true;
     }
-    // start(): manidy ny sehatra "active" nialoha (linear, mitovy amin'ny taloha)
+                                                                                  
     start(key, data) {
         if (this._active) { this._shutdownScene(this._active); }
         this._running = this._running.filter(s => s !== this._active);
         this._active = this._scenes.get(key);
         if (this._active) { this._boot(this._active, data); if (!this._running.includes(this._active)) this._running.push(this._active); }
     }
-    // launch(): mandefa sehatra vaovao HIARAKA amin'ireo efa mandeha (parallel — ohatra: UI overlay)
+                                                                                                     
     launch(key, data) {
         const scene = this._scenes.get(key);
         if (scene && !this._running.includes(scene)) { this._boot(scene, data); this._running.push(scene); }
@@ -1700,43 +1645,43 @@ class MpitantanaSehatra {
     wake(key, data) { const s=this._scenes.get(key); if (s) { s.sleeping=false; if (s.onWake) s.onWake(data); } }
     pause(key) { const s=this._scenes.get(key); if (s) { s.paused=true; if (s.onPause) s.onPause(); } }
     resume(key, data) { const s=this._scenes.get(key); if (s) { s.paused=false; if (s.onResume) s.onResume(data); } }
-    // ✅ VAOVAO v4.3.0 — auto-off: rehefa shutdown ny sehatra, dia esorina
-    // avokoa ny listeners rehetra tao amin'ny scene.events (=scene mihitsy,
-    // satria extends Hetsika), mba tsy hisy "listener zombie" mitazona
-    // sahala sy mihazona références rehefa ampiasaina indray ilay Sehatra.
+                                                                          
+                                                                            
+                                                                       
+                                                                           
     _shutdownScene(scene) { if (scene && scene.active) { if (scene.shutdown) scene.shutdown(); scene.active=false; if (scene.removeAll) scene.removeAll(); } }
     destroyScene(key) { const s=this._scenes.get(key); if (s) { this._shutdownScene(s); if (s.destroy) s.destroy(); this._running=this._running.filter(x=>x!==s); this._scenes.delete(key); } }
     get active() { return this._active; }
     getScene(key) { return this._scenes.get(key); }
     isActive(key) { const s=this._scenes.get(key); return !!(s && s.active && !s.sleeping); }
-    // sendMessage: fifandraisana tsotra mezra ny sehatra roa (ohatra: game -> UI overlay)
+                                                                                          
     sendMessage(key, event, payload) { const s=this._scenes.get(key); if (s && s.onMessage) s.onMessage(event, payload); }
     update(dt, dtMs) { for (const s of this._running) if (s.active && !s.paused && !s.sleeping) s.update(dt, dtMs); }
     render(renderer, camera, alpha = 1) { for (const s of this._running) if (s.active && s.visible && !s.sleeping) s.render(renderer, camera, alpha); }
     renderUI(renderer) { for (const s of this._running) if (s.active && s.visible && !s.sleeping) s.renderUI(renderer); }
 
-    // --------------------------------------------------------
-    // ✅ VAOVAO v4.3.3 — HMR (Hot Module Replacement) HOOK
-    // Ho an'ny Vite/Webpack dev server: rehefa manova ny code an'ny
-    // Scene class ianao, dia azo atao ny FANAVAOZANA NY METHODS ihany
-    // (create/update/render/shutdown/sns) amin'ny instance MISY SAHADY,
-    // tsy misy fanadiovana ny "state" ankehitriny (entities, position,
-    // score, sns) — tsy toy ny refresh feno an'ny page. Io no tombony
-    // lehibe amin'ny dev experience raha oharina amin'ny fanaovana
-    // refresh isaky ny fanovana kely.
-    //
-    // hotReplaceScene(key, NewSceneClass): mametraka ny prototype
-    // vaovao amin'ny instance efa misy (Object.setPrototypeOf), dia
-    // mamerina antsoina ny create() raha mbola active ilay scene (mba
-    // hametrahana ny listeners/entities vaovao raha nampiana), fa tsy
-    // manadio ny "data" (DataManager) na ny "events" listeners.
-    // --------------------------------------------------------
+                                                               
+                                                          
+                                                                    
+                                                                      
+                                                                        
+                                                                       
+                                                                      
+                                                                   
+                                      
+      
+                                                                  
+                                                                    
+                                                                      
+                                                                      
+                                                                
+                                                               
     hotReplaceScene(key, NewSceneClass) {
         const oldScene = this._scenes.get(key);
         if (!oldScene) { console.warn(`HMR: sehatra "${key}" tsy hita, tsy azo atao ny hot-replace`); return null; }
         const wasActive = oldScene.active, wasRunning = this._running.includes(oldScene);
-        // Mametraka ny methods vaovao amin'ny instance MISY SAHADY (state
-        // voatahiry: x,y,data,events listeners, sns — tsy very na dia iray aza)
+                                                                          
+                                                                                
         Object.setPrototypeOf(oldScene, NewSceneClass.prototype);
         if (wasActive && oldScene.create) {
             try { oldScene.create(); } catch (e) { console.error(`HMR: create() error tao amin'ny "${key}":`, e); }
@@ -1744,42 +1689,42 @@ class MpitantanaSehatra {
         console.log(`🔥 HMR: "${key}" navaozina (state voatahiry)`);
         return oldScene;
     }
-    // Fampifandraisana amin'ny Vite (import.meta.hot) na Webpack (module.hot).
-    // Fampiasana ao amin'ny Scene file mihitsy:
-    //   if (import.meta.hot) game.scenes.hookHMR(import.meta.hot, 'game', GameScene);
+                                                                               
+                                                
+                                                                                      
     hookHMR(hotAPI, key, SceneClassRef) {
         if (!hotAPI) return;
         if (hotAPI.accept) {
-            // Vite-style: hotAPI.accept(callback) miantso ny module vaovao
+                                                                           
             hotAPI.accept((newModule) => {
                 if (!newModule) return;
-                // Mitady ny export voalohany class-type (heuristic tsotra)
+                                                                           
                 const NewClass = newModule.default || Object.values(newModule).find(v => typeof v === 'function');
                 if (NewClass) this.hotReplaceScene(key, NewClass);
             });
         } else if (hotAPI.dispose && hotAPI.accept) {
-            // Webpack-style (mitovy endrika ihany, fa azo atao manokana)
+                                                                         
             hotAPI.accept();
         }
     }
 }
-// ============================================================
-// ✅ VAOVAO v4.2.3 — Sarimihetsika: Timeline Events feno
-// (onFrame, onComplete, onRepeat, yoyo, repeat count, repeatDelay)
-// ============================================================
+                                                               
+                                                        
+                                                                   
+                                                               
 class Sarimihetsika {
     constructor(spritesheet) { this.sheet=spritesheet; this.anims=new Map(); this.current=null; this.frame=0; this.time=0; this.finished=false; this._dir=1; this._repeatsLeft=0; this._delayT=0; }
     add(name, frames, opts = {}) {
-        if (typeof opts === 'number') opts = {fps:opts}; // retro-compatibilité: add(name, frames, fps, loop)
+        if (typeof opts === 'number') opts = {fps:opts};                                                     
         const fps = opts.fps || 12, loop = opts.loop !== undefined ? opts.loop : true;
         this.anims.set(name, {
             frames, fps, loop, duration:1000/fps,
             yoyo: !!opts.yoyo,
-            repeat: opts.repeat!==undefined ? opts.repeat : (loop ? -1 : 0), // -1 = mandrakizay
-            repeatDelay: opts.repeatDelay || 0, // ms fiatoana isaky ny fiverenana
-            onFrame: opts.onFrame || null,       // (frameIndex, frameValue) => {}
-            onComplete: opts.onComplete || null, // () => {} — antsoina rehefa tapitra tanteraka (tsy loop intsony)
-            onRepeat: opts.onRepeat || null       // (repeatCount) => {}
+            repeat: opts.repeat!==undefined ? opts.repeat : (loop ? -1 : 0),                    
+            repeatDelay: opts.repeatDelay || 0,                                   
+            onFrame: opts.onFrame || null,                                        
+            onComplete: opts.onComplete || null,                                                                   
+            onRepeat: opts.onRepeat || null                             
         });
         return this;
     }
@@ -1809,7 +1754,7 @@ class Sarimihetsika {
         }
     }
     _onEdge(anim) {
-        // Vita fihodinana iray (cycle). Mizaha raha mbola misy 'repeat' sisa.
+                                                                              
         if (anim.repeat === -1) { if (anim.onRepeat) anim.onRepeat(-1); if (anim.repeatDelay) this._delayT = anim.repeatDelay; return; }
         if (this._repeatsLeft > 0) { this._repeatsLeft--; if (anim.onRepeat) anim.onRepeat(this._repeatsLeft); if (anim.repeatDelay) this._delayT = anim.repeatDelay; return; }
         this.finished = true;
@@ -1817,32 +1762,32 @@ class Sarimihetsika {
     }
     getFrame() { const anim=this.anims.get(this.current); if (!anim) return null; return anim.frames[this.frame]; }
 }
-// ============================================================
-// ✅ VAOVAO v4.3.4 — SKELETAL ANIMATION RUNTIME (<15KB)
-// Runtime tsotra ho an'ny character 2D miorina amin'ny bone
-// hierarchy — tsy fanoloana feno an'i Spine/DragonBones (tsy misy
-// IK, mesh deformation, clipping) fa ampy ho an'ny character
-// fototra: sprite tsirairay mifamatotra amin'ny "bone" iray,
-// ny bone tsirairay dia manana reny (parent), rotation/position/
-// scale azo atao KEYFRAME animation, ary ny "world transform" an'ny
-// bone tsirairay dia kajian'ny mandeha manaraka ny hierarchy.
-//
-// Rig JSON mahazatra (mitovy amin'ny fototry ny Spine/DragonBones):
-// {
-//   bones: [ {name, parent, x, y, rotation, scaleX, scaleY, sprite} ],
-//   animations: {
-//     walk: { duration: 800, tracks: {
-//       "leg_L": { rotation: [{t:0,v:0},{t:400,v:0.5},{t:800,v:0}] }
-//     }}
-//   }
-// }
-// ============================================================
+                                                               
+                                                       
+                                                            
+                                                                  
+                                                             
+                                                             
+                                                                 
+                                                                    
+                                                              
+  
+                                                                    
+    
+                                                                       
+                  
+                                       
+                                                                     
+         
+      
+    
+                                                               
 class Taolana2D {
     constructor(name, opts = {}) {
         this.name = name; this.parent = null; this.children = [];
         this.x = opts.x||0; this.y = opts.y||0; this.rotation = opts.rotation||0;
         this.scaleX = opts.scaleX!==undefined?opts.scaleX:1; this.scaleY = opts.scaleY!==undefined?opts.scaleY:1;
-        this.sprite = opts.sprite||null; // {textureKey, sx,sy,sw,sh, pivotX,pivotY} — azo tsy misy (bone tsotra, tsy misy sary)
+        this.sprite = opts.sprite||null;                                                                                        
         this.localMatrix = new Lamina2D(); this.worldMatrix = new Lamina2D();
     }
     addChild(bone) { bone.parent = this; this.children.push(bone); return bone; }
@@ -1861,8 +1806,8 @@ class Taolana2D {
 }
 class EndrikaTaolana {
     constructor() { this.bones = new Map(); this.root = null; }
-    // Mamorona ny bone tree manontolo avy amin'ny rig JSON (bones[]
-    // misy {name, parent, x,y,rotation,scaleX,scaleY,sprite}).
+                                                                    
+                                                               
     static fromJSON(rigJson) {
         const skel = new EndrikaTaolana();
         for (const b of rigJson.bones) {
@@ -1872,21 +1817,21 @@ class EndrikaTaolana {
         for (const b of rigJson.bones) {
             const bone = skel.bones.get(b.name);
             if (b.parent && skel.bones.has(b.parent)) skel.bones.get(b.parent).addChild(bone);
-            else if (!skel.root) skel.root = bone; // bone voalohany tsy manana reny = root
+            else if (!skel.root) skel.root = bone;                                         
         }
         if (!skel.root) { const first = rigJson.bones[0]; if (first) skel.root = skel.bones.get(first.name); }
         return skel;
     }
     getBone(name) { return this.bones.get(name); }
     updateWorld() { if (this.root) this.root.updateWorld(); }
-    // Manondraka ny bone rehetra manana "sprite" (drawSpriteRotated,
-    // mampiasa ny worldMatrix mba hahazoana ny toerana/rotation eran-tany).
+                                                                     
+                                                                            
     render(renderer) {
         for (const bone of this.bones.values()) {
             if (!bone.sprite) continue;
             const m = bone.worldMatrix.m;
-            // Manala ny "world position" (m[4],m[5]) sy ny rotation avy
-            // amin'ny matrix (atan2 an'ny colonne voalohany).
+                                                                        
+                                                              
             const worldX = m[4], worldY = m[5];
             const worldRotation = Math.atan2(m[1], m[0]);
             const worldScaleX = Math.hypot(m[0], m[1]);
@@ -1901,13 +1846,13 @@ class EndrikaTaolana {
         }
     }
 }
-// HetsikaTaolana: mitantana ny keyframe animation ho an'ny bone
-// maromaro miaraka (mitovy amin'ny Sarimihetsika fa ho an'ny bone
-// rotation/position/scale, tsy frame index).
+                                                                
+                                                                  
+                                             
 class HetsikaTaolana {
     constructor(skeleton) { this.skeleton = skeleton; this.animations = new Map(); this.current = null; this.time = 0; this.loop = true; this.speed = 1; this.finished = false; }
     addAnimation(name, def) { this.animations.set(name, def); return this; }
-    // Ampidiro avy amin'ny rig JSON manontolo (rigJson.animations)
+                                                                   
     static loadAnimations(hetsika, animationsJson) { for (const name in animationsJson) hetsika.addAnimation(name, animationsJson[name]); return hetsika; }
     play(name, opts = {}) {
         if (!this.animations.has(name)) { console.warn(`HetsikaTaolana: animation "${name}" tsy hita`); return this; }
@@ -1915,9 +1860,9 @@ class HetsikaTaolana {
         this.loop = opts.loop!==undefined ? opts.loop : true;
         return this;
     }
-    // _sampleTrack: mitady ny sanda (interpolated) an'ny track iray
-    // (rotation/x/y/scaleX/scaleY) amin'ny fotoana "t" voafaritra,
-    // mifototra amin'ny keyframe roa manodidina azy (linear interpolation).
+                                                                    
+                                                                   
+                                                                            
     _sampleTrack(keyframes, t) {
         if (!keyframes || !keyframes.length) return undefined;
         if (keyframes.length === 1 || t <= keyframes[0].t) return keyframes[0].v;
@@ -1986,23 +1931,23 @@ class Vovoka {
         }
     }
 }
-// ============================================================
-// ✅ VAOVAO v4.3.1 — CONSTRAINTS/JOINTS: DistanceJoint, RevoluteJoint,
-// SpringJoint. Ireo dia miasa MIVANTANA amin'ny Vondrona (ECS SoA),
-// mitovy amin'ny fomba fiasan'ny Fizika.step() — tsy mila class OOP
-// isaky ny entity, fa id roa (a, b) fotsiny no ilaina. Ampiasaina
-// ho an'ny ragdoll (constraint maromaro mifamatotra), swing/pendulum
-// (RevoluteJoint), na vehicle suspension (SpringJoint).
-//
-// FANAMARIHANA: joint iray dia azo atao "static anchor" raha b=-1
-// (mifamatotra amin'ny teboka fiorenana fotsiny, tsy entity).
-// ============================================================
+                                                               
+                                                                      
+                                                                    
+                                                                    
+                                                                  
+                                                                     
+                                                        
+  
+                                                                  
+                                                              
+                                                               
 class DistanceJoint {
-    // a, b: entity id (Vondrona). anchorB null raha b=-1 (fiorenana static)
+                                                                            
     constructor(a, b, distance, opts = {}) {
         this.a=a; this.b=b; this.distance=distance;
         this.staticAnchor = b===-1 ? {x:opts.anchorX||0, y:opts.anchorY||0} : null;
-        this.stiffness = opts.stiffness!==undefined ? opts.stiffness : 1; // 0..1, 1=rigid tanteraka
+        this.stiffness = opts.stiffness!==undefined ? opts.stiffness : 1;                           
         this.enabled = true;
     }
     update(V) {
@@ -2021,9 +1966,9 @@ class DistanceJoint {
     }
 }
 class RevoluteJoint {
-    // Mitovy amin'ny DistanceJoint fa manana "pivot point" tsy miova
-    // (rotation azo mihodina malalaka manodidina ny pivot) — swing/pendulum.
-    // pivotOffset: {x,y} avy amin'ny b (na eo amin'ny toerana static raha b=-1)
+                                                                     
+                                                                             
+                                                                                
     constructor(a, b, opts = {}) {
         this.a=a; this.b=b;
         this.staticAnchor = b===-1 ? {x:opts.anchorX||0, y:opts.anchorY||0} : null;
@@ -2032,18 +1977,18 @@ class RevoluteJoint {
     }
     update(V, dt) {
         if (!this.enabled) return;
-        // RevoluteJoint = DistanceJoint tsy miova habe (rigid rod, tsy misy stiffness variable)
+                                                                                                
         const ax=V.x[this.a]+V.w[this.a]/2, ay=V.y[this.a]+V.h[this.a]/2;
         const bx = this.staticAnchor ? this.staticAnchor.x : V.x[this.b]+V.w[this.b]/2;
         const by = this.staticAnchor ? this.staticAnchor.y : V.y[this.b]+V.h[this.b]/2;
         const dx=ax-bx, dy=ay-by; let dist=Math.hypot(dx,dy); if (dist<EPSILON) dist=EPSILON;
         const nx=dx/dist, ny=dy/dist;
-        // Mametraka mivantana ny "a" eo amin'ny farin'ny rod (rigid, tsy manaraka mass split
-        // satria matetika ny pivot dia static na "b" lehibe kokoa lavitra — tsotra kokoa toy izao)
+                                                                                             
+                                                                                                   
         if (!V.isStatic[this.a]) {
             V.x[this.a] = bx + nx*this.length - V.w[this.a]/2;
             V.y[this.a] = by + ny*this.length - V.h[this.a]/2;
-            // Manala ny hafainganam-pandeha manaraka ny radius (tangential velocity ihany no tavela)
+                                                                                                     
             const vx=V.vx[this.a], vy=V.vy[this.a];
             const radialV = vx*nx+vy*ny;
             V.vx[this.a] -= radialV*nx; V.vy[this.a] -= radialV*ny;
@@ -2051,13 +1996,13 @@ class RevoluteJoint {
     }
 }
 class SpringJoint {
-    // Mitovy amin'ny DistanceJoint fa manisa FORCE (Hooke's law: F=-k*x)
-    // fa tsy manova mivantana ny toerana — ho an'ny vehicle suspension,
-    // rubber band effect, na "soft body" tsotra.
+                                                                         
+                                                                        
+                                                 
     constructor(a, b, restLength, opts = {}) {
         this.a=a; this.b=b; this.restLength=restLength;
         this.staticAnchor = b===-1 ? {x:opts.anchorX||0, y:opts.anchorY||0} : null;
-        this.stiffness = opts.stiffness!==undefined ? opts.stiffness : 200; // "k" ao amin'ny F=-k*x
+        this.stiffness = opts.stiffness!==undefined ? opts.stiffness : 200;                         
         this.damping = opts.damping!==undefined ? opts.damping : 5;
         this.enabled = true;
     }
@@ -2070,7 +2015,7 @@ class SpringJoint {
         const nx=dx/dist, ny=dy/dist;
         const stretch = dist-this.restLength;
         const forceMag = stretch*this.stiffness;
-        // Damping: manala ny hafainganam-pandeha manaraka ny axis (tsy hihontsona mandrakizay)
+                                                                                               
         if (!V.isStatic[this.a]) {
             const relVx = -V.vx[this.a], relVy = -V.vy[this.a];
             const dampForce = (relVx*nx+relVy*ny)*this.damping;
@@ -2085,9 +2030,9 @@ class SpringJoint {
         }
     }
 }
-// MpitantanaJoint: mitahiry ny joint rehetra, manova azy indray mihodina
-// (antsoina AORIAN'ny Fizika.step(), mba tsy hifanipaka amin'ny impulse
-// resolution — ny joint dia "position correction" fanampiny).
+                                                                         
+                                                                        
+                                                              
 class MpitantanaJoint {
     constructor() { this.joints = []; }
     add(joint) { this.joints.push(joint); return joint; }
@@ -2096,9 +2041,9 @@ class MpitantanaJoint {
     clear() { this.joints.length = 0; }
 }
 const Fizika = {
-    // --------------------------------------------------------
-    // FIFANDRAISANA FOTOTRA (geometry tests, tsy misy hetsika)
-    // --------------------------------------------------------
+                                                               
+                                                               
+                                                               
     rectVsRect(ax,ay,aw,ah,bx,by,bw,bh) { return ax<bx+bw && ax+aw>bx && ay<by+bh && ay+ah>by; },
     circleVsCircle(ax,ay,ar,bx,by,br) { const dx=bx-ax,dy=by-ay; return dx*dx+dy*dy<=(ar+br)*(ar+br); },
     circleVsRect(cx,cy,cr,rx,ry,rw,rh) { const nx=Z.clamp(cx,rx,rx+rw), ny=Z.clamp(cy,ry,ry+rh); const dx=cx-nx, dy=cy-ny; return dx*dx+dy*dy<=cr*cr; },
@@ -2124,13 +2069,13 @@ const Fizika = {
     _getAxes(points) { const axes=[]; for(let i=0;i<points.length;i++){const p1=points[i],p2=points[(i+1)%points.length];const nx=-(p2.y-p1.y),ny=p2.x-p1.x;const len=Math.hypot(nx,ny)||1;axes.push({x:nx/len,y:ny/len});} return axes; },
     _project(points, axis) { let min=Infinity,max=-Infinity; for(const p of points){const d=p.x*axis.x+p.y*axis.y;if(d<min)min=d;if(d>max)max=d;} return {min,max}; },
 
-    // --------------------------------------------------------
-    // ✅ VAOVAO v4.3.1 — SAT MTV (Minimum Translation Vector):
-    // mamerina {axis:{x,y}, overlap} = ilay axis manondro ny lalana
-    // FOHY INDRINDRA hanalana ny fifandonana, na null raha tsy
-    // mifandona. Io no fototry ny "polygon resolution" (endrika
-    // mihodina, ohatra Lafomaro.rect+rotation, na regular(N)).
-    // --------------------------------------------------------
+                                                               
+                                                              
+                                                                    
+                                                               
+                                                                
+                                                               
+                                                               
     satMTV(polyA, polyB) {
         const ptsA=polyA.worldPoints(), ptsB=polyB.worldPoints();
         const axesA=this._getAxes(ptsA), axesB=this._getAxes(ptsB);
@@ -2138,10 +2083,10 @@ const Fizika = {
         for (const axis of [...axesA,...axesB]) {
             const projA=this._project(ptsA,axis), projB=this._project(ptsB,axis);
             const overlap = Math.min(projA.max,projB.max) - Math.max(projA.min,projB.min);
-            if (overlap<=0) return null; // misy axis tsy mifandona = tsy mety mifandona ny endrika roa
+            if (overlap<=0) return null;                                                               
             if (overlap<minOverlap) { minOverlap=overlap; minAxis=axis; }
         }
-        // Manamarina ny direction: tokony hanondro AVY amin'ny A MANKANY amin'ny B
+                                                                                   
         const centerA={x:0,y:0}, centerB={x:0,y:0};
         for(const p of ptsA){centerA.x+=p.x/ptsA.length;centerA.y+=p.y/ptsA.length;}
         for(const p of ptsB){centerB.x+=p.x/ptsB.length;centerB.y+=p.y/ptsB.length;}
@@ -2149,13 +2094,13 @@ const Fizika = {
         if (dx*minAxis.x+dy*minAxis.y<0) minAxis={x:-minAxis.x,y:-minAxis.y};
         return {axis:minAxis, overlap:minOverlap};
     },
-    // --------------------------------------------------------
-    // ✅ VAOVAO v4.3.1 — Resolution polygon (endrika mihodina):
-    // a,b dia {poly:Lafomaro, vx,vy,mass,bounce,isStatic}. Mizara
-    // ny push araka ny invMass (mitovy amin'ny resolveAABB), ary
-    // manova mivantana ny poly.x/poly.y (setPos) mba hifanaraka
-    // amin'ny fandehan'ny Lafomaro (dirty-flag caching).
-    // --------------------------------------------------------
+                                                               
+                                                               
+                                                                  
+                                                                 
+                                                                
+                                                         
+                                                               
     resolvePolygon(a, b) {
         const mtv = this.satMTV(a.poly, b.poly); if (!mtv) return null;
         const bStatic = b.isStatic===undefined ? true : !!b.isStatic;
@@ -2179,12 +2124,12 @@ const Fizika = {
         return {axis:mtv.axis, overlap:mtv.overlap};
     },
 
-    // --------------------------------------------------------
-    // RESOLUTION AABB (manisy lanja/mass ho an'ny roa tonta,
-    // tsy manosika ny isStatic===true, mizara push araka invMass)
-    // opts.slide=true : manova ny axis iray ihany (X na Y, ilay kely
-    // indrindra ny overlap), toy ny "slide along wall" amin'ny platformer
-    // --------------------------------------------------------
+                                                               
+                                                             
+                                                                  
+                                                                     
+                                                                          
+                                                               
     resolveAABB(a, b, opts) {
         const overlapX=Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x), overlapY=Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y);
         if (overlapX<=0 || overlapY<=0) return null;
@@ -2210,11 +2155,11 @@ const Fizika = {
         }
     },
 
-    // --------------------------------------------------------
-    // RESOLUTION BORIBORY vs BORIBORY (circle-circle, mampiasa
-    // radius=w/2 an'ny entity). Manisy impulse manaraka ny normale
-    // (tsy toy ny AABB izay X/Y ihany — eto dia azimut feno)
-    // --------------------------------------------------------
+                                                               
+                                                               
+                                                                   
+                                                             
+                                                               
     resolveCircle(a, b) {
         const ar=a.w/2, br=b.w/2, acx=a.x+ar, acy=a.y+ar, bcx=b.x+br, bcy=b.y+br;
         const dx=bcx-acx, dy=bcy-acy; let dist=Math.hypot(dx,dy);
@@ -2229,21 +2174,21 @@ const Fizika = {
         const nx=dx/dist, ny=dy/dist, overlap=minDist-dist;
         if (!aStatic) { a.x -= nx*overlap*(invMassA/totalInv); a.y -= ny*overlap*(invMassA/totalInv); }
         if (!bStatic) { b.x += nx*overlap*(invMassB/totalInv); b.y += ny*overlap*(invMassB/totalInv); }
-        // Impulse manaraka ny normale (elastic, manisy bounce)
+                                                               
         const bounce = Math.max(a.bounce||0, b.bounce||0);
         const rvx=(b.vx||0)-(a.vx||0), rvy=(b.vy||0)-(a.vy||0);
         const velAlongNormal = rvx*nx+rvy*ny;
-        if (velAlongNormal>0) return {axis:'n', overlap}; // efa mihataka
+        if (velAlongNormal>0) return {axis:'n', overlap};                
         const j = -(1+bounce)*velAlongNormal/totalInv;
         if (!aStatic) { a.vx -= j*invMassA*nx; a.vy -= j*invMassA*ny; }
         if (!bStatic) { b.vx += j*invMassB*nx; b.vy += j*invMassB*ny; }
         return {axis:'n', overlap};
     },
 
-    // --------------------------------------------------------
-    // Fifandraisana samihafa araka ny shape (0=rect,1=circle) —
-    // ampiasain'ny Fizika.step() rehefa manisa collision pair
-    // --------------------------------------------------------
+                                                               
+                                                                
+                                                              
+                                                               
     testPair(a, b) {
         if (a.shape===1 && b.shape===1) return this.circleVsCircle(a.x+a.w/2,a.y+a.w/2,a.w/2, b.x+b.w/2,b.y+b.w/2,b.w/2);
         if (a.shape===1) return this.circleVsRect(a.x+a.w/2,a.y+a.w/2,a.w/2, b.x,b.y,b.w,b.h);
@@ -2252,63 +2197,63 @@ const Fizika = {
     },
     resolvePair(a, b, opts) {
         if (a.shape===1 && b.shape===1) return this.resolveCircle(a, b);
-        // Circle vs Rect: heverina ho AABB tsotra (mifanaraka amin'ny
-        // habaky ny bounding-box an'ny circle), ampy ho an'ny platformer/arcade
+                                                                      
+                                                                                
         return this.resolveAABB(a, b, opts);
     },
 
-    // --------------------------------------------------------
-    // ✅ VAOVAO v4.2.2 — "PHYSICS STEP" TENA MIFAMATOTRA AMIN'NY ECS
-    // Fizika.step(V, dt, opts) dia mandalo ny Vondrona (SoA) manontolo:
-    //   1) Gravity + Semi-Implicit Euler integration (ax/ay -> vx/vy -> x/y)
-    //   2) Friction araka ny V.friction[id] isaky ny entity (damping exponentiel)
-    //   3) Broad-phase amin'ny SakanToerana (Spatial Hash, mitovy amin'ilay
-    //      efa nampiasaina tao amin'ny FitaovanaVoa) mba tsy hanao O(n²)
-    //   4) Narrow-phase AABB + impulse resolution araka ny mass/isStatic/bounce
-    //   5) onCollide(idA, idB, hit) callback rehefa misy fifandraisana
-    //
-    // opts: {
-    //   gravity: 980,           // px/s² (ataovy 0 raha top-down, tsy misy fianjerana)
-    //   maxFallSpeed: 2000,     // hafainganam-pandeha farany (terminal velocity)
-    //   cellSize: 64,           // habaky ny sela ao amin'ny SakanToerana
-    //   iterations: 1,          // fihodinana solver fanampiny (2-3 raha maro mifanindry)
-    //   bounds: {x,y,w,h},      // tsy tsy maintsy, raha misy dia manidy ny sehatra
-    //   onCollide: (idA, idB, hit) => {}
-    // }
-    // Mamerina ny grid nampiasaina (azo averina ampiasaina raha
-    // mila query manokana toy ny "iza no manodidina an'ity entity ity")
-    // --------------------------------------------------------
-    // --------------------------------------------------------
-    // ✅ VAOVAO v4.3.1 — PHYSICS GROUPS: collision filtering matrix,
-    // mitovy amin'ny "Arcade Physics Groups" an'i Phaser. Mamorona
-    // anarana group (ohatra 'player','enemy','projectile') ho id
-    // (0-255) mifamatotra amin'ny V.physicsGroup[id], ary mamaritra
-    // MANAO COLLISION ve ny group roa (allow/deny matrix). Raha tsy
-    // misy rule voafaritra mihitsy, dia MIFANDONA ny rehetra
-    // (default = mahazatra, mitovy amin'ny tsy nampiasana Group).
-    // --------------------------------------------------------
+                                                               
+                                                                    
+                                                                        
+                                                                             
+                                                                                  
+                                                                            
+                                                                         
+                                                                                
+                                                                       
+      
+              
+                                                                                       
+                                                                                  
+                                                                          
+                                                                                          
+                                                                                    
+                                         
+        
+                                                                
+                                                                        
+                                                               
+                                                               
+                                                                    
+                                                                   
+                                                                 
+                                                                    
+                                                                    
+                                                             
+                                                                  
+                                                               
     Group: {
-        _names: new Map(),   // name -> id (0-255)
-        _nextId: 1,          // 0 = "default", tsy voatokana
-        _rules: new Map(),   // "idA:idB" (idA<=idB) -> boolean
+        _names: new Map(),                        
+        _nextId: 1,                                         
+        _rules: new Map(),                                     
         define(name) {
             if (this._names.has(name)) return this._names.get(name);
             const id = this._nextId++; this._names.set(name, id); return id;
         },
         id(name) { return this._names.get(name); },
         _key(a, b) { return a<=b ? a+':'+b : b+':'+a; },
-        // setCollision('player','enemy', true|false) : mamaritra raha
-        // mifandona ve ny group roa ireo. Azo atao 'A' ihany koa raha
-        // mikasika ny tenany ihany ny group (ohatra: projectile vs projectile)
+                                                                      
+                                                                      
+                                                                               
         setCollision(nameA, nameB, canCollide = true) {
             const a = typeof nameA==='string' ? this.define(nameA) : nameA;
             const b = typeof nameB==='string' ? this.define(nameB) : nameB;
             this._rules.set(this._key(a,b), canCollide);
         },
         canCollide(groupA, groupB) {
-            if (groupA===0 || groupB===0) return true; // "default" group = mifandona amin'ny rehetra
+            if (groupA===0 || groupB===0) return true;                                               
             const rule = this._rules.get(this._key(groupA,groupB));
-            return rule===undefined ? true : rule; // tsy misy rule voafaritra = mifandona (default)
+            return rule===undefined ? true : rule;                                                  
         },
         reset() { this._names.clear(); this._rules.clear(); this._nextId=1; }
     },
@@ -2324,7 +2269,7 @@ const Fizika = {
         if (!this._grid || this._grid.cellSize !== cellSize) this._grid = new SakanToerana(cellSize);
         const grid = this._grid;
 
-        // 1-2) Integration: gravity + acceleration -> velocity -> friction -> position
+                                                                                       
         for (let id = 0; id < V.count; id++) {
             if (!V.alive[id] || !V.active[id] || V.isStatic[id]) continue;
             V.vx[id] += V.ax[id]*dt;
@@ -2337,12 +2282,12 @@ const Fizika = {
 
             const moveX = V.vx[id]*dt, moveY = V.vy[id]*dt;
 
-            // ✅ VAOVAO v4.3.1 — CCD (Continuous Collision Detection):
-            // raha mihoatra ny habeny ny fandehanan'ilay entity amin'ity
-            // frame ity (tena haingana, ohatra bala), dia raycast hatramin'ny
-            // toerana vaovao mba tsy "hitapaka" rindrina manify (tunneling).
-            // Ilaina ihany raha V.ccd[id]=1 (tsy mahazatra, fa entity voafaritra
-            // manokana, satria mandany kokoa ny raycast noho ny AABB tsotra).
+                                                                      
+                                                                         
+                                                                              
+                                                                             
+                                                                                 
+                                                                              
             if (V.ccd[id] && V.isSolid[id]) {
                 const dist = Math.hypot(moveX, moveY);
                 const minDim = Math.min(V.w[id]||1, V.h[id]||1);
@@ -2357,12 +2302,12 @@ const Fizika = {
                         if (hit && hit.t>=0 && hit.t<closestT) { closestT=hit.t; closestId=oid; }
                     }
                     if (closestId>=0) {
-                        // Mijanona kely alohan'ny hit point (tsy mandalo, tsy mitsotra ao anaty)
+                                                                                                 
                         const safeT = Math.max(0, closestT - (minDim/2)/dist);
                         V.x[id] += moveX*safeT; V.y[id] += moveY*safeT;
                         V.vx[id]=0; V.vy[id]=0;
                         if (onCollide) onCollide(id, closestId, {axis:'ccd', overlap:0});
-                        continue; // tsy manao ny fametrahana x/y mahazatra intsony, vita ny handling
+                        continue;                                                                    
                     }
                 }
             }
@@ -2378,9 +2323,9 @@ const Fizika = {
             }
         }
 
-        // 3-4) Broad-phase (spatial hash) + narrow-phase + impulse resolution,
-        // averina in-{iterations} eny mba hampitony ny "jitter" rehefa maro
-        // ny entity mifanindry indray mihodina.
+                                                                               
+                                                                            
+                                                
         for (let it = 0; it < iterations; it++) {
             grid.clear();
             for (let id = 0; id < V.count; id++) {
@@ -2398,8 +2343,8 @@ const Fizika = {
                     if (checked.has(key)) continue;
                     checked.add(key);
                     if (V.isStatic[id] && V.isStatic[otherId]) continue;
-                    // ✅ Physics Groups filter: raha voafaritra fa TSY mifandona
-                    // ireo group roa ireo, dia tsy manao geometry test intsony.
+                                                                                
+                                                                                
                     if (!this.Group.canCollide(V.physicsGroup[id], V.physicsGroup[otherId])) continue;
                     const a = {x:V.x[id],y:V.y[id],w:V.w[id],h:V.h[id],vx:V.vx[id],vy:V.vy[id],mass:V.mass[id],bounce:V.bounce[id],isStatic:!!V.isStatic[id],shape:V.shape[id]};
                     const b = {x:V.x[otherId],y:V.y[otherId],w:V.w[otherId],h:V.h[otherId],vx:V.vx[otherId],vy:V.vy[otherId],mass:V.mass[otherId],bounce:V.bounce[otherId],isStatic:!!V.isStatic[otherId],shape:V.shape[otherId]};
@@ -2419,21 +2364,21 @@ const Fizika = {
 class Drafitra {
     constructor(opts = {}) { this.tileSize=opts.tileSize||32; this.width=opts.width||20; this.height=opts.height||15; this.layers=[]; this.tilesets=[]; this.objects=[]; this.tileAnimations=new Map(); this._animTime=0; }
     addLayer(name, data, opts = {}) { this.layers.push({name,data,visible:opts.visible!==false,solid:opts.solid||false,properties:opts.properties||{},tint:opts.tint!==undefined?opts.tint:0xFFFFFFFF,opacity:opts.opacity!==undefined?opts.opacity:1}); return this; }
-    // --------------------------------------------------------
-    // ✅ VAOVAO v4.3.3 — fromTiled TENA FENO:
-    //  - TILE ANIMATIONS: ts.tiles[].animation (frame-list voafaritra
-    //    tao amin'ny Tiled Tileset Editor) — tehirizina ao amin'ny
-    //    this.tileAnimations (localTileId -> [{tileid,duration}])
-    //  - LAYER TINT/OPACITY: layer.tintcolor (#RRGGBB) sy layer.opacity
-    //  - OBJECT ROTATION/SCALE: obj.rotation (degrees), obj.gid (raha
-    //    "tile object", misy width/height=scaled size)
-    //  - GID FLIP FLAGS: ny 3 bit ambony indrindra amin'ny GID (32-bit)
-    //    dia horizontal/vertical/diagonal flip, tsiny an'ny Tiled rehefa
-    //    "mihodina" tile tsirairay ao anaty tilelayer (tsy object)
-    //  - CUSTOM PROPERTIES: efa vita (_propsToObj), fa ampiana eto koa
-    //    ho an'ny tileset.tiles[].properties (per-tile metadata, ohatra
-    //    "damage":10 amin'ny tile "spike")
-    // --------------------------------------------------------
+                                                               
+                                             
+                                                                      
+                                                                   
+                                                                  
+                                                                        
+                                                                      
+                                                       
+                                                                        
+                                                                         
+                                                                   
+                                                                       
+                                                                        
+                                           
+                                                               
     static fromTiled(json, tilesetKeyOrMap) {
         const map=new Drafitra({tileSize:json.tilewidth,width:json.width,height:json.height});
         for(const layer of json.layers||[]){
@@ -2447,8 +2392,8 @@ class Drafitra {
                     map.objects.push({
                         id: obj.id, name: obj.name||'', type: obj.type||obj.class||'',
                         x: obj.x, y: obj.y, w: obj.width||0, h: obj.height||0,
-                        rotation: (obj.rotation||0)*Math.PI/180, // degrees->radians
-                        gid: obj.gid||0, // >0 raha "tile object" (sprite voafidy avy amin'ny tileset)
+                        rotation: (obj.rotation||0)*Math.PI/180,                    
+                        gid: obj.gid||0,                                                              
                         point: !!obj.point, ellipse: !!obj.ellipse,
                         layer: layer.name,
                         properties: Drafitra._propsToObj(obj.properties||[])
@@ -2456,7 +2401,7 @@ class Drafitra {
                 }
             }
         }
-        // tilesetKeyOrMap: string (tileset iray) NA object {tilesetName: rendererKey, ...} (maromaro)
+                                                                                                      
         if (json.tilesets && json.tilesets.length) {
             for (const ts of json.tilesets) {
                 const name = ts.name || (ts.source ? ts.source.replace(/\.[^.]+$/,'') : null);
@@ -2466,7 +2411,7 @@ class Drafitra {
                 if (!rendererKey) continue;
                 const columns = ts.columns || (ts.imagewidth && ts.tilewidth ? Math.floor(ts.imagewidth/ts.tilewidth) : 0);
                 map.tilesets.push({key:rendererKey, columns, firstGid:ts.firstgid, tileCount: ts.tilecount||0});
-                // Tile animations + per-tile custom properties (ts.tiles[])
+                                                                            
                 for (const tileDef of ts.tiles||[]) {
                     const globalId = ts.firstgid + tileDef.id;
                     if (tileDef.animation && tileDef.animation.length) {
@@ -2483,7 +2428,7 @@ class Drafitra {
     }
     static _propsToObj(propsArr) { const o={}; for (const p of propsArr||[]) o[p.name]=p.value; return o; }
     static _hexToColor(hex) { hex=hex.replace('#',''); if(hex.length===6)hex+='FF'; return parseInt(hex,16)>>>0; }
-    // GID flip flags (Tiled): 3 bit ambony amin'ny 32-bit GID
+                                                              
     static FLIP_H = 0x80000000;
     static FLIP_V = 0x40000000;
     static FLIP_D = 0x20000000;
@@ -2496,8 +2441,8 @@ class Drafitra {
         };
     }
     getTileProperties(gid) { return this._tileProperties ? (this._tileProperties.get(gid)||null) : null; }
-    // Mitady tileset mifanaraka amin'ity GID ity (raha maro tileset, ny GID
-    // farany latsaka amin'ny firstGid no ilay tokony ho izy)
+                                                                            
+                                                             
     _tilesetForGid(gid) {
         let best=null;
         for (const ts of this.tilesets) if (gid>=ts.firstGid && (!best || ts.firstGid>best.firstGid)) best=ts;
@@ -2508,9 +2453,9 @@ class Drafitra {
     getTile(layerName, x, y) { const layer=this.layers.find(l=>l.name===layerName); if(!layer)return 0; const tx=Math.floor(x/this.tileSize),ty=Math.floor(y/this.tileSize); if(ty<0||ty>=layer.data.length)return 0; if(tx<0||tx>=layer.data[ty].length)return 0; return layer.data[ty][tx]; }
     setTile(layerName, x, y, value) { const layer=this.layers.find(l=>l.name===layerName); if(!layer)return; const tx=Math.floor(x/this.tileSize),ty=Math.floor(y/this.tileSize); if(ty>=0&&ty<layer.data.length&&tx>=0&&tx<layer.data[ty].length)layer.data[ty][tx]=value; }
     isSolidAt(x, y) { for(const layer of this.layers){if(!layer.solid)continue;const tx=Math.floor(x/this.tileSize),ty=Math.floor(y/this.tileSize);if(ty>=0&&ty<layer.data.length&&tx>=0&&tx<layer.data[ty].length&&layer.data[ty][tx]!==0)return true;} return false; }
-    // ✅ VAOVAO v4.3.3 — Ilaina antsoina isaky ny frame (mialoha ny render())
-    // mba hampandehanana ny tile animations (mizaha ny fotoana lasa,
-    // manova ny "displayed tile" ho an'ny GID voafaritra animation).
+                                                                             
+                                                                     
+                                                                     
     updateAnimations(dtMs) {
         if (!this.tileAnimations.size) return;
         this._animTime += dtMs;
@@ -2525,15 +2470,15 @@ class Drafitra {
         const t=this.tileSize, bounds=camera.getBounds();
         const x0=Math.max(0,Math.floor(bounds.x/t)), y0=Math.max(0,Math.floor(bounds.y/t));
         const x1=Math.min(this.width,Math.ceil(bounds.right/t)+1), y1=Math.min(this.height,Math.ceil(bounds.bottom/t)+1);
-        // Raha tsy voatondro ny tilesetKey, mampiasa ny multi-tileset resolution (_tilesetForGid)
+                                                                                                  
         const singleTileset = tilesetKey ? this.tilesets.find(ts=>ts.key===tilesetKey) : null;
         for(const layer of this.layers){if(!layer.visible)continue;
             const layerColor = Drafitra._packLayerColor(layer.tint, layer.opacity);
             for(let y=y0;y<y1;y++){if(!layer.data[y])continue;for(let x=x0;x<x1;x++){
             const rawGid=layer.data[y][x];if(!rawGid||rawGid===0)continue;
             const {gid, flipH, flipV} = Drafitra.decodeGid(rawGid);
-            // Tile animation override: raha ity GID ity dia manana animation
-            // voafaritra, dia asehoy ny "frame ankehitriny" fa tsy ny GID tsotra.
+                                                                             
+                                                                                  
             const displayGid = (this._animFrameCache && this._animFrameCache.get(gid)) || gid;
             const tileset = singleTileset || this._tilesetForGid(displayGid);
             if (!tileset) continue;
@@ -2586,9 +2531,9 @@ const Fandraisana = {
     Bara: class { constructor(x,y,w,h,opts={}){this.x=x;this.y=y;this.w=w;this.h=h;this.max=opts.max||100;this.value=opts.value!=null?opts.value:this.max;this.bgColor=opts.bgColor||0xFF2222FF;this.fillColor=opts.fillColor||0xFF44FF44;} setValue(v){this.value=Z.clamp(v,0,this.max);} render(renderer){renderer.drawRect(this.x,this.y,this.w,this.h,this.bgColor);const pct=this.value/this.max;renderer.drawRect(this.x+2,this.y+2,(this.w-4)*pct,this.h-4,this.fillColor);} }
 };
 
-// ============================================================
-// 30. TEHIRIZO — ✅ FIX: LZW binary-safe decompression
-// ============================================================
+                                                               
+                                                      
+                                                               
 class Tehirizo {
     constructor(key = 'rakitrakatra_v4') { this.key = key; }
     _slotKey(slot) { return this.key + '_slot' + slot; }
@@ -2597,7 +2542,7 @@ class Tehirizo {
     list() { const slots=[]; for(let i=0;i<8;i++){try{const v=localStorage.getItem(this._slotKey(i));if(v){const p=JSON.parse(v);slots.push({slot:i,timestamp:p.timestamp});}}catch(e){}} return slots; }
     delete(slot) { try{localStorage.removeItem(this._slotKey(slot));}catch(e){} }
     clear() { for(let i=0;i<8;i++)this.delete(i); }
-    // ✅ FIX: Binary-safe LZW — mampiasa Uint8Array fa tsy string split
+                                                                       
     _lzwCompress(str) {
         const dict = {}; const data = str.split(''); const out = [];
         let phrase = data[0]; let code = 256;
@@ -2640,9 +2585,9 @@ class Tehirizo {
     }
 }
 
-// ============================================================
-// 31-50. Teny, Toetrandro, Debug, Antontanisa, sns.
-// ============================================================
+                                                               
+                                                    
+                                                               
 const Teny = {
     current: 'mg', dictionaries: {},
     add(lang, entries) { if(!this.dictionaries[lang])this.dictionaries[lang]={}; Object.assign(this.dictionaries[lang], entries); return this; },
@@ -2685,24 +2630,24 @@ class Antontanisa {
     render(renderer) {}
 }
 
-// ============================================================
-// ✅ VAOVAO v4.2.3 — MpitantanaFanamboarana (Debug Overlay DOM)
-// "DevTools" kely miorina eo ambonin'ny lalao mihitsy: FPS/frame-time
-// graph, isan'ny entity, drawCalls, memory heap JS (raha misy
-// performance.memory), ary console.log kely azo ampiasaina na dia
-// tsy misy F12 aza (ilaina indrindra amin'ny mobile debugging).
-// Tsy fanoloana ny Phaser DevTools (izay browser extension feno),
-// fa fitaovana ao anaty lalao mihitsy, tsy misy dependency.
-// ============================================================
-// ============================================================
-// ✅ VAOVAO v4.3.3 — MpitantanaFanamboarana INTERACTIVE:
-// Tabs 3 (Stats/Entities/Physics), entity inspector azo tsindriana
-// mba hijery ny fields (x,y,vx,vy,mass,...) an'ny entity ID iray,
-// ary "physics debug toggle" (showColliders) izay ampiasain'ny
-// Sehatra.render() raha te-hampiseho ny AABB/circle collider eo
-// ambonin'ny sprite. Tsy fanoloana ny Phaser DevTools browser
-// extension, fa "on-screen inspector" ao anaty lalao mihitsy.
-// ============================================================
+                                                               
+                                                               
+                                                                      
+                                                              
+                                                                  
+                                                                
+                                                                  
+                                                            
+                                                               
+                                                               
+                                                        
+                                                                   
+                                                                  
+                                                               
+                                                                
+                                                              
+                                                              
+                                                               
 class MpitantanaFanamboarana {
     constructor(opts = {}) {
         this.visible = opts.visible !== false;
@@ -2710,16 +2655,16 @@ class MpitantanaFanamboarana {
         this._el = null; this._logEl = null; this._statsEl = null; this._graphEl = null;
         this._tabs = ['Stats','Entities','Physics']; this._activeTab = 'Stats';
         this._tabButtons = {}; this._entityListEl = null; this._entityDetailEl = null; this._physicsToggleEl = null;
-        this.showColliders = false;    // ✅ physics debug toggle: raha true, Sehatra.render() mety hampiseho collider outline
-        this.selectedEntity = -1;      // entity ID voafidy ao amin'ny inspector (-1 = tsy misy)
-        this._vondrona = opts.vondrona || null; // Vondrona ECS reference, ho an'ny entity inspector
+        this.showColliders = false;                                                                                          
+        this.selectedEntity = -1;                                                               
+        this._vondrona = opts.vondrona || null;                                                     
         if (typeof document !== 'undefined') this._buildDOM();
     }
     setVondrona(V) { this._vondrona = V; }
     _buildDOM() {
         const el = document.createElement('div');
         el.style.cssText = 'position:fixed;top:4px;left:4px;z-index:99999;font:11px monospace;background:rgba(0,0,0,0.85);color:#0f0;padding:6px 8px;border-radius:4px;pointer-events:auto;max-width:300px;line-height:1.4;user-select:none;';
-        // Tabs
+               
         const tabBar = document.createElement('div'); tabBar.style.cssText='display:flex;gap:4px;margin-bottom:4px;';
         for (const tab of this._tabs) {
             const btn = document.createElement('button');
@@ -2729,14 +2674,14 @@ class MpitantanaFanamboarana {
             tabBar.appendChild(btn); this._tabButtons[tab] = btn;
         }
         el.appendChild(tabBar);
-        // Stats panel
+                      
         this._statsEl = document.createElement('div');
         this._graphEl = document.createElement('canvas'); this._graphEl.width=120; this._graphEl.height=30; this._graphEl.style.cssText='display:block;margin-top:4px;';
         this._logEl = document.createElement('div'); this._logEl.style.cssText='margin-top:4px;color:#ccc;max-height:120px;overflow:hidden;white-space:pre;';
-        // Entities panel
+                         
         this._entityListEl = document.createElement('div'); this._entityListEl.style.cssText='max-height:100px;overflow-y:auto;display:none;';
         this._entityDetailEl = document.createElement('div'); this._entityDetailEl.style.cssText='margin-top:4px;color:#0ff;white-space:pre;display:none;';
-        // Physics panel
+                        
         this._physicsToggleEl = document.createElement('label'); this._physicsToggleEl.style.cssText='display:none;align-items:center;gap:4px;cursor:pointer;';
         const checkbox = document.createElement('input'); checkbox.type='checkbox';
         checkbox.onchange = (e) => { this.showColliders = e.target.checked; };
@@ -2776,7 +2721,7 @@ class MpitantanaFanamboarana {
             rows.push(`<div data-id="${id}" style="cursor:pointer;padding:1px 2px;${id===this.selectedEntity?'background:#050;':''}">#${id} (${V.x[id].toFixed(0)},${V.y[id].toFixed(0)})</div>`);
         }
         this._entityListEl.innerHTML = rows.join('');
-        // Fampiasana event delegation (tsindrio ny lisitra mba hisafidianana entity)
+                                                                                     
         this._entityListEl.onclick = (e) => {
             const target = e.target.closest ? e.target.closest('[data-id]') : null;
             if (target) this.selectEntity(parseInt(target.getAttribute('data-id'), 10));
@@ -2797,7 +2742,7 @@ class MpitantanaFanamboarana {
         this._logs.push(String(msg)); if (this._logs.length > this._maxLogs) this._logs.shift();
     }
     toggle() { this.visible = !this.visible; if (this._el) this._el.style.display = this.visible ? 'block' : 'none'; }
-    // stats: Antontanisa | {fps, frameTime, entityCount, drawCalls}
+                                                                    
     update(stats) {
         if (!this.visible || !this._el) return;
         const mem = (typeof performance !== 'undefined' && performance.memory)
@@ -2894,28 +2839,28 @@ class JoystickVirtoaly {
         else{const t=touches.find(tt=>tt.id===this.touchId);if(t){const dx=t.x-this.ox,dy=t.y-this.oy,len=Math.hypot(dx,dy)||1,m=Math.min(len,this.radius);this.dx=(dx/len)*(m/this.radius);this.dy=(dy/len)*(m/this.radius);}else{this.active=false;this.dx=0;this.dy=0;this.touchId=-1;}}
     }
 }
-// ============================================================
-// ✅ VAOVAO v4.3.0 — PLUGIN SYSTEM MATOTRA (Plugin Cache toy an'i Phaser)
-// Lifecycle feno: init(game) -> start() -> update(dt) -> destroy()
-// Roa karazana fametrahana:
-//  - installGlobal(key, PluginClass, opts) : instance TOKANA, mandrakariva
-//    miasa (mitovy amin'ny system global toy ny Feo/Fanindry)
-//  - installScene(scene, key, PluginClass, opts) : instance an'ny scene
-//    tokana, destroy() automatique @ scene shutdown (mifamatotra amin'ny
-//    MpitantanaSehatra._shutdownScene)
-//
-// Endriky ny Plugin (class na factory object), rehetra opsionaly:
-//   { name, version, init(game){}, start(){}, update(dt){}, destroy(){} }
-// ============================================================
+                                                               
+                                                                         
+                                                                   
+                            
+                                                                           
+                                                              
+                                                                        
+                                                                         
+                                       
+  
+                                                                  
+                                                                          
+                                                               
 class MpitantanaFanampiny {
     constructor(game) {
         this.game = game || null;
-        this._registry = new Map();   // name -> PluginClass (registered, mbola tsy miasa)
-        this.plugins = new Map();     // name -> instance (global, miasa)
-        this._sceneCache = new WeakMap(); // scene -> Map(name -> instance)
+        this._registry = new Map();                                                       
+        this.plugins = new Map();                                        
+        this._sceneCache = new WeakMap();                                  
     }
-    // Mametraka ny "class" ao anaty registry, azo installGlobal/installScene
-    // avy eo amin'ny fotoana hafa (mitovy amin'ny PluginCache.register an'i Phaser)
+                                                                             
+                                                                                    
     register(name, PluginClass) { this._registry.set(name, PluginClass); return this; }
 
     _instantiate(PluginClass, opts) {
@@ -2941,8 +2886,8 @@ class MpitantanaFanampiny {
     getGlobal(name) { return this.plugins.get(name); }
     updateGlobal(dt) { for (const p of this.plugins.values()) if (p.update) p.update(dt); }
 
-    // Scene-scoped: ny plugin dia miasa ho an'ilay scene voatondro ihany,
-    // ary destroy()-ina rehefa ny scene mihitsy no vita shutdown.
+                                                                          
+                                                                  
     installScene(scene, name, PluginClassOrNull, opts = {}) {
         if (!this._sceneCache.has(scene)) this._sceneCache.set(scene, new Map());
         const cache = this._sceneCache.get(scene);
@@ -2955,8 +2900,8 @@ class MpitantanaFanampiny {
             if (inst.init) inst.init(this.game, scene);
             if (inst.start) inst.start();
             cache.set(name, inst);
-            // Fampifamatorana amin'ny lifecycle an'ny Sehatra: rehefa
-            // shutdown ilay scene, dia destroy() daholo ny plugin an-scene.
+                                                                      
+                                                                            
             const origShutdown = scene.shutdown ? scene.shutdown.bind(scene) : null;
             if (!scene._pluginHookInstalled) {
                 scene._pluginHookInstalled = true;
@@ -2972,7 +2917,7 @@ class MpitantanaFanampiny {
     getScenePlugin(scene, name) { const c=this._sceneCache.get(scene); return c ? c.get(name) : undefined; }
     updateScenePlugins(scene, dt) { const c=this._sceneCache.get(scene); if (c) for (const p of c.values()) if (p.update) p.update(dt); }
 
-    // --- Retro-compatibilité amin'ny API taloha (install/uninstall/get/list) ---
+                                                                                  
     install(plugin) {
         if (this.plugins.has(plugin.name)) { console.warn(`Plugin "${plugin.name}" already installed`); return false; }
         try {
@@ -2986,9 +2931,9 @@ class MpitantanaFanampiny {
     list() { return Array.from(this.plugins.keys()); }
 }
 
-// ============================================================
-// GAME LOOP - Lalao
-// ============================================================
+                                                               
+                    
+                                                               
 class Lalao {
     constructor(width = 800, height = 600, opts = {}) {
         this.width=width;this.height=height;
@@ -3001,10 +2946,10 @@ class Lalao {
         this.plugins=new MpitantanaFanampiny(this);
         Fanindry.init(this.canvas); Feo.init();
         this._running=false;this._paused=false;this._lastTime=0;this._accumulator=0;this._fixedDt=1/60;
-        // ✅ VAOVAO v4.3.0 — TIMESCALE: mifehy ny dt REHETRA (physics, anim,
-        // tween, particles, weather, camera) indray mandeha. 1=mahazatra,
-        // 0.5=slow-motion antsasany, 0=pause tanteraka (fa mbola misy
-        // render+input, tsy toy ny pause() izay manajanona ny update rehetra).
+                                                                            
+                                                                          
+                                                                      
+                                                                               
         this.timeScale = 1;
         this._loop=this._loop.bind(this);
         this._designAspect=width/height;
@@ -3024,8 +2969,8 @@ class Lalao {
     _loop(now) {
         if(!this._running)return; requestAnimationFrame(this._loop);
         const dtMsRaw=Math.min(now-this._lastTime,100);this._lastTime=now;
-        // ✅ TimeScale: ny dt "scaled" no ampiasaina amin'ny simulation rehetra,
-        // fa ny stats.update dia mampiasa ny dt tsy voafehy mba ho marina ny FPS.
+                                                                                
+                                                                                  
         const dtMs=dtMsRaw*this.timeScale; const dt=dtMs/1000;
         this.stats.update(dtMsRaw);
         if(!this._paused){
@@ -3040,9 +2985,9 @@ class Lalao {
         this.scenes.render(this.renderer,this.camera,alpha);this.particles.render(this.renderer);this.weather.render(this.renderer);
         this.renderer.end();
         this.renderer.begin(null);this.scenes.renderUI(this.renderer);
-        // ✅ VAOVAO v4.3.3 — Camera FX overlay (fadeIn/fadeOut/flash):
-        // manosotra rectangle manontolo efijery, aorian'ny UI rehetra,
-        // mba hisarona ny zavatra rehetra (fade to black, sns).
+                                                                      
+                                                                       
+                                                                
         const overlay = this.camera.getOverlayColor();
         if (overlay) { const packed=((overlay.r&0xFF)<<24)|((overlay.g&0xFF)<<16)|((overlay.b&0xFF)<<8)|Math.round(overlay.a*255); this.renderer.drawRect(0,0,this.width,this.height,packed>>>0); }
         this.renderer.end();
@@ -3052,11 +2997,11 @@ class Lalao {
     get(key) { const systems={renderer:this.renderer,ecs:this.ecs,camera:this.camera,timer:this.timer,loader:this.loader,scenes:this.scenes,stats:this.stats,debug:this.debug,particles:this.particles,weather:this.weather,save:this.save,plugins:this.plugins}; return systems[key]; }
 }
 
-// ============================================================
-// V4.2.0 MODULE VAOVAO (35) — ✅ FIX: FitaovanaVoa + AndroAlina
-// ============================================================
+                                                               
+                                                               
+                                                               
 
-// ✅ FIX #1: FitaovanaVoa with Spatial Hash Integration
+                                                       
 class FitaovanaVoa {
     constructor(cellSize = 64) {
         this.hitboxes = []; this.hurtboxes = [];
@@ -3073,10 +3018,10 @@ class FitaovanaVoa {
     removeHitbox(hb) { const i=this.hitboxes.indexOf(hb); if(i!==-1)this.hitboxes.splice(i,1); }
     removeHurtbox(hb) { const i=this.hurtboxes.indexOf(hb); if(i!==-1)this.hurtboxes.splice(i,1); }
     update(onHit) {
-        // Rebuild spatial hash every frame
+                                           
         this._grid.clear();
         for (const hurt of this.hurtboxes) this._grid.insert(hurt, hurt.x, hurt.y, hurt.w, hurt.h);
-        // Query-based collision instead of O(n²)
+                                                 
         for (const hit of this.hitboxes) {
             if (!hit.active) continue;
             const candidates = this._grid.query(hit.x, hit.y, hit.w, hit.h);
@@ -3111,7 +3056,7 @@ class Fiadiana {
     update(dt) { if(this._cd>0)this._cd-=dt;if(this._reloading){this._reloadT-=dt;if(this._reloadT<=0){this.current.ammo=this.current.maxAmmo;this._reloading=false;}} }
 }
 
-// ✅ FIX #2: AndroAlina Phase Correction
+                                        
 const AndroAlina = {
     _t: 0, dayLength: 120,
     update(dt) { this._t = (this._t + dt) % this.dayLength; },
@@ -3119,7 +3064,7 @@ const AndroAlina = {
     isNight() { const p = this.phase(); return p > 0.7 || p < 0.15; },
     tint() {
         const p = this.phase();
-        // ✅ FIX: cos((p - 0.5) * PI2) = -1 @ p=0.5 (noon/bright), +1 @ p=0 (night/dark)
+                                                                                        
         const nightAmount = 0.5 + 0.5 * Math.cos((p - 0.5) * PI2);
         return { r: 0.05, g: 0.05, b: 0.25, a: Z.clamp(nightAmount * 0.6, 0, 0.6) };
     },
@@ -3300,9 +3245,9 @@ class FanambaraKely extends Hetsika {
     update(dt) { if(this._cd>0)this._cd-=dt; }
 }
 
-// ============================================================
-// EXPORT
-// ============================================================
+                                                               
+         
+                                                               
 const RakitrakatraV4 = {
     KINOVANA: '4.3.3', ANARANMIAFINA: 'Ady Goavana - Patched',
     Lalao, Sehatra, Vektora2, Vektora3, Lamina2D, Efajoro, Boribory, Lafomaro, Z,
