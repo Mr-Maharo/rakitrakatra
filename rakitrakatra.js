@@ -465,6 +465,7 @@ class Vondrona {
         this.marika = new Array(maxEntities).fill(null);
         this.heryX = new Float32Array(maxEntities);
         this.heryY = new Float32Array(maxEntities);
+        this.tebokaPolygon = new Array(maxEntities).fill(null);
         this._initDefaults();
     }
     _initDefaults() {
@@ -522,8 +523,10 @@ class Vondrona {
         this.marika[id]=null;
         this.heryX[id]=0;
         this.heryY[id]=0;
+        this.tebokaPolygon[id]=null;
         this._tagDirty = true; return id;
     }
+}
     destroy(id) {
         if (id >= 0 && id < this.count && this.alive[id]) {
             this.alive[id] = 0; this.active[id] = 0;
