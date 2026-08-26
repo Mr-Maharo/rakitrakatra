@@ -1085,3 +1085,511 @@ GRAVITY_PRESETS: {
     INVERTED:   { x: 0, y: -980, scale: 1 },                       
     WIND_HAVANANA: { x: 200, y: 980, scale: 1 },                     
 }
+
+mamoronaPolygon: function(vondrona, tebokaList, safidy = {}) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (let i = 0; i < tebokaList.length; i++) {
+        if (tebokaList[i].x < minX) minX = tebokaList[i].x;
+        if (tebokaList[i].y < minY) minY = tebokaList[i].y;
+        if (tebokaList[i].x > maxX) maxX = tebokaList[i].x;
+        if (tebokaList[i].y > maxY) maxY = tebokaList[i].y;
+    }
+    const centreX = (minX + maxX) / 2;
+    const centreY = (minY + maxY) / 2;
+    const id = vondrona.create();
+    vondrona.endrika[id] = 2;
+    vondrona.x[id] = centreX;
+    vondrona.y[id] = centreY;
+    vondrona.sakany[id] = maxX - minX;
+    vondrona.haavony[id] = maxY - minY;
+    vondrona.lanja[id] = safidy.lanja || 1;
+    vondrona.elasticite[id] = safidy.elasticite ?? 0.2;
+    vondrona.frictionCoeff[id] = safidy.frictionCoeff ?? 0.5;
+    vondrona.mafy[id] = safidy.mafy ?? 1;
+    vondrona.marika[id] = safidy.marika || null;
+    vondrona.tebokaPolygon = vondrona.tebokaPolygon || new Array(vondrona.max).fill(null);
+    const tebokaCentred = [];
+    for (let i = 0; i < tebokaList.length; i++) {
+        tebokaCentred.push({ x: tebokaList[i].x - centreX, y: tebokaList[i].y - centreY });
+    }
+    vondrona.tebokaPolygon[id] = tebokaCentred;
+    vondrona.momentInertia[id] = this._kajyMomentInertiaPolygon(tebokaCentred, vondrona.lanja[id]);
+    return id;
+},
+
+mamoronaTriangle: function(vondrona, x, y, halava, safidy = {}) {
+    const h = halava * Math.sqrt(3) / 2;
+    return this.mamoronaPolygon(vondrona, [
+        { x: x, y: y - h * 2 / 3 },
+        { x: x - halava / 2, y: y + h / 3 },
+        { x: x + halava / 2, y: y + h / 3 }
+    ], safidy);
+},
+
+mamoronaPentagon: function(vondrona, x, y, radius, safidy = {}) {
+    const teboka = [];
+    for (let i = 0; i < 5; i++) {
+        const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+        teboka.push({ x: x + Math.cos(angle) * radius, y: y + Math.sin(angle) * radius });
+    }
+    return this.mamoronaPolygon(vondrona, teboka, safidy);
+},
+
+mamoronaHexagon: function(vondrona, x, y, radius, safidy = {}) {
+    const teboka = [];
+    for (let i = 0; i < 6; i++) {
+        const angle = (i * 2 * Math.PI / 6) - Math.PI / 2;
+        teboka.push({ x: x + Math.cos(angle) * radius, y: y + Math.sin(angle) * radius });
+    }
+    return this.mamoronaPolygon(vondrona, teboka, safidy);
+},
+
+_kajyMomentInertiaPolygon: function(teboka, lanja) {
+    let area = 0;
+    let inertiaNum = 0;
+    const n = teboka.length;
+    for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n;
+        const cross = Math.abs(teboka[i].x * teboka[j].y - teboka[j].x * teboka[i].y);
+        area += cross;
+        inertiaNum += cross * (
+            teboka[i].x * teboka[i].x + teboka[i].x * teboka[j].x + teboka[j].x * teboka[j].x +
+            teboka[i].y * teboka[i].y + teboka[i].y * teboka[j].y + teboka[j].y * teboka[j].y
+        );
+    }
+    area /= 2;
+    if (area < 0.0001) return lanja;
+    return (lanja * inertiaNum) / (6 * area);
+},
+
+_kajyMomentInertiaBoribory: function(lanja, radius) {
+    return 0.5 * lanja * radius * radius;
+},
+
+fanavaozanaMomentInertia: function(vondrona, id) {
+    if (!vondrona.velona[id]) return;
+    const lanja = vondrona.lanja[id] || 1;
+    if (vondrona.endrika[id] === 0) {
+        const w = vondrona.sakany[id];
+        const h = vondrona.haavony[id];
+        vondrona.momentInertia[id] = lanja * (w * w + h * h) / 12;
+    } else if (vondrona.endrika[id] === 1) {
+        vondrona.momentInertia[id] = this._kajyMomentInertiaBoribory(lanja, vondrona.sakany[id] / 2);
+    } else if (vondrona.endrika[id] === 2 && vondrona.tebokaPolygon && vondrona.tebokaPolygon[id]) {
+        vondrona.momentInertia[id] = this._kajyMomentInertiaPolygon(vondrona.tebokaPolygon[id], lanja);
+    }
+},
+
+vahaFifandonanaImpulseFeno: function(v, idA, idB, fifandonana) {
+    const zotra = fifandonana.zotra;
+    const overlap = fifandonana.overlap;
+    const tebokaFifandonana = fifandonana.teboka || null;
+    const masseA = v.tsyMihetsika[idA] ? 0 : 1 / (v.lanja[idA] || 1);
+    const masseB = v.tsyMihetsika[idB] ? 0 : 1 / (v.lanja[idB] || 1);
+    const masseTotal = masseA + masseB;
+    if (masseTotal <= 0) return;
+    const correction = overlap / masseTotal * 0.8;
+    if (!v.tsyMihetsika[idA]) { v.x[idA] -= zotra.x * correction * masseA; v.y[idA] -= zotra.y * correction * masseA; }
+    if (!v.tsyMihetsika[idB]) { v.x[idB] += zotra.x * correction * masseB; v.y[idB] += zotra.y * correction * masseB; }
+    const rAx = tebokaFifandonana ? tebokaFifandonana.x - (v.x[idA] + v.sakany[idA]/2) : 0;
+    const rAy = tebokaFifandonana ? tebokaFifandonana.y - (v.y[idA] + v.haavony[idA]/2) : 0;
+    const rBx = tebokaFifandonana ? tebokaFifandonana.x - (v.x[idB] + v.sakany[idB]/2) : 0;
+    const rBy = tebokaFifandonana ? tebokaFifandonana.y - (v.y[idB] + v.haavony[idB]/2) : 0;
+    const velAx = v.hafainganamPainganaX[idA] - v.hafainganamFihodinana[idA] * rAy;
+    const velAy = v.hafainganamPainganaY[idA] + v.hafainganamFihodinana[idA] * rAx;
+    const velBx = v.hafainganamPainganaX[idB] - v.hafainganamFihodinana[idB] * rBy;
+    const velBy = v.hafainganamPainganaY[idB] + v.hafainganamFihodinana[idB] * rBx;
+    const relVx = velBx - velAx;
+    const relVy = velBy - velAy;
+    const velAlongNormal = relVx * zotra.x + relVy * zotra.y;
+    if (velAlongNormal > 0) return;
+    const restitution = Math.min(v.elasticite[idA] || 0.2, v.elasticite[idB] || 0.2);
+    const rACrossN = rAx * zotra.y - rAy * zotra.x;
+    const rBCrossN = rBx * zotra.y - rBy * zotra.x;
+    const invMassSum = masseTotal + rACrossN * rACrossN / (v.momentInertia[idA] || 1) + rBCrossN * rBCrossN / (v.momentInertia[idB] || 1);
+    let impulse = -(1 + restitution) * velAlongNormal / invMassSum;
+    const impulseX = impulse * zotra.x;
+    const impulseY = impulse * zotra.y;
+    if (!v.tsyMihetsika[idA]) {
+        v.hafainganamPainganaX[idA] -= impulseX * masseA;
+        v.hafainganamPainganaY[idA] -= impulseY * masseA;
+        v.hafainganamFihodinana[idA] -= rACrossN * impulse / (v.momentInertia[idA] || 1);
+    }
+    if (!v.tsyMihetsika[idB]) {
+        v.hafainganamPainganaX[idB] += impulseX * masseB;
+        v.hafainganamPainganaY[idB] += impulseY * masseB;
+        v.hafainganamFihodinana[idB] += rBCrossN * impulse / (v.momentInertia[idB] || 1);
+    }
+    const tangentX = relVx - velAlongNormal * zotra.x;
+    const tangentY = relVy - velAlongNormal * zotra.y;
+    const tangentLen = Math.hypot(tangentX, tangentY);
+    if (tangentLen > 0.0001) {
+        const tx = tangentX / tangentLen;
+        const ty = tangentY / tangentLen;
+        const frictionCoeff = Math.sqrt((v.frictionCoeff[idA] || 0.5) * (v.frictionCoeff[idB] || 0.5));
+        const rACrossT = rAx * ty - rAy * tx;
+        const rBCrossT = rBx * ty - rBy * tx;
+        const invMassSumT = masseTotal + rACrossT * rACrossT / (v.momentInertia[idA] || 1) + rBCrossT * rBCrossT / (v.momentInertia[idB] || 1);
+        let frictionImpulse = -(relVx * tx + relVy * ty) / invMassSumT;
+        if (Math.abs(frictionImpulse) > Math.abs(impulse) * frictionCoeff) {
+            frictionImpulse = -Math.abs(impulse) * frictionCoeff * Math.sign(frictionImpulse);
+        }
+        if (!v.tsyMihetsika[idA]) {
+            v.hafainganamPainganaX[idA] -= frictionImpulse * tx * masseA;
+            v.hafainganamPainganaY[idA] -= frictionImpulse * ty * masseA;
+            v.hafainganamFihodinana[idA] -= rACrossT * frictionImpulse / (v.momentInertia[idA] || 1);
+        }
+        if (!v.tsyMihetsika[idB]) {
+            v.hafainganamPainganaX[idB] += frictionImpulse * tx * masseB;
+            v.hafainganamPainganaY[idB] += frictionImpulse * ty * masseB;
+            v.hafainganamFihodinana[idB] += rBCrossT * frictionImpulse / (v.momentInertia[idB] || 1);
+        }
+    }
+},
+
+ampiharoHeryAminAnchor: function(vondrona, id, anchorX, anchorY, heryX, heryY) {
+    if (!vondrona.velona[id] || vondrona.tsyMihetsika[id]) return;
+    const lanja = vondrona.lanja[id] || 1;
+    vondrona.hafainganamPainganaX[id] += heryX / lanja;
+    vondrona.hafainganamPainganaY[id] += heryY / lanja;
+    const cx = vondrona.x[id] + vondrona.sakany[id] / 2;
+    const cy = vondrona.y[id] + vondrona.haavony[id] / 2;
+    const rx = anchorX - cx;
+    const ry = anchorY - cy;
+    const torque = rx * heryY - ry * heryX;
+    vondrona.hafainganamFihodinana[id] += torque / (vondrona.momentInertia[id] || 1);
+    vondrona.matory[id] = 0;
+    vondrona.torimasoTimer[id] = 0;
+},
+
+_hetsikaAnkapobeny: { mpihaino: {} },
+
+mihaino: function(anarana, asa) {
+    if (!this._hetsikaAnkapobeny.mpihaino[anarana]) this._hetsikaAnkapobeny.mpihaino[anarana] = [];
+    this._hetsikaAnkapobeny.mpihaino[anarana].push(asa);
+    return this;
+},
+
+esorinaMpihainoAnkapobeny: function(anarana, asa) {
+    const list = this._hetsikaAnkapobeny.mpihaino[anarana];
+    if (!list) return this;
+    const idx = list.indexOf(asa);
+    if (idx >= 0) list.splice(idx, 1);
+    return this;
+},
+
+ampangarahara: function(anarana) {
+    const args = Array.prototype.slice.call(arguments, 1);
+    const list = this._hetsikaAnkapobeny.mpihaino[anarana];
+    if (list) for (let i = 0; i < list.length; i++) list[i].apply(this, args);
+    return this;
+},
+
+_tambatraHazavana: new Map(),
+
+mamoronaTambatraHazavana: function(vondrona, parentId, ampahanyList, safidy = {}) {
+    if (!vondrona.velona[parentId]) return null;
+    const children = [];
+    for (let i = 0; i < ampahanyList.length; i++) {
+        const amp = ampahanyList[i];
+        const childId = vondrona.create();
+        vondrona.endrika[childId] = amp.endrika ?? 0;
+        vondrona.sakany[childId] = amp.sakany || 32;
+        vondrona.haavony[childId] = amp.haavony || 32;
+        vondrona.lanja[childId] = amp.lanja || 1;
+        vondrona.elasticite[childId] = amp.elasticite ?? 0.2;
+        vondrona.frictionCoeff[childId] = amp.frictionCoeff ?? 0.5;
+        vondrona.mafy[childId] = amp.mafy ?? 1;
+        vondrona.marika[childId] = amp.marika || null;
+        vondrona.sokajyFifandonana[childId] = safidy.sokajy || vondrona.sokajyFifandonana[parentId];
+        vondrona.saronTavaFifandonana[childId] = safidy.saronTava ?? vondrona.saronTavaFifandonana[parentId];
+        const offX = amp.offsetX || 0;
+        const offY = amp.offsetY || 0;
+        const offAngle = amp.offsetAngle || 0;
+        children.push({ id: childId, offsetX: offX, offsetY: offY, offsetAngle: offAngle });
+    }
+    let existing = this._tambatraHazavana.get(parentId);
+    if (!existing) { existing = []; this._tambatraHazavana.set(parentId, existing); }
+    for (let i = 0; i < children.length; i++) existing.push(children[i]);
+    this.fanavaozanaTambatraHazavana(vondrona, parentId);
+    return parentId;
+},
+
+fanavaozanaTambatraHazavana: function(vondrona, parentId) {
+    const children = this._tambatraHazavana.get(parentId);
+    if (!children || !vondrona.velona[parentId]) return;
+    const px = vondrona.x[parentId] + vondrona.sakany[parentId] / 2;
+    const py = vondrona.y[parentId] + vondrona.haavony[parentId] / 2;
+    const pAngle = vondrona.fihodinana[parentId];
+    const cos = Math.cos(pAngle);
+    const sin = Math.sin(pAngle);
+    for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        if (!vondrona.velona[child.id]) continue;
+        const rx = child.offsetX * cos - child.offsetY * sin;
+        const ry = child.offsetX * sin + child.offsetY * cos;
+        vondrona.x[child.id] = px + rx - vondrona.sakany[child.id] / 2;
+        vondrona.y[child.id] = py + ry - vondrona.haavony[child.id] / 2;
+        vondrona.fihodinana[child.id] = pAngle + child.offsetAngle;
+        vondrona.hafainganamPainganaX[child.id] = vondrona.hafainganamPainganaX[parentId];
+        vondrona.hafainganamPainganaY[child.id] = vondrona.hafainganamPainganaY[parentId];
+        vondrona.hafainganamFihodinana[child.id] = vondrona.hafainganamFihodinana[parentId];
+    }
+},
+
+ravanaTambatraHazavana: function(vondrona, parentId) {
+    const children = this._tambatraHazavana.get(parentId);
+    if (children) {
+        for (let i = 0; i < children.length; i++) vondrona.destroy(children[i].id);
+        this._tambatraHazavana.delete(parentId);
+    }
+},
+
+ampidiraoZanakaTambatra: function(vondrona, parentId, ampahany) {
+    if (!vondrona.velona[parentId]) return null;
+    const childId = vondrona.create();
+    vondrona.endrika[childId] = ampahany.endrika ?? 0;
+    vondrona.sakany[childId] = ampahany.sakany || 32;
+    vondrona.haavony[childId] = ampahany.haavony || 32;
+    vondrona.lanja[childId] = ampahany.lanja || 1;
+    vondrona.elasticite[childId] = ampahany.elasticite ?? 0.2;
+    vondrona.frictionCoeff[childId] = ampahany.frictionCoeff ?? 0.5;
+    vondrona.mafy[childId] = ampahany.mafy ?? 1;
+    vondrona.marika[childId] = ampahany.marika || null;
+    vondrona.sokajyFifandonana[childId] = vondrona.sokajyFifandonana[parentId];
+    vondrona.saronTavaFifandonana[childId] = vondrona.saronTavaFifandonana[parentId];
+    const entry = { id: childId, offsetX: ampahany.offsetX || 0, offsetY: ampahany.offsetY || 0, offsetAngle: ampahany.offsetAngle || 0 };
+    let existing = this._tambatraHazavana.get(parentId);
+    if (!existing) { existing = []; this._tambatraHazavana.set(parentId, existing); }
+    existing.push(entry);
+    this.fanavaozanaTambatraHazavana(vondrona, parentId);
+    return childId;
+},
+
+esorinaZanakaTambatra: function(vondrona, parentId, childId) {
+    const children = this._tambatraHazavana.get(parentId);
+    if (!children) return false;
+    for (let i = 0; i < children.length; i++) {
+        if (children[i].id === childId) {
+            vondrona.destroy(childId);
+            children.splice(i, 1);
+            return true;
+        }
+    }
+    return false;
+},
+
+decomposeConcave: function(tebokaList) {
+    const polygons = [];
+    const n = tebokaList.length;
+    if (n < 3) return polygons;
+    let isConvex = true;
+    for (let i = 0; i < n; i++) {
+        const a = tebokaList[i];
+        const b = tebokaList[(i + 1) % n];
+        const c = tebokaList[(i + 2) % n];
+        if ((b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x) < 0) { isConvex = false; break; }
+    }
+    if (isConvex) { polygons.push(tebokaList.slice()); return polygons; }
+    for (let i = 0; i < n; i++) {
+        const a = tebokaList[i];
+        const b = tebokaList[(i + 1) % n];
+        const c = tebokaList[(i + 2) % n];
+        if ((b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x) < 0) {
+            const poly1 = [a, b];
+            for (let j = (i + 3) % n; j !== i; j = (j + 1) % n) {
+                const p = tebokaList[j];
+                const prev = poly1[poly1.length - 1];
+                if ((p.x - prev.x) * (a.y - prev.y) - (p.y - prev.y) * (a.x - prev.x) >= 0) poly1.push(p);
+                else break;
+            }
+            if (poly1.length >= 3) polygons.push(poly1);
+            const poly2 = [b];
+            for (let j = (i + 2) % n; j !== (i + 1) % n; j = (j + 1) % n) poly2.push(tebokaList[j]);
+            if (poly2.length >= 3) {
+                const sub = this.decomposeConcave(poly2);
+                for (let s = 0; s < sub.length; s++) polygons.push(sub[s]);
+            }
+            return polygons;
+        }
+    }
+    polygons.push(tebokaList.slice());
+    return polygons;
+},
+
+mamoronaConcave: function(vondrona, tebokaList, safidy = {}) {
+    const convexParts = this.decomposeConcave(tebokaList);
+    if (convexParts.length === 1) return this.mamoronaPolygon(vondrona, convexParts[0], safidy);
+    const parentId = vondrona.create();
+    vondrona.endrika[parentId] = 0;
+    vondrona.sakany[parentId] = 0;
+    vondrona.haavony[parentId] = 0;
+    vondrona.mafy[parentId] = 0;
+    vondrona.marika[parentId] = safidy.marika || "concave";
+    const ampahanyList = [];
+    for (let i = 0; i < convexParts.length; i++) {
+        let cx = 0, cy = 0;
+        for (let j = 0; j < convexParts[i].length; j++) { cx += convexParts[i][j].x; cy += convexParts[i][j].y; }
+        cx /= convexParts[i].length;
+        cy /= convexParts[i].length;
+        ampahanyList.push({ endrika: 2, teboka: convexParts[i], offsetX: cx, offsetY: cy, lanja: (safidy.lanja || 1) / convexParts.length });
+    }
+    return this.mamoronaTambatraHazavana(vondrona, parentId, ampahanyList.map(function(a) {
+        return { endrika: 2, sakany: 1, haavony: 1, offsetX: a.offsetX, offsetY: a.offsetY, lanja: a.lanja, marika: safidy.marika || "concave_part" };
+    }), safidy);
+},
+
+ampiharoFatoranaPrismatika: function(vondrona, idA, idB, zotraX, zotraY, halavaMin, halavaMax, henjana) {
+    if (!vondrona.velona[idA] || !vondrona.velona[idB]) return;
+    const dx = (vondrona.x[idB] + vondrona.sakany[idB]/2) - (vondrona.x[idA] + vondrona.sakany[idA]/2);
+    const dy = (vondrona.y[idB] + vondrona.haavony[idB]/2) - (vondrona.y[idA] + vondrona.haavony[idA]/2);
+    const projection = dx * zotraX + dy * zotraY;
+    const clamped = Math.max(halavaMin, Math.min(halavaMax, projection));
+    const diff = (clamped - projection) * (henjana || 1);
+    const ox = zotraX * diff;
+    const oy = zotraY * diff;
+    if (!vondrona.tsyMihetsika[idA]) { vondrona.x[idA] -= ox * 0.5; vondrona.y[idA] -= oy * 0.5; }
+    if (!vondrona.tsyMihetsika[idB]) { vondrona.x[idB] += ox * 0.5; vondrona.y[idB] += oy * 0.5; }
+    const perpX = -zotraY;
+    const perpY = zotraX;
+    const perpDot = dx * perpX + dy * perpY;
+    if (!vondrona.tsyMihetsika[idA]) { vondrona.x[idA] += perpX * perpDot * 0.5; vondrona.y[idA] += perpY * perpDot * 0.5; }
+    if (!vondrona.tsyMihetsika[idB]) { vondrona.x[idB] -= perpX * perpDot * 0.5; vondrona.y[idB] -= perpY * perpDot * 0.5; }
+},
+
+ampiharoFatoranaGear: function(vondrona, idA, idB, ratio) {
+    if (!vondrona.velona[idA] || !vondrona.velona[idB]) return;
+    const targetAngleB = vondrona.fihodinana[idA] * ratio;
+    const diff = targetAngleB - vondrona.fihodinana[idB];
+    const correction = diff * 0.5;
+    if (!vondrona.tsyMihetsika[idA]) vondrona.hafainganamFihodinana[idA] -= correction * 0.1;
+    if (!vondrona.tsyMihetsika[idB]) vondrona.hafainganamFihodinana[idB] += correction * 0.1;
+},
+
+_fatoranaMisyBreaking: [],
+
+ampiharoFatoranaMisyFahatapahana: function(vondrona, idA, idB, halava, heryMaxFahatapahana) {
+    const entry = { idA: idA, idB: idB, halava: halava, heryMax: heryMaxFahatapahana, tapaka: false };
+    this._fatoranaMisyBreaking.push(entry);
+    return entry;
+},
+
+fanavaozanaFatoranaBreaking: function(vondrona) {
+    for (let i = this._fatoranaMisyBreaking.length - 1; i >= 0; i--) {
+        const f = this._fatoranaMisyBreaking[i];
+        if (f.tapaka || !vondrona.velona[f.idA] || !vondrona.velona[f.idB]) {
+            if (f.tapaka) this._fatoranaMisyBreaking.splice(i, 1);
+            continue;
+        }
+        const dx = (vondrona.x[f.idB] + vondrona.sakany[f.idB]/2) - (vondrona.x[f.idA] + vondrona.sakany[f.idA]/2);
+        const dy = (vondrona.y[f.idB] + vondrona.haavony[f.idB]/2) - (vondrona.y[f.idA] + vondrona.haavony[f.idA]/2);
+        const dist = Math.hypot(dx, dy);
+        const force = Math.abs(dist - f.halava) * (vondrona.lanja[f.idA] || 1);
+        if (force > f.heryMax) {
+            f.tapaka = true;
+            this.ampangarahara("fatoranaTapaka", f.idA, f.idB);
+        } else {
+            this.ampiharoFatoranaTariby(vondrona, f.idA, f.idB, f.halava);
+        }
+    }
+},
+
+_ccdConfig: { mavitrika: false, elanelanaMax: 0 },
+
+mametrakaCCD: function(mavitrika, elanelanaMax) {
+    this._ccdConfig.mavitrika = mavitrika;
+    this._ccdConfig.elanelanaMax = elanelanaMax || 0;
+},
+
+fanavaozanaCCD: function(vondrona, fotoana) {
+    if (!this._ccdConfig.mavitrika) return;
+    for (let i = 0; i < vondrona.isa; i++) {
+        if (!vondrona.velona[i] || vondrona.tsyMihetsika[i] || !vondrona.ccd[i]) continue;
+        const vx = vondrona.hafainganamPainganaX[i] * fotoana;
+        const vy = vondrona.hafainganamPainganaY[i] * fotoana;
+        const dist = Math.hypot(vx, vy);
+        const minDim = Math.min(vondrona.sakany[i] || 1, vondrona.haavony[i] || 1);
+        if (dist <= minDim) continue;
+        const steps = Math.ceil(dist / minDim);
+        const stepDt = fotoana / steps;
+        for (let s = 0; s < steps; s++) {
+            vondrona.x[i] += vondrona.hafainganamPainganaX[i] * stepDt;
+            vondrona.y[i] += vondrona.hafainganamPainganaY[i] * stepDt;
+            for (let j = 0; j < vondrona.isa; j++) {
+                if (j === i || !vondrona.velona[j] || !vondrona.mafy[j]) continue;
+                if (vondrona.x[i] < vondrona.x[j] + vondrona.sakany[j] && vondrona.x[i] + vondrona.sakany[i] > vondrona.x[j] && vondrona.y[i] < vondrona.y[j] + vondrona.haavony[j] && vondrona.y[i] + vondrona.haavony[i] > vondrona.y[j]) {
+                    vondrona.hafainganamPainganaX[i] *= -0.5;
+                    vondrona.hafainganamPainganaY[i] *= -0.5;
+                    break;
+                }
+            }
+        }
+    }
+},
+
+_timeScale: 1,
+
+mametrakaTimeScale: function(scale) {
+    this._timeScale = Math.max(0, scale);
+},
+
+makaTimeScale: function() {
+    return this._timeScale;
+},
+
+mandehaMiarakaTimeScale: function(vondrona, fotoanaRaw, safidy) {
+    const fotoana = fotoanaRaw * this._timeScale;
+    this.mandeha(vondrona, fotoana, safidy);
+},
+
+_plugins: new Map(),
+
+mametrakaPlugin: function(anarana, plugin) {
+    if (plugin.mametrahana) plugin.mametrahana(this);
+    this._plugins.set(anarana, plugin);
+    return this;
+},
+
+esorinaPlugin: function(anarana) {
+    const p = this._plugins.get(anarana);
+    if (p && p.fanesorana) p.fanesorana(this);
+    this._plugins.delete(anarana);
+    return this;
+},
+
+makaPlugin: function(anarana) {
+    return this._plugins.get(anarana);
+},
+
+fanavaozanaPlugins: function(vondrona, fotoana) {
+    for (const [, p] of this._plugins) {
+        if (p.fanavaozana) p.fanavaozana(vondrona, fotoana);
+    }
+},
+
+fikarohanaTeboka: function(vondrona, tebokaX, tebokaY, sivana) {
+    const hits = [];
+    for (let i = 0; i < vondrona.isa; i++) {
+        if (!vondrona.velona[i] || !vondrona.mafy[i]) continue;
+        if (sivana && !sivana(i)) continue;
+        if (vondrona.endrika[i] === 1) {
+            const cx = vondrona.x[i] + vondrona.sakany[i] / 2;
+            const cy = vondrona.y[i] + vondrona.haavony[i] / 2;
+            const r = vondrona.sakany[i] / 2;
+            if ((tebokaX - cx) * (tebokaX - cx) + (tebokaY - cy) * (tebokaY - cy) <= r * r) hits.push(i);
+        } else {
+            if (tebokaX >= vondrona.x[i] && tebokaX <= vondrona.x[i] + vondrona.sakany[i] && tebokaY >= vondrona.y[i] && tebokaY <= vondrona.y[i] + vondrona.haavony[i]) hits.push(i);
+        }
+    }
+    return hits;
+},
+
+fikarohanaFaritra: function(vondrona, faritraX, faritraY, faritraW, faritraH, sivana) {
+    const hits = [];
+    for (let i = 0; i < vondrona.isa; i++) {
+        if (!vondrona.velona[i] || !vondrona.mafy[i]) continue;
+        if (sivana && !sivana(i)) continue;
+        if (vondrona.x[i] < faritraX + faritraW && vondrona.x[i] + vondrona.sakany[i] > faritraX && vondrona.y[i] < faritraY + faritraH && vondrona.y[i] + vondrona.haavony[i] > faritraY) hits.push(i);
+    }
+    return hits;
+},
