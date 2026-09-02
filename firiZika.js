@@ -1,165 +1,10 @@
 //by Maharo
 //firiZika JS
-                               
-kajyFifandonanaBoriboryVsBoribory: function(v, idA, idB) {
-    const centreAx = v.x[idA] + v.sakany[idA] / 2;
-    const centreAy = v.y[idA] + v.haavony[idA] / 2;
-    const centreBx = v.x[idB] + v.sakany[idB] / 2;
-    const centreBy = v.y[idB] + v.haavony[idB] / 2;
-    
-    const radiusA = v.sakany[idA] / 2;                                     
-    const radiusB = v.sakany[idB] / 2;
-    
-    const dx = centreBx - centreAx;
-    const dy = centreBy - centreAy;
-    const elanelanaCarre = dx * dx + dy * dy;
-    const radiusTotal = radiusA + radiusB;
-    
-    if (elanelanaCarre >= radiusTotal * radiusTotal) return null;
-    
-    const elanelana = Math.sqrt(elanelanaCarre);
-    if (elanelana < 0.0001) {
-                                               
-        return {
-            overlap: radiusTotal,
-            zotra: { x: 1, y: 0 }
-        };
-    }
-    
-    const overlap = radiusTotal - elanelana;
-    const zotra = { x: dx / elanelana, y: dy / elanelana };
-    
-    return { overlap, zotra };
-},
 
-                                                    
-kajyFifandonanaBoriboryVsEfajoro: function(v, idCircle, idRect) {
-    const cx = v.x[idCircle] + v.sakany[idCircle] / 2;
-    const cy = v.y[idCircle] + v.haavony[idCircle] / 2;
-    const radius = v.sakany[idCircle] / 2;
-    
-                                    
-    const rx = v.x[idRect] + v.sakany[idRect] / 2;
-    const ry = v.y[idRect] + v.haavony[idRect] / 2;
-    const demiW = v.sakany[idRect] / 2;
-    const demiH = v.haavony[idRect] / 2;
-    const angle = v.fihodinana[idRect];
-    
-                                                               
-    const cos = Math.cos(-angle);
-    const sin = Math.sin(-angle);
-    const dx = cx - rx;
-    const dy = cy - ry;
-    const localX = dx * cos - dy * sin;
-    const localY = dx * sin + dy * cos;
-    
-                                                   
-    const clampX = Math.max(-demiW, Math.min(localX, demiW));
-    const clampY = Math.max(-demiH, Math.min(localY, demiH));
-    
-                                                   
-    const distX = localX - clampX;
-    const distY = localY - clampY;
-    const distCarre = distX * distX + distY * distY;
-    
-    if (distCarre >= radius * radius) return null;
-    
-    const dist = Math.sqrt(distCarre);
-    
-    let zotraLocal;
-    if (dist < 0.0001) {
-                                                                       
-        const overlapX = demiW - Math.abs(localX) + radius;
-        const overlapY = demiH - Math.abs(localY) + radius;
-        if (overlapX < overlapY) {
-            zotraLocal = { x: localX > 0 ? 1 : -1, y: 0 };
-        } else {
-            zotraLocal = { x: 0, y: localY > 0 ? 1 : -1 };
-        }
-    } else {
-        zotraLocal = { x: distX / dist, y: distY / dist };
-    }
-    
-                                        
-    const cosW = Math.cos(angle);
-    const sinW = Math.sin(angle);
-    const zotra = {
-        x: zotraLocal.x * cosW - zotraLocal.y * sinW,
-        y: zotraLocal.x * sinW + zotraLocal.y * cosW
-    };
-    
-    const overlap = radius - dist;
-    
-    return { overlap, zotra };
-},
+(function(global) {
+'use strict';
 
-                                             
-kajyFifandonanaBoriboryVsPolygon: function(centreX, centreY, radius, tebokaPolygon) {
-    let overlapKely = Infinity;
-    let zotraFifandonana = null;
-    
-                              
-    const axes = this._makaZotra(tebokaPolygon);
-    
-                                                       
-    let akaikyIndrindra = Infinity;
-    let tebokaAkaiky = null;
-    for (let i = 0; i < tebokaPolygon.length; i++) {
-        const dx = tebokaPolygon[i].x - centreX;
-        const dy = tebokaPolygon[i].y - centreY;
-        const d = dx * dx + dy * dy;
-        if (d < akaikyIndrindra) {
-            akaikyIndrindra = d;
-            tebokaAkaiky = tebokaPolygon[i];
-        }
-    }
-    if (tebokaAkaiky) {
-        const dx = centreX - tebokaAkaiky.x;
-        const dy = centreY - tebokaAkaiky.y;
-        const len = Math.hypot(dx, dy);
-        if (len > 0.0001) {
-            axes.push({ x: dx / len, y: dy / len });
-        }
-    }
-    
-    for (let i = 0; i < axes.length; i++) {
-        const axis = axes[i];
-        
-                          
-        const projPoly = this._kajyElanelana(tebokaPolygon, axis);
-        
-                                                                              
-        const centreProj = centreX * axis.x + centreY * axis.y;
-        const projCircle = { min: centreProj - radius, max: centreProj + radius };
-        
-        const overlap = Math.min(projPoly.max, projCircle.max) - Math.max(projPoly.min, projCircle.min);
-        
-        if (overlap <= 0) return null;
-        
-        if (overlap < overlapKely) {
-            overlapKely = overlap;
-            zotraFifandonana = axis;
-        }
-    }
-    
-                                                      
-    const centrePoly = this._kajyCentre(tebokaPolygon);
-    const dirX = centreX - centrePoly.x;
-    const dirY = centreY - centrePoly.y;
-    if (dirX * zotraFifandonana.x + dirY * zotraFifandonana.y < 0) {
-        zotraFifandonana = { x: -zotraFifandonana.x, y: -zotraFifandonana.y };
-    }
-    
-    return { overlap: overlapKely, zotra: zotraFifandonana };
-},
-
-   
-                                               
-                                            
-                                       
-                                               
-   
-
+const FiriZika = {
                                
 kajyFifandonanaBoriboryVsBoribory: function(v, idA, idB) {
     const centreAx = v.x[idA] + v.sakany[idA] / 2;
@@ -656,7 +501,7 @@ tsipikaVsEfajoro: function(ox, oy, dx, dy, maxElanelana, v, id) {
     
                                           
     let nx = 0, ny = 0;
-    if (tmin === tmin) {                      
+    {
                                        
         const eps = 0.001;
         const lx = localOx + localDx * t;
@@ -813,7 +658,7 @@ SOKAJY: {
     TANY:       0x0008,          
     SENSORA:    0x0010,          
     TSY_HITA:   0x0020,                            
-}
+},
 
    
                                                
@@ -1085,7 +930,7 @@ GRAVITY_PRESETS: {
     SIDEWAYS:   { x: 400, y: 0, scale: 1 },                            
     INVERTED:   { x: 0, y: -980, scale: 1 },                       
     WIND_HAVANANA: { x: 200, y: 980, scale: 1 },                     
-}
+},
 
 mamoronaPolygon: function(vondrona, tebokaList, safidy = {}) {
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -1593,6 +1438,11 @@ fikarohanaFaritra: function(vondrona, faritraX, faritraY, faritraW, faritraH, si
         if (vondrona.x[i] < faritraX + faritraW && vondrona.x[i] + vondrona.sakany[i] > faritraX && vondrona.y[i] < faritraY + faritraH && vondrona.y[i] + vondrona.haavony[i] > faritraY) hits.push(i);
     }
     return hits;
-},
+}
 
-  
+};
+
+if (typeof module !== 'undefined' && module.exports) module.exports = FiriZika;
+else { global.FiriZika = FiriZika; global.FZ = FiriZika; }
+
+})(typeof window !== 'undefined' ? window : globalThis);
