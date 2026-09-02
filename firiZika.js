@@ -1,5 +1,5 @@
 //by Maharo
-//fieiZika JS
+//firiZika JS
                                
 kajyFifandonanaBoriboryVsBoribory: function(v, idA, idB) {
     const centreAx = v.x[idA] + v.sakany[idA] / 2;
