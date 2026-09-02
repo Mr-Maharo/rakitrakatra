@@ -29,9 +29,6 @@
         #code-panel { height: 250px; background: var(--code-bg); border-top: 1px solid #333; display: flex; flex-direction: column; }
         #code-header { padding: 5px 15px; background: #2d2d2d; font-size: 12px; color: #aaa; display: flex; justify-content: space-between; }
         #code-content { flex: 1; padding: 10px; font-family: 'Consolas', monospace; font-size: 13px; color: #9cdcfe; overflow: auto; white-space: pre-wrap; tab-size: 2; }
-        
-        /* Utility Classes for Demos */
-        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -50,6 +47,7 @@
     </header>
     
     <div id="canvas-container">
+        <!-- Canvas dia hosoloina isaky ny manova demo mba ho clean -->
         <canvas id="gameCanvas" width="800" height="600"></canvas>
     </div>
 
@@ -63,17 +61,14 @@
 </div>
 
 <!-- IMPORT LIBRARY -->
-<script src="rakitrakatra.js"></script> 
-<!-- Raha tsy mandeha ny import etsy ambony, ataovy copy-paste ny content ao anatin'ny script tag iray manaraka -->
+<script src="./Pasted_Text_1788335817716.txt"></script> 
+
 <script>
-    // FALLBACK: Raha tsy load ny external file, dia atao eto ny global object (simulated for safety if file missing)
+    // Fallback raha tsy load ny external file
     const R = window.R || window.RakitrakatraV4 || window.R4;
     if (!R) alert("Tsy hita ny Rakitrakatra JS library! Ampidiro ny file.");
 
     // --- DEMO CONFIGURATION ---
-    // Ity no lisitra ny "Plugins" rehetra miaraka amin'ny code fampiasana azy ireo.
-    // Ny sasany dia system (mila Lalao), ny sasany dia utility.
-    
     const DEMOS = {
         "Lalao (Game Core)": {
             desc: "Ny fototry ny lalao manontolo.",
@@ -89,7 +84,7 @@
                     update(dt) { this.t += dt; }
                     render(r, c) {
                         r.drawRect(350 + Math.sin(this.t)*50, 250, 100, 100, 0x00FF00FF);
-                        r.drawText ? r.drawText("Sehatra Demo", 350, 200, 20, 0xFFFFFFFF) : null;
+                        if(r.drawText) r.drawText("Sehatra Demo", 350, 200, 20, 0xFFFFFFFF);
                     }
                 }
                 g.addScene('demo', DemoScene);
@@ -124,7 +119,6 @@
                     render(r, c) {
                         r.drawRect(100, 100, 200, 200, 0xFF0000FF); // Red
                         r.drawRect(350, 100, 200, 200, 0x00FF0088); // Green Transparent
-                        // Gradient simulation
                         for(let i=0; i<10; i++) r.drawRect(100+i*30, 400, 20, 50, (i*25)<<24 | 0xFFFFFF);
                     }
                 }
@@ -137,12 +131,10 @@
             run: (g) => {
                 class PhysScene extends R.Sehatra {
                     create() {
-                        // Floor
                         const floor = g.ecs.create();
                         g.ecs.x[floor]=0; g.ecs.y[floor]=550; g.ecs.w[floor]=800; g.ecs.h[floor]=50;
                         g.ecs.isStatic[floor]=1; g.ecs.isSolid[floor]=1; g.ecs.color[floor]=0x888888FF;
 
-                        // Ball
                         const ball = g.ecs.create();
                         g.ecs.x[ball]=400; g.ecs.y[ball]=100; g.ecs.w[ball]=40; g.ecs.h[ball]=40;
                         g.ecs.shape[ball]=1; g.ecs.isSolid[ball]=1; g.ecs.bounce[ball]=0.8; g.ecs.color[ball]=0xFFFF00FF;
@@ -150,7 +142,7 @@
                     update(dt) { R.Fizika.step(g.ecs, dt, {gravity: 900}); }
                     render(r, c) {
                         g.ecs.forEach(id => {
-                            if(g.ecs.shape[id]===1) r.circle(g.ecs.x[id]+20, g.ecs.y[id]+20, 20, g.ecs.color[id]); // Simple circle draw fallback
+                            if(g.ecs.shape[id]===1) r.circle(g.ecs.x[id]+20, g.ecs.y[id]+20, 20, g.ecs.color[id]);
                             else r.drawRect(g.ecs.x[id], g.ecs.y[id], g.ecs.w[id], g.ecs.h[id], g.ecs.color[id]);
                         });
                     }
@@ -173,7 +165,7 @@
                     }
                     render(r, c) {
                         r.drawRect(this.x-20, this.y-20, 40, 40, this.color);
-                        r.drawText ? r.drawText("Ampiasao Arrow na Mouse", 300, 50, 16, 0xFFFFFFFF) : null;
+                        if(r.drawText) r.drawText("Ampiasao Arrow na Mouse", 300, 50, 16, 0xFFFFFFFF);
                     }
                 }
                 g.addScene('input', InputScene); g.scenes.start('input');
@@ -187,7 +179,6 @@
                     create() {
                         this.p = g.ecs.create();
                         g.ecs.w[this.p]=30; g.ecs.h[this.p]=30; g.ecs.color[this.p]=0xFFFFFFFF;
-                        g.camera.follow({x:0,y:0,w:30,h:30}); // Fake target ref
                         g.camera.setBounds(-1000, -1000, 2000, 2000);
                     }
                     update(dt) {
@@ -198,7 +189,6 @@
                         if(R.Fanindry.justPressed(' ')) g.camera.shake(20, 300);
                     }
                     render(r, c) {
-                        // Draw grid to see movement
                         for(let i=-1000; i<1000; i+=100) {
                             r.drawRect(i, -1000, 2, 2000, 0x333333FF);
                             r.drawRect(-1000, i, 2000, 2, 0x333333FF);
@@ -222,9 +212,7 @@
                             });
                         }
                     }
-                    render(r, c) { /* Particles auto-rendered by Lalao loop usually, but here manual */ }
                 }
-                // Note: In full Lalao loop, particles.render is called automatically.
                 g.addScene('part', PartScene); g.scenes.start('part');
             }
         },
@@ -235,7 +223,7 @@
                 class AudioScene extends R.Sehatra {
                     render(r, c) {
                         r.drawRect(300, 250, 200, 100, 0x0000FFFF);
-                        r.drawText ? r.drawText("Tsindrio SPACE handrenesana feo", 250, 200, 16, 0xFFFFFFFF) : null;
+                        if(r.drawText) r.drawText("Tsindrio SPACE handrenesana feo", 250, 200, 16, 0xFFFFFFFF);
                     }
                     update(dt) {
                         if(R.Fanindry.justPressed(' ')) {
@@ -266,11 +254,9 @@
             desc: "Tiled Map Editor support.",
             code: `const map = Drafitra.fromTiled(jsonData, 'tilesetKey');\nmap.render(renderer, camera);`,
             run: (g) => {
-                // Simulated simple tilemap since we don't have assets loaded
                 class MapScene extends R.Sehatra {
                     create() {
                         this.map = new R.Drafitra({tileSize: 40, width: 20, height: 15});
-                        // Create dummy layer
                         const data = [];
                         for(let y=0; y<15; y++) {
                             const row = [];
@@ -280,7 +266,6 @@
                         this.map.addLayer('ground', data);
                     }
                     render(r, c) {
-                        // Manual render for demo without texture
                         for(let y=0; y<15; y++) for(let x=0; x<20; x++) {
                             if(this.map.layers[0].data[y][x] === 1)
                                 r.drawRect(x*40, y*40, 40, 40, 0x444444FF);
@@ -353,7 +338,7 @@
                          this.msg = "Miandry...";
                          g.timer.after(2000, () => this.msg = "Vita ny 2 segondra!"); 
                      }
-                     render(r,c) { r.drawText ? r.drawText(this.msg, 300, 300, 20, 0xFFFFFFFF) : null; }
+                     render(r,c) { if(r.drawText) r.drawText(this.msg, 300, 300, 20, 0xFFFFFFFF); }
                  }
                  g.addScene('timer', TimerScene); g.scenes.start('timer');
             }
@@ -416,7 +401,6 @@
             run: (g) => {
                 class WxScene extends R.Sehatra {
                     create() { g.weather.setMode('rain', 2); }
-                    render(r,c) { /* Weather renders itself in main loop usually */ }
                 }
                 g.addScene('wx', WxScene); g.scenes.start('wx');
             }
@@ -444,7 +428,6 @@
             desc: "In-game Debug Panel.",
             code: `devtools.toggle();`,
             run: (g) => {
-                // Create the devtools instance manually as it's optional
                 if(!g.devTools) {
                     g.devTools = new R.MpitantanaFanamboarana({vondrona: g.ecs});
                 }
@@ -474,7 +457,6 @@
                     update(dt) { R.AndroAlina.update(dt); }
                     render(r, c) {
                         const t = R.AndroAlina.tint();
-                        // Draw sky
                         const col = (Math.floor(t.r*255)<<24) | (Math.floor(t.g*255)<<16) | (Math.floor(t.b*255)<<8) | 255;
                         r.drawRect(0,0,800,600, col);
                     }
@@ -482,42 +464,15 @@
                 g.addScene('dn', DNScene); g.scenes.start('dn');
             }
         },
-        "Fisintonana (Dash)": {
-            desc: "Dash mechanic helper.",
-            code: `dash.start(dx, dy);`,
-            run: (g) => { console.log("Dash system ready."); }
-        },
-        "IsaMitohy (Combo)": {
-            desc: "Score combo multiplier.",
-            code: `combo.add(100);`,
-            run: (g) => { console.log("Combo system ready."); }
-        },
-        "ZavaBita (Achievements)": {
-            desc: "Achievement unlocker.",
-            code: `achiev.unlock('first_kill');`,
-            run: (g) => { console.log("Achievements ready."); }
-        },
-        "FivarotanaMock (Shop)": {
-            desc: "Simple Shop system.",
-            code: `shop.buy('item_id');`,
-            run: (g) => { console.log("Shop ready."); }
-        },
-        "Radar": {
-            desc: "Proximity scanner.",
-            code: `Radar.scan(x, y, range, entities);`,
-            run: (g) => { console.log("Radar ready."); }
-        },
-        "MpametakaMody (Modding)": {
-            desc: "JSON Mod loader.",
-            code: `MpametakaMody.register('gun_mod', data);`,
-            run: (g) => { console.log("Modding API ready."); }
-        },
-        // ... Afaka ampiana eto ny sisa raha mila
+        "Fisintonana (Dash)": { desc: "Dash mechanic helper.", code: `dash.start(dx, dy);`, run: (g) => {} },
+        "IsaMitohy (Combo)": { desc: "Score combo multiplier.", code: `combo.add(100);`, run: (g) => {} },
+        "ZavaBita (Achievements)": { desc: "Achievement unlocker.", code: `achiev.unlock('first_kill');`, run: (g) => {} },
+        "FivarotanaMock (Shop)": { desc: "Simple Shop system.", code: `shop.buy('item_id');`, run: (g) => {} },
+        "Radar": { desc: "Proximity scanner.", code: `Radar.scan(x, y, range, entities);`, run: (g) => {} },
+        "MpametakaMody (Modding)": { desc: "JSON Mod loader.", code: `MpametakaMody.register('gun_mod', data);`, run: (g) => {} }
     };
 
-    // Fill remaining generic entries to reach "85 plugins" concept visually if needed, 
-    // but mapping actual classes from source is better.
-    // Let's map strictly what exists in source that wasn't covered above explicitly:
+    // Fill remaining generic entries
     const EXTRAS = [
         "Vektora2", "Vektora3", "Lamina2D", "Efajoro", "Boribory", "Lafomaro", 
         "Kisendrasendra (Random)", "Piolaka (Spline)", "Rano (Water)", "Sarintany (Minimap)", 
@@ -550,6 +505,7 @@
     const titleEl = document.getElementById('current-title');
     const codeEl = document.getElementById('code-content');
     const searchEl = document.getElementById('search');
+    const containerEl = document.getElementById('canvas-container');
     
     let currentGame = null;
 
@@ -573,23 +529,31 @@
         titleEl.textContent = name;
         codeEl.textContent = DEMOS[name].code;
 
-        // Reset Game Engine
+        // 1. Stop old game
         if(currentGame) {
             currentGame.stop();
-            // Cleanup canvas context roughly
-            const cvs = document.getElementById('gameCanvas');
-            const ctx = cvs.getContext('2d'); // Just to clear if webgl fails or mixed
-            if(ctx) ctx.clearRect(0,0,800,600);
+            currentGame = null;
         }
 
-        // Init New Game Instance for Demo
-        // We use a wrapper to catch errors
+        // 2. FIX: Manaisotra ny canvas taloha tanteraka mba tsy hisy singleton conflict
+        const oldCanvas = document.getElementById('gameCanvas');
+        if(oldCanvas) oldCanvas.remove();
+
+        // 3. FIX: Reset Fanindry singleton flag satria canvas vaovao no ampiasaina
+        if(R.Fanindry) {
+            R.Fanindry._init = false;
+            R.Fanindry._canvas = null;
+        }
+
+        // 4. Mamorona canvas vaovao
+        const newCanvas = document.createElement('canvas');
+        newCanvas.id = 'gameCanvas';
+        newCanvas.width = 800;
+        newCanvas.height = 600;
+        containerEl.appendChild(newCanvas);
+
+        // 5. Init New Game Instance
         try {
-            const canvas = document.getElementById('gameCanvas');
-            // Important: Re-create canvas node to clean WebGL context completely
-            const newCanvas = canvas.cloneNode(true);
-            canvas.parentNode.replaceChild(newCanvas, canvas);
-            
             currentGame = new R.Lalao(800, 600, { canvas: newCanvas });
             
             // Run specific demo setup
@@ -597,14 +561,12 @@
             
             // Start loop if not started by run()
             if(!currentGame._running && name !== "Lalao (Game Core)") {
-                // Some demos define scenes but don't start them, ensure generic start if empty
                 if(currentGame.scenes._running.length === 0) {
-                     // Fallback scene
                      class Empty extends R.Sehatra { render(r){ r.clear(0.2,0.2,0.2,1); }}
                      currentGame.addScene('empty', Empty);
                      currentGame.scenes.start('empty');
                 }
-                currentGame.start(null); // Start loop without forcing a specific scene key if already pushed
+                currentGame.start(null);
             }
 
         } catch(e) {
