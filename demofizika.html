@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="mg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Demo Fizika — Projetila (demofizika)</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;margin:20px;background:#f7f7fb;color:#111}
+    h1{font-size:1.4rem;margin-bottom:6px}
+    #controls{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px}
+    .control{display:flex;flex-direction:column;background:#fff;border:1px solid #e1e4ea;padding:10px;border-radius:8px;min-width:180px}
+    label{font-size:0.9rem;margin-bottom:6px}
+    input[type=range]{width:160px}
+    #scene{background:linear-gradient(#cfe9ff, #eaf6ff);border:1px solid #cbd5e1;border-radius:6px;display:block}
+    #info{margin-top:10px}
+    button{padding:8px 12px;border-radius:6px;border:1px solid #8aa0c6;background:#4f7bd1;color:#fff;cursor:pointer}
+    button.secondary{background:#aaa;color:#fff}
+    small{color:#445}
+  </style>
+</head>
+<body>
+  <h1>Demo Fizika — Projetila</h1>
+  <p>Simulation tsotra mampiseho hetsika projetila (paosy projetila). Afaka manova ny zoro, hafainganam-pandeha, sy ny herin'ny gravité ianao, avy eo tsindrio <strong>Start</strong>.</p>
+
+  <div id="controls">
+    <div class="control">
+      <label for="angle">Zoro (deg): <span id="angleVal">45</span>°</label>
+      <input id="angle" type="range" min="0" max="90" value="45">
+    </div>
+
+    <div class="control">
+      <label for="speed">Hafainganam-pandeha (m/s): <span id="speedVal">30</span></label>
+      <input id="speed" type="range" min="1" max="120" value="30">
+    </div>
+
+    <div class="control">
+      <label for="gravity">Gravité (m/s²): <span id="gravityVal">9.81</span></label>
+      <input id="gravity" type="range" min="0.1" max="20" step="0.01" value="9.81">
+      <small>Raha kely kokoa ny gravité -> dia hipetraka lavitra ny projetila</small>
+    </div>
+
+    <div class="control">
+      <label>Fampisehoana</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="startBtn">Start</button>
+        <button id="pauseBtn" class="secondary">Pause</button>
+        <button id="resetBtn" class="secondary">Reset</button>
+      </div>
+      <label style="margin-top:8px"><input id="showPred" type="checkbox" checked> Asehoy ny trajectory teorika</label>
+    </div>
+  </div>
+
+  <canvas id="scene" width="960" height="420"></canvas>
+
+  <div id="info">
+    <p><strong>Vokatry ny kajy:</strong></p>
+    <ul>
+      <li>Range teorika: <span id="range">—</span> m</li>
+      <li>Fotoana latsaka (time of flight): <span id="flightTime">—</span> s</li>
+      <li>Haavo ambony indrindra (max height): <span id="maxH">—</span> m</li>
+    </ul>
+  </div>
+
+<script>
+// Demofizika: projetila tsotra (ignores air resistance)
+// Fanamarihana: Canvas dia mampiasa pixels; hamaritana skala (px per meter)
+
+const canvas = document.getElementById('scene');
+const ctx = canvas.getContext('2d');
+
+const angleEl = document.getElementById('angle');
+const speedEl = document.getElementById('speed');
+const gravityEl = document.getElementById('gravity');
+const angleVal = document.getElementById('angleVal');
+const speedVal = document.getElementById('speedVal');
+const gravityVal = document.getElementById('gravityVal');
+const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const resetBtn = document.getElementById('resetBtn');
+const showPred = document.getElementById('showPred');
+
+const rangeEl = document.getElementById('range');
+const flightTimeEl = document.getElementById('flightTime');
+const maxHEl = document.getElementById('maxH');
+
+let animationId = null;
+let running = false;
+let t = 0;
+let dt = 0.016; // ~60fps
+
+// Initial parameters
+function getParams(){
+  const angleDeg = Number(angleEl.value);
+  const angle = angleDeg * Math.PI/180;
+  const v0 = Number(speedEl.value);
+  const g = Number(gravityEl.value);
+  return {angleDeg, angle, v0, g};
+}
+
+function updateUI(){
+  const {angleDeg, v0, g} = getParams();
+  angleVal.textContent = angleDeg;
+  speedVal.textContent = v0;
+  gravityVal.textContent = g.toFixed(2);
+  // theoretical values
+  const R = (v0*v0 * Math.sin(2*getParams().angle)) / g; // range
+  const tflight = (2*v0*Math.sin(getParams().angle))/g;
+  const hmax = (v0*v0 * Math.pow(Math.sin(getParams().angle),2)) / (2*g);
+  rangeEl.textContent = isFinite(R)? R.toFixed(2): '—';
+  flightTimeEl.textContent = isFinite(tflight)? tflight.toFixed(2): '—';
+  maxHEl.textContent = isFinite(hmax)? hmax.toFixed(2): '—';
+}
+
+angleEl.addEventListener('input',()=>{updateUI(); drawScene();});
+speedEl.addEventListener('input',()=>{updateUI(); drawScene();});
+gravityEl.addEventListener('input',()=>{updateUI(); drawScene();});
+showPred.addEventListener('change', drawScene);
+
+// Mapping: meters -> pixels
+function autoscale(v0, g){
+  // choose scale so the theoretical range fits nicely in canvas width
+  const theta = getParams().angle;
+  const R = (v0*v0 * Math.sin(2*theta)) / g || 10;
+  const pxMargin = 80;
+  const avail = canvas.width - pxMargin;
+  const pxPerMeter = Math.max(5, avail / (R*1.2)); // at least 5 px/m
+  return pxPerMeter;
+}
+
+// initial projectile state
+let state = null;
+
+function reset(){
+  cancelAnimationFrame(animationId);
+  running = false;
+  t = 0;
+  state = null;
+  startBtn.disabled = false;
+  pauseBtn.textContent = 'Pause';
+  updateUI();
+  drawScene();
+}
+
+function start(){
+  if(running){return}
+  const {angle, v0, g} = getParams();
+  const pxPerMeter = autoscale(v0,g);
+  // starting position in meters (x, y) with origin at left ground
+  const x0 = 0.5; // meters offset from left to show
+  const y0 = 0; // ground level is y=0 (meters)
+  const vx = v0 * Math.cos(angle);
+  let vy = v0 * Math.sin(angle);
+  state = {x:x0, y:y0, vx, vy, pxPerMeter, g};
+  running = true;
+  startBtn.disabled = true;
+  animationLoop();
+}
+
+function pause(){
+  if(!running) return;
+  running = false;
+  cancelAnimationFrame(animationId);
+  pauseBtn.textContent = pauseBtn.textContent === 'Pause' ? 'Resume' : 'Pause';
+}
+
+function animationLoop(){
+  if(!running) return;
+  // advance state
+  const s = state;
+  // update in meters
+  s.x += s.vx * dt;
+  s.vy -= s.g * dt; // vy positive upward; canvas y is flipped later
+  s.y += s.vy * dt;
+  t += dt;
+
+  drawScene();
+
+  // stop when projectile hits ground (y <= 0)
+  if(s.y <= 0 && t>0.02){
+    running = false;
+    startBtn.disabled = false;
+    // ensure final draw exactly at ground
+    s.y = 0;
+    drawScene();
+    return;
+  }
+
+  animationId = requestAnimationFrame(animationLoop);
+}
+
+function drawScene(){
+  // clear
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // draw ground
+  const groundY = canvas.height - 40;
+  ctx.fillStyle = '#e6f0e6';
+  ctx.fillRect(0, groundY, canvas.width, 40);
+  ctx.strokeStyle = '#8db28d';
+  ctx.beginPath();
+  ctx.moveTo(0, groundY+1);
+  ctx.lineTo(canvas.width, groundY+1);
+  ctx.stroke();
+
+  // origin in pixels
+  const originPx = {x:60, y: groundY};
+
+  // draw launch platform
+  ctx.fillStyle = '#6b7280';
+  ctx.fillRect(originPx.x-6, originPx.y-6, 12,6);
+
+  // get params
+  const {angle, v0, g} = getParams();
+  const pxPerMeter = state? state.pxPerMeter : autoscale(v0,g);
+
+  // draw theoretical trajectory optional
+  if(showPred.checked){
+    ctx.strokeStyle = 'rgba(200,40,40,0.9)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    const R = (v0*v0 * Math.sin(2*angle)) / g;
+    const steps = 200;
+    for(let i=0;i<=steps;i++){
+      const xm = R * (i/steps);
+      // equation y(x) = x*tan(theta) - g*x^2/(2*v0^2*cos^2(theta))
+      const y = xm*Math.tan(angle) - (g*xm*xm) / (2*v0*v0*Math.cos(angle)*Math.cos(angle));
+      const px = originPx.x + xm*pxPerMeter;
+      const py = originPx.y - y*pxPerMeter;
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+  }
+
+  // draw projectile if state exists
+  if(state){
+    const px = originPx.x + state.x * pxPerMeter;
+    const py = originPx.y - state.y * pxPerMeter;
+    // trail
+    ctx.fillStyle = 'rgba(40,90,200,0.12)';
+    ctx.beginPath();
+    ctx.arc(px, py, 6, 0, Math.PI*2);
+    ctx.fill();
+    // projectile center
+    ctx.fillStyle = '#023e8a';
+    ctx.beginPath();
+    ctx.arc(px, py, 6, 0, Math.PI*2);
+    ctx.fill();
+
+    // draw velocity vector
+    const vscale = 10; // px per (m/s) for arrow
+    ctx.strokeStyle = '#ff6b6b';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(px,py);
+    ctx.lineTo(px + state.vx * vscale, py - state.vy * vscale);
+    ctx.stroke();
+  }
+
+  // labels
+  ctx.fillStyle = '#102a43';
+  ctx.font = '13px system-ui';
+  ctx.fillText('Origin', originPx.x-30, originPx.y+16);
+
+}
+
+// UI bindings
+startBtn.addEventListener('click', ()=>{ start(); });
+pauseBtn.addEventListener('click', ()=>{ pause(); });
+resetBtn.addEventListener('click', ()=>{ reset(); });
+
+// initialize
+reset();
+
+// resize canvas responsively
+window.addEventListener('resize', ()=>{
+  // keep canvas size fixed for demo, optionally adapt
+  drawScene();
+});
+
+</script>
+</body>
+</html>
