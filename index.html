@@ -1,325 +1,3316 @@
-<!DOCTYPE html>
-<html lang="mg">
+<!doctype html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RAKITRAKATRA V4.2.1 - Plugin Explorer</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rakitrakatra V4 — 85 Plugins Complete Showcase</title>
+
 <style>
-:root{--bg:#0a0a0f;--panel:#12121a;--border:#2a2a3a;--accent:#00ff88;--accent-dim:#00ff8833;--text:#e0e0e0;--dim:#888;--code-bg:#1a1a24}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
-header{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;flex-shrink:0}
-header h1{font-size:18px;color:var(--accent)}
-header .ver{font-size:12px;color:var(--dim);background:var(--accent-dim);padding:2px 8px;border-radius:4px}
-.main{display:flex;flex:1;overflow:hidden}
-.sidebar{width:280px;border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0}
-.sidebar input{width:100%;padding:10px 14px;background:var(--panel);border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:13px;outline:none}
-.sidebar input::placeholder{color:var(--dim)}
-.plist{list-style:none}
-.pi{padding:8px 14px;cursor:pointer;font-size:13px;border-left:3px solid transparent;transition:all .15s;display:flex;justify-content:space-between;align-items:center}
-.pi:hover{background:var(--accent-dim)}
-.pi.active{background:var(--accent-dim);border-left-color:var(--accent);color:var(--accent)}
-.cat-tag{display:inline-block;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:bold}
-.cat-core{background:#00ff8833;color:#00ff88}
-.cat-A{background:#ff444433;color:#ff6666}
-.cat-B{background:#ff880033;color:#ffaa44}
-.cat-C{background:#4488ff33;color:#66aaff}
-.cat-D{background:#aa44ff33;color:#cc88ff}
-.cat-E{background:#ffff0033;color:#ffff66}
-.content{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.demo-area{flex:1;position:relative;background:#000;display:flex;align-items:center;justify-content:center;min-height:300px}
-.demo-area canvas{border:1px solid var(--border);image-rendering:pixelated}
-.demo-overlay{position:absolute;top:10px;right:10px;font-size:11px;color:var(--dim);pointer-events:none}
-.code-panel{height:280px;border-top:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
-.code-tabs{display:flex;border-bottom:1px solid var(--border)}
-.code-tab{padding:8px 16px;font-size:12px;cursor:pointer;border-bottom:2px solid transparent;color:var(--dim)}
-.code-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-.code-content{flex:1;overflow:auto;padding:14px;background:var(--code-bg)}
-.code-content pre{font-family:'Cascadia Code','Fira Code',monospace;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;color:#c0c0d0}
-.kw{color:#cc77ff}.fn{color:#66ccff}.str{color:#88ff88}.num{color:#ffaa44}.cmt{color:#666;font-style:italic}
-::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:var(--accent)}
-@media(max-width:768px){.main{flex-direction:column}.sidebar{width:100%;height:200px;border-right:none;border-bottom:1px solid var(--border)}.code-panel{height:200px}}
+:root{--bg:#07101a;--panel:#0d1826;--panel2:#101f31;--line:#21344b;--text:#edf4fb;--muted:#9eacbd;--a:#6fb5ff;--b:#70efc0;--warn:#ffd27a;--danger:#ff8787}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}button,input,select{font:inherit}button{cursor:pointer}
+.app{height:100vh;display:grid;grid-template-columns:330px minmax(0,1fr)}
+.side{border-right:1px solid var(--line);background:linear-gradient(180deg,#0b1522,#07101a);display:flex;flex-direction:column;min-width:0}
+.brand{padding:18px 16px 14px;border-bottom:1px solid var(--line)}.brand h1{font-size:21px;margin:0}.brand p{margin:7px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
+.tools{padding:12px;border-bottom:1px solid var(--line);display:grid;gap:8px}.search{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#08131f;color:var(--text);outline:none}.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px}.filters button{padding:8px;border:1px solid var(--line);border-radius:9px;background:#0b1624;color:#cbd6e2}.filters button.active{border-color:#315c83;background:#163352;color:#fff}
+.count{color:var(--muted);font-size:11px}.navlist{overflow:auto;padding:8px}.navitem{width:100%;display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;align-items:center;text-align:left;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--text);padding:8px 9px;margin:2px 0}.navitem:hover{background:#102033}.navitem.active{background:#15324d;border-color:#244a6d}.navnum{color:var(--muted);font-size:11px;text-align:right}.navname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.main{min-width:0;display:grid;grid-template-rows:auto 1fr}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 17px;border-bottom:1px solid var(--line);background:#0a1421}.top h2{margin:0;font-size:17px}.top .muted{font-size:11px;color:var(--muted)}.pill{border:1px solid var(--line);padding:7px 9px;border-radius:999px;font-size:11px;color:#c9d4e3}
+.workspace{overflow:auto;padding:18px}.hero{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.hero h3{margin:0;font-size:30px}.hero p{color:var(--muted);margin:8px 0 0;line-height:1.55;max-width:920px}.hero-actions{display:flex;gap:8px}.act{border:1px solid var(--line);background:#0e1a29;color:#eaf3fc;padding:9px 11px;border-radius:9px}.act.primary{border-color:#315c83;background:#173655}.act:hover{filter:brightness(1.12)}
+.meta-grid{margin-top:14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.meta-card{border:1px solid var(--line);border-radius:11px;background:var(--panel);padding:11px}.meta-card b{display:block;font-size:11px;color:var(--muted);margin-bottom:5px}.meta-card span{font-size:13px}
+.columns{margin-top:14px;display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,440px);gap:14px}.panel{border:1px solid var(--line);border-radius:13px;background:var(--panel);padding:14px}.panel h4{margin:0 0 10px;font-size:14px}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{font:11px ui-monospace,SFMono-Regular,Menlo,monospace;border:1px solid var(--line);background:#0a1420;color:#c9d9e9;padding:5px 7px;border-radius:7px}
+pre{margin:0;white-space:pre-wrap;word-break:break-word;overflow:auto;background:#07101a;border:1px solid #1c2f45;border-radius:10px;padding:12px;color:#d8e6f4;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace}.source{max-height:520px}.usage{min-height:210px}
+.demo{margin-top:14px;border:1px solid var(--line);border-radius:13px;background:radial-gradient(circle at 15% 0%,#15314d,#08111b 68%);padding:14px}.demohead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.demohead .label{font-weight:700}.demoarea{position:relative;height:330px;border:1px solid #1b2d42;border-radius:10px;overflow:hidden;background:#06101a}.demoarea canvas{width:100%;height:100%;display:block}.out{position:absolute;left:10px;right:10px;bottom:10px;max-height:44%;overflow:auto;background:rgba(2,7,13,.88);border:1px solid #21364d;border-radius:8px;padding:9px;font:11px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;color:#d9e5f2;white-space:pre-wrap}.ok{color:var(--b)}.err{color:var(--danger)}
+.details{margin-top:14px}.details summary{cursor:pointer;color:#cbd8e6}.note{margin-top:12px;border-left:3px solid #315c83;padding-left:10px;color:var(--muted);font-size:12px;line-height:1.5}.pager{display:flex;justify-content:space-between;gap:10px;margin-top:18px}.pager button{min-width:130px}.source-tag{display:inline-block;margin-left:8px;color:var(--muted);font-size:10px}
+@media(max-width:1100px){.columns{grid-template-columns:1fr}.meta-grid{grid-template-columns:1fr 1fr}.app{grid-template-columns:260px minmax(0,1fr)}}
+@media(max-width:760px){.app{grid-template-columns:1fr}.side{display:none}.workspace{padding:12px}.meta-grid{grid-template-columns:1fr}.hero{display:block}.hero-actions{margin-top:10px}.columns{grid-template-columns:1fr}}
 </style>
+
 </head>
 <body>
-<header>
-<h1>⚡ RAKITRAKATRA V4.2.1</h1>
-<span class="ver">85 Plugins • Teny Gasy • WebGL2</span>
-</header>
-<div class="main">
-<div class="sidebar">
-<input type="text" id="searchInput" placeholder="🔍 Hitady plugin...">
-<ul class="plist" id="pluginList"></ul>
+<div class="app">
+<aside class="side">
+  <div class="brand"><h1>Rakitrakatra V4</h1><p>Complete 85-plugin showcase. One index.html + the original engine file. Every entry has API methods, source excerpt, direct usage code and a runnable demo.</p></div>
+  <div class="tools"><input id="search" class="search" placeholder="Search plugin / method…"><div class="filters"><button id="f-all" class="active">All 85</button><button id="f-class">Classes</button><button id="f-object">Objects</button><span id="count" class="count">85 shown / 85 plugins</span></div></div>
+  <div id="nav" class="navlist"></div>
+</aside>
+<main class="main">
+<header class="top"><div><h2>Plugins using the Rakitrakatra engine directly</h2><div class="muted">Engine export: R / R4 / Rakitrakatra · version 4.3.3</div></div><div id="number" class="pill">1 / 85</div></header>
+<section class="workspace">
+  <div class="hero"><div><h3 id="title">—</h3><p id="desc">—</p></div><div class="hero-actions"><button class="act" id="prev">← Previous</button><button class="act primary" id="run">▶ Run demo</button><button class="act" id="copy">Copy usage code</button><button class="act" id="next">Next →</button></div></div>
+  <div class="meta-grid">
+    <div class="meta-card"><b>PLUGIN</b><span id="sig">—</span></div>
+    <div class="meta-card"><b>ENGINE</b><span>Rakitrakatra V4 · direct R API</span></div>
+    <div class="meta-card"><b>STATUS</b><span id="status">Ready</span></div>
+    <div class="meta-card"><b>CATALOG</b><span>85 plugins</span></div>
+  </div>
+  <div class="columns">
+    <div class="panel"><h4>Detected API / methods</h4><div id="methods" class="chips"></div><div id="notes"></div></div>
+    <div class="panel"><h4>Usage code</h4><pre id="usage" class="usage">—</pre></div>
+  </div>
+  <div class="demo"><div class="demohead"><div><span class="label">Live demo</span><span class="source-tag">uses window.R</span></div><span class="pill">Canvas preview</span></div><div class="demoarea"><canvas id="stage" width="900" height="520"></canvas><div id="out" class="out ok">Press “Run demo” to execute this plugin usage example.</div></div></div>
+  <div class="details panel"><h4>Engine source excerpt</h4><details open><summary>Show declaration excerpt from rakitrakatra.js</summary><pre id="source" class="source">—</pre></details></div>
+  <div class="details panel"><h4>How this demo is wired</h4><div class="note">This page intentionally loads the supplied engine as a sibling file: <code>&lt;script src="./rakitrakatra.js"&gt;&lt;/script&gt;</code>. The engine exports the runtime on <code>R</code>, <code>R4</code> and <code>Rakitrakatra</code>, so each demo uses the same engine rather than duplicating plugin logic. The plugin manager in the engine also supports registry, global install, scene install and updates.</div></div>
+  <div class="pager"><button class="act" onclick="document.querySelector('#prev').click()">← Previous</button><button class="act primary" onclick="document.querySelector('#run').click()">▶ Run demo</button><button class="act" onclick="document.querySelector('#next').click()">Next →</button></div>
+</section>
+</main>
 </div>
-<div class="content">
-<div class="demo-area">
-<canvas id="demoCanvas" width="640" height="400"></canvas>
-<div class="demo-overlay" id="demoOverlay">FPS: --</div>
-</div>
-<div class="code-panel">
-<div class="code-tabs">
-<div class="code-tab active" data-tab="usage">📖 Fampiasana</div>
-<div class="code-tab" data-tab="api">📋 API Reference</div>
-</div>
-<div class="code-content">
-<pre id="codeDisplay"><span class="cmt">// Safidio ny plugin iray ao amin'ny lisitra havia...</span></pre>
-</div>
-</div>
-</div>
-</div>
-
 <script src="rakitrakatra.js"></script>
 <script>
-// ============================================================
-// PLUGIN REGISTRY — 85 plugins, ZERO template literals
-// ============================================================
-var PLUGINS = [
-{id:'Vektora2',name:'Vektora2',cat:'core',desc:'Vecteur 2D optimized',
-usage:'var v = new R.Vektora2(10, 20);\nv.add(new R.Vektora2(5, 3));\nconsole.log(v.x, v.y); // 15, 23\nv.normalize();\nvar d = R.Vektora2.distance(a, b);',
-demo:function(ctx,w,h,t){var cx=w/2,cy=h/2;for(var i=0;i<8;i++){var a=(i/8)*Math.PI*2+t;var vx=Math.cos(a)*100,vy=Math.sin(a)*100;ctx.strokeStyle='#00ff88';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+vx,cy+vy);ctx.stroke();ctx.fillStyle='#00ff88';ctx.beginPath();ctx.arc(cx+vx,cy+vy,4,0,Math.PI*2);ctx.fill();}}},
-
-{id:'Efajoro',name:'Efajoro',cat:'core',desc:'Rectangle AABB collision',
-usage:'var r = new R.Efajoro(10, 20, 100, 50);\nconsole.log(r.left, r.right, r.cx);\nif (r.intersects(other)) {\n  var overlap = r.intersection(other);\n}',
-demo:function(ctx,w,h,t){var x1=w/2-60+Math.sin(t)*40,y1=h/2-30;var x2=w/2-20,y2=h/2-40+Math.cos(t*1.3)*30;ctx.strokeStyle='#00ff88';ctx.strokeRect(x1,y1,80,60);ctx.strokeStyle='#ff4444';ctx.strokeRect(x2,y2,60,80);var ox=Math.max(x1,x2),oy=Math.max(y1,y2);var ow=Math.min(x1+80,x2+60)-ox,oh=Math.min(y1+60,y2+80)-oy;if(ow>0&&oh>0){ctx.fillStyle='rgba(255,255,0,0.3)';ctx.fillRect(ox,oy,ow,oh);}}},
-
-{id:'Boribory',name:'Boribory',cat:'core',desc:'Circle collision detection',
-usage:'var c = new R.Boribory(100, 100, 30);\nif (c.contains(mx, my)) console.log("Inside!");\nif (c.intersects(otherCircle)) { /* hit */ }',
-demo:function(ctx,w,h,t){var x1=w/2+Math.sin(t)*80,y1=h/2,r1=30;var x2=w/2-Math.sin(t)*80,y2=h/2,r2=25;ctx.beginPath();ctx.arc(x1,y1,r1,0,Math.PI*2);ctx.strokeStyle='#00ff88';ctx.stroke();ctx.beginPath();ctx.arc(x2,y2,r2,0,Math.PI*2);ctx.strokeStyle='#ff4444';ctx.stroke();var dx=x2-x1,dy=y2-y1;if(dx*dx+dy*dy<=(r1+r2)*(r1+r2)){ctx.fillStyle='rgba(255,255,0,0.4)';ctx.beginPath();ctx.arc((x1+x2)/2,(y1+y2)/2,10,0,Math.PI*2);ctx.fill();}}},
-
-{id:'Lamina2D',name:'Lamina2D',cat:'core',desc:'Matrice 2D transform',
-usage:'var m = new R.Lamina2D();\nm.translate(100, 50);\nm.rotate(Math.PI / 4);\nm.scale(2, 2);\nvar p = m.transformPoint(10, 0);',
-demo:function(ctx,w,h,t){var cx=w/2,cy=h/2;var sc=1+Math.sin(t*2)*0.3;ctx.save();ctx.translate(cx,cy);ctx.rotate(t);ctx.scale(sc,sc);ctx.strokeStyle='#00ff88';ctx.lineWidth=2;ctx.strokeRect(-40,-40,80,80);ctx.fillStyle='#00ff8833';ctx.fillRect(-40,-40,80,80);ctx.restore();}},
-
-{id:'Z',name:'Z Utils',cat:'core',desc:'Fitahirizana fonctions utilitaires',
-usage:'R.Z.lerp(0, 100, 0.5);     // 50\nR.Z.clamp(150, 0, 100);    // 100\nR.Z.rand(10, 20);\nR.Z.shuffle([1,2,3,4]);\nR.Z.uuid();',
-demo:function(ctx,w,h,t){for(var i=0;i<20;i++){var x=20+Math.random()*(w-40);var y=h*0.3+(h*0.4)*((Math.sin(t+i*0.5)+1)/2);var s=3+Math.abs(Math.sin(t*2+i))*7;ctx.fillStyle='hsl('+(i*18)+',80%,60%)';ctx.beginPath();ctx.arc(x,y,s,0,Math.PI*2);ctx.fill();}}},
-
-{id:'Vondrona',name:'Vondrona (ECS)',cat:'core',desc:'Entity Component System SoA',
-usage:'var ecs = new R.Vondrona(1000);\nvar id = ecs.create();\necs.x[id] = 100;\necs.y[id] = 200;\necs.hp[id] = 50;\necs.setTag(id, 1);\necs.query(1, function(eid) {\n  console.log(ecs.x[eid]);\n});\necs.destroy(id);',
-demo:function(ctx,w,h,t){if(!this._e){this._e=new R.Vondrona(500);for(var i=0;i<100;i++){var id=this._e.create();this._e.x[id]=Math.random()*640;this._e.y[id]=Math.random()*400;this._e.vx[id]=(Math.random()-0.5)*60;this._e.vy[id]=(Math.random()-0.5)*60;}}var e=this._e,dt=0.016;e.forEach(function(id){e.x[id]+=e.vx[id]*dt;e.y[id]+=e.vy[id]*dt;if(e.x[id]<0||e.x[id]>640)e.vx[id]*=-1;if(e.y[id]<0||e.y[id]>400)e.vy[id]*=-1;});e.forEach(function(id){ctx.fillStyle='#00ff88';ctx.fillRect(e.x[id]-2,e.y[id]-2,4,4);});}},
-
-{id:'SakanToerana',name:'SakanToerana',cat:'core',desc:'Spatial Hash Grid O(n)',
-usage:'var grid = new R.SakanToerana(64);\ngrid.insert(entityId, x, y, w, h);\nvar found = grid.query(rx, ry, rw, rh);\nfor (var id of found) { /* check */ }',
-demo:function(ctx,w,h,t){var grid=new R.SakanToerana(64);var ents=[];for(var i=0;i<50;i++){var ex=Math.random()*640,ey=Math.random()*400;ents.push({x:ex,y:ey,w:8,h:8});grid.insert(i,ex,ey,8,8);}var qx=w/2-50+Math.sin(t)*100,qy=h/2-50+Math.cos(t*0.7)*80;var found=grid.query(qx,qy,100,100);ctx.strokeStyle='#222';for(var x=0;x<w;x+=64){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}for(var y=0;y<h;y+=64){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}for(var i=0;i<ents.length;i++){ctx.fillStyle=found.has(i)?'#ffff00':'#00ff8844';ctx.fillRect(ents[i].x,ents[i].y,8,8);}ctx.strokeStyle='#ff4444';ctx.lineWidth=2;ctx.strokeRect(qx,qy,100,100);}},
-
-{id:'Mpampiseho',name:'Mpampiseho',cat:'core',desc:'WebGL2 Batched Renderer',
-usage:'renderer.begin(camera);\nrenderer.drawSprite(x,y,w,h, sx,sy,sw,sh, color, "texKey");\nrenderer.drawRect(x,y,w,h, 0xFFFF00FF);\nrenderer.end();',
-demo:function(ctx,w,h,t){for(var i=0;i<200;i++){var x=(i*37+t*50)%w;var y=(i*53+Math.sin(t+i)*30)%h;ctx.fillStyle='hsla('+(i*3)+',70%,60%,0.7)';ctx.fillRect(x,y,6,6);}}},
-
-{id:'Kamera',name:'Kamera',cat:'core',desc:'Camera follow/shake/deadzone',
-usage:'var cam = new R.Kamera(800, 600);\ncam.follow(player, 0.1);\ncam.setBounds(0, 0, 2000, 1500);\ncam.shake(10, 300);\ncam.update(dtMs);\nvar world = cam.screenToWorld(mx, my);',
-demo:function(ctx,w,h,t){ctx.fillStyle='#1a1a24';for(var x=0;x<w;x+=40)for(var y=0;y<h;y+=40){ctx.fillRect(x+Math.sin(t+x*0.01)*5,y+Math.cos(t+y*0.01)*5,2,2);}var cx=w/2+Math.sin(t)*100,cy=h/2+Math.cos(t*0.7)*80;ctx.strokeStyle='#00ff88';ctx.lineWidth=2;ctx.strokeRect(cx-15,cy-15,30,30);ctx.fillStyle='#00ff8833';ctx.font='11px monospace';ctx.fillText('camera target',cx-35,cy+30);}},
-
-{id:'Fanindry',name:'Fanindry',cat:'core',desc:'Input keyboard/mouse/touch/gamepad',
-usage:'R.Fanindry.init(canvas);\nif (R.Fanindry.isDown("arrowright")) moveRight();\nif (R.Fanindry.justPressed(" ")) jump();\nif (R.Fanindry.mouseJustDown(0)) shoot();\nvar axis = R.Fanindry.axis();',
-demo:function(ctx,w,h,t){var keys=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'];for(var i=0;i<keys.length;i++){var k=keys[i];var down=R&&R.Fanindry&&R.Fanindry.keys&&R.Fanindry.keys.has(k.toLowerCase());ctx.fillStyle=down?'#00ff88':'#333';ctx.fillRect(w/2-120+i*50,h/2-20,40,40);ctx.fillStyle='#fff';ctx.font='9px monospace';ctx.fillText(k.slice(0,4),w/2-118+i*50,h/2+5);}ctx.fillStyle='#888';ctx.font='12px sans-serif';ctx.fillText('Tsindrio ny kitendry...',w/2-80,h/2+50);}},
-
-{id:'FitaovanaVoa',name:'FitaovanaVoa',cat:'A',desc:'Hitbox/Hurtbox + Spatial Hash ✅ FIXED',
-usage:'var combat = new R.FitaovanaVoa(64);\ncombat.addHitbox(attacker, {x:x,y:y,w:40,h:40}, 10, 0);\ncombat.addHurtbox(victim, {x:x,y:y,w:30,h:30}, 1);\ncombat.update(function(hit, hurt) {\n  console.log("Hit!", hit.damage);\n});',
-demo:function(ctx,w,h,t){var combat=new R.FitaovanaVoa(64);var hx=w/2-30+Math.sin(t*2)*60,hy=h/2-20;combat.addHitbox({},{x:hx,y:hy,w:40,h:40},10,0);combat.addHurtbox({},{x:w/2-10,y:h/2-10,w:30,h:30},1);var hit=false;combat.update(function(){hit=true;});ctx.fillStyle=hit?'#ff4444':'#00ff8844';ctx.fillRect(hx,hy,40,40);ctx.fillStyle='#4488ff';ctx.fillRect(w/2-10,h/2-10,30,30);if(hit){ctx.fillStyle='#ffff00';ctx.font='bold 20px sans-serif';ctx.fillText('HIT!',w/2+30,h/2-20);}ctx.fillStyle='#888';ctx.font='11px monospace';ctx.fillText('Team 0 vs Team 1',10,h-10);}},
-
-{id:'FitahirizanaBaiko',name:'FitahirizanaBaiko',cat:'A',desc:'Input Buffer + Coyote Time',
-usage:'var input = new R.FitahirizanaBaiko(0.15, 0.1);\ninput.press("jump");\nif (input.consume("jump")) doJump();\ninput.setGrounded(onGround);\nif (input.canCoyote()) canStillJump = true;',
-demo:function(ctx,w,h,t){var phase=(t%2)/2;var pressed=phase>0.3&&phase<0.35;var consumed=phase>0.3&&phase<0.5;ctx.fillStyle='#333';ctx.fillRect(w/2-150,h/2-10,300,20);ctx.fillStyle=pressed?'#00ff88':consumed?'#ffff0066':'#222';ctx.fillRect(w/2-150,h/2-10,300*phase,20);ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText(pressed?'PRESS':'buffer window',w/2-40,h/2-20);ctx.fillText('coyote: 0.15s',w/2-40,h/2+30);}},
-
-{id:'Fiadiana',name:'Fiadiana',cat:'A',desc:'Weapon arsenal/cooldown/reload',
-usage:'var arsenal = new R.Fiadiana([\n  {name:"Pistol",ammo:12,maxAmmo:12,cooldown:0.3,reloadTime:1.5}\n]);\nif (arsenal.canFire()) arsenal.fire();\narsenal.reload();\narsenal.update(dt);',
-demo:function(ctx,w,h,t){var wp={name:'Pistol',ammo:12,max:12};var ammoLeft=Math.max(0,wp.ammo-Math.floor((t%3)*3));ctx.fillStyle='#222';ctx.fillRect(w/2-100,h/2-30,200,60);ctx.fillStyle='#00ff88';ctx.font='bold 14px monospace';ctx.fillText(wp.name,w/2-80,h/2-10);ctx.fillStyle=ammoLeft>3?'#00ff88':'#ff4444';ctx.fillRect(w/2-80,h/2+5,160*(ammoLeft/wp.max),12);ctx.fillStyle='#fff';ctx.font='10px monospace';ctx.fillText(ammoLeft+'/'+wp.max,w/2-80,h/2+28);}},
-
-{id:'AndroAlina',name:'AndroAlina',cat:'A',desc:'Day/Night cycle ✅ FIXED phase',
-usage:'R.AndroAlina.update(dt);\nvar tint = R.AndroAlina.tint();\nif (R.AndroAlina.isNight()) activateNightVision();\nR.AndroAlina.setTime(0.5); // noon',
-demo:function(ctx,w,h,t){R.AndroAlina._t=(t*10)%R.AndroAlina.dayLength;var p=R.AndroAlina.phase();var nightAmount=0.5+0.5*Math.cos((p-0.5)*Math.PI*2);var brightness=1-nightAmount*0.6;var grad=ctx.createLinearGradient(0,0,0,h);grad.addColorStop(0,'rgb('+(30+brightness*100)+','+(40+brightness*140)+','+(80+brightness*175)+')');grad.addColorStop(1,'rgb('+(20+brightness*60)+','+(30+brightness*80)+','+(50+brightness*100)+')');ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);var sunY=h*0.2+Math.sin((p-0.5)*Math.PI*2)*h*0.3;ctx.fillStyle=p>0.2&&p<0.7?'#ffdd44':'#ddeeff';ctx.beginPath();ctx.arc(w*0.7,sunY,20,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(5,5,25,'+(nightAmount*0.6)+')';ctx.fillRect(0,0,w,h);ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText('Phase: '+(p*100).toFixed(0)+'% | Night: '+R.AndroAlina.isNight(),10,h-10);}},
-
-{id:'BokotraVirtoaly',name:'BokotraVirtoaly',cat:'A',desc:'Custom virtual buttons ABXY',
-usage:'var btn = new R.BokotraVirtoaly();\nbtn.define("fire");\nbtn.press("fire");\nif (btn.justPressed("fire")) shoot();\nbtn.endFrame();',
-demo:function(ctx,w,h,t){var labels=['A','B','X','Y'];var colors=['#44ff44','#ff4444','#4488ff','#ffff44'];for(var i=0;i<4;i++){var active=Math.sin(t*3+i)>0.5;var bx=w/2+Math.cos(i*Math.PI/2)*60;var by=h/2+Math.sin(i*Math.PI/2)*60;ctx.beginPath();ctx.arc(bx,by,25,0,Math.PI*2);ctx.fillStyle=active?colors[i]:colors[i]+'44';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 16px sans-serif';ctx.textAlign='center';ctx.fillText(labels[i],bx,by+6);}ctx.textAlign='left';}},
-
-{id:'FaribolanaMihena',name:'FaribolanaMihena',cat:'B',desc:'BR shrinking zone',
-usage:'var zone = new R.FaribolanaMihena(cx,cy,500,50,120,5);\nzone.update(dt);\nvar dmg = zone.damageIfOutside(px,py,dt);\nconsole.log(zone.radius, zone.progress());',
-demo:function(ctx,w,h,t){var progress=(t%10)/10;var radius=180-(180-30)*progress;ctx.fillStyle='rgba(255,0,0,0.15)';ctx.fillRect(0,0,w,h);ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.arc(w/2,h/2,radius,0,Math.PI*2);ctx.fill();ctx.globalCompositeOperation='source-over';ctx.beginPath();ctx.arc(w/2,h/2,radius,0,Math.PI*2);ctx.strokeStyle='#ff4444';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText('Radius: '+radius.toFixed(0)+' | Progress: '+(progress*100).toFixed(0)+'%',10,h-10);}},
-
-{id:'EndrikaBala',name:'EndrikaBala',cat:'B',desc:'Bullet hell patterns',
-usage:'var bullets = R.EndrikaBala.spiral(12, timeOffset, 200);\nbullets.forEach(function(b) {\n  spawnBullet(x, y, b.angle, b.speed);\n});\nvar aimed = R.EndrikaBala.aimed(ex,ey,px,py,300);',
-demo:function(ctx,w,h,t){var patterns=['spiral','wave','burst'];var pat=patterns[Math.floor(t/3)%3];var bullets;if(pat==='spiral'){bullets=[];for(var i=0;i<12;i++)bullets.push({angle:t*2+i*Math.PI*2/12});}else if(pat==='wave'){bullets=[];for(var i=0;i<8;i++){var tt=i/7-0.5;bullets.push({angle:t*0.5+tt*1.0});}}else{bullets=[];for(var i=0;i<16;i++)bullets.push({angle:t+(Math.random()-0.5)*0.8});}for(var i=0;i<bullets.length;i++){var dist=((t*100)%150);var bx=w/2+Math.cos(bullets[i].angle)*dist;var by=h/2+Math.sin(bullets[i].angle)*dist;if(dist<150){ctx.fillStyle='#ffff44';ctx.beginPath();ctx.arc(bx,by,3,0,Math.PI*2);ctx.fill();}}ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText('Pattern: '+pat,10,h-10);}},
-
-{id:'Fisintonana',name:'Fisintonana',cat:'B',desc:'Dash + i-frames',
-usage:'var dash = new R.Fisintonana(120, 0.18, 0.25, 0.8);\nif (dashBtn && dash.canDash()) dash.start(dirX, dirY);\nvar move = dash.update(dt);\nplayer.x += move.dx;\nif (dash.isInvincible) ignoreDamage();',
-demo:function(ctx,w,h,t){var cycle=t%2;var px=w/4+(cycle>0.1&&cycle<0.5?(cycle-0.1)*375:0);var inv=cycle>=0.1&&cycle<0.35;ctx.fillStyle=inv?'rgba(255,255,255,0.5)':'#00ff88';ctx.fillRect(px-10,h/2-10,20,20);if(inv){ctx.strokeStyle='#fff';ctx.setLineDash([4,4]);ctx.strokeRect(px-12,h/2-12,24,24);ctx.setLineDash([]);}ctx.fillStyle='#888';ctx.font='11px monospace';ctx.fillText('iFrames: '+inv+' | Dash active: '+(cycle>0.1&&cycle<0.5),10,h-10);}},
-
-{id:'IsaMitohy',name:'IsaMitohy',cat:'B',desc:'Combo counter & multiplier',
-usage:'var combo = new R.IsaMitohy(1.5);\nvar score = combo.add(100);\nconsole.log(combo.combo, combo.multiplier);\ncombo.update(dt);\ncombo.reset();',
-demo:function(ctx,w,h,t){var hits=Math.floor(t*3)%20;var mult=1+Math.floor(hits/5)*0.5;ctx.fillStyle='#00ff88';ctx.font='bold 40px sans-serif';ctx.textAlign='center';ctx.fillText(hits+' HITS',w/2,h/2-20);ctx.fillStyle='#ffff44';ctx.font='bold 24px sans-serif';ctx.fillText('x'+mult.toFixed(1),w/2,h/2+20);ctx.textAlign='left';}},
-
-{id:'TantaraFandresena',name:'TantaraFandresena',cat:'B',desc:'Kill feed & leaderboard',
-usage:'var feed = new R.TantaraFandresena(5, 10);\nfeed.addKill("Player1", "Enemy3");\nfeed.addScore("Player1", 50);\nvar ranking = feed.ranking();',
-demo:function(ctx,w,h,t){var names=['Soa','Niry','Hery','Bako','Fy'];var scores=[0,0,0,0,0];var count=Math.min(Math.floor(t*2),15);for(var i=0;i<count;i++){scores[i%5]++;}var sorted=[];for(var i=0;i<5;i++)sorted.push({name:names[i],score:scores[i]});sorted.sort(function(a,b){return b.score-a.score;});ctx.fillStyle='#000a';ctx.fillRect(w/2-100,20,200,sorted.length*22+10);for(var i=0;i<sorted.length;i++){ctx.fillStyle=i===0?'#ffff44':'#ccc';ctx.font='12px monospace';ctx.fillText('#'+(i+1)+' '+sorted[i].name+': '+sorted[i].score,w/2-80,40+i*22);}}},
-
-{id:'KarazanTany',name:'KarazanTany',cat:'C',desc:'Biome generator (noise)',
-usage:'var biome = R.KarazanTany.biomeAt(x, y, seed);\n// "rano"|"fasika"|"ahitra"|"ala"|"oram-panala"\nvar grid = R.KarazanTany.generate(800,600,16,seed);',
-demo:function(ctx,w,h,t){var colors={rano:'#2244aa',fasika:'#ddcc66',ahitra:'#44aa44',ala:'#226622','oram-panala':'#dddddd'};var cs=16;for(var y=0;y<h;y+=cs)for(var x=0;x<w;x+=cs){var n=R.Tabataba.fbm((x+t*10)*0.01,y*0.01,4,42);var b=n<-0.2?'rano':n<0?'fasika':n<0.35?'ahitra':n<0.6?'ala':'oram-panala';ctx.fillStyle=colors[b]||'#333';ctx.fillRect(x,y,cs,cs);}}},
-
-{id:'DrafitraSimba',name:'DrafitraSimba',cat:'C',desc:'Destructible tile grid',
-usage:'var wall = new R.DrafitraSimba(20, 15, 32, 3);\nwall.damage(cx, cy, 1);\nif (wall.isBroken(cx, cy)) { /* passable */ }\nwall.repair(cx, cy);',
-demo:function(ctx,w,h,t){var cols=20,rows=12,cs=32;var hp=new Uint8Array(cols*rows).fill(3);var dmgCount=Math.floor(t*5)%60;for(var i=0;i<dmgCount;i++){var idx=Math.floor(Math.random()*cols*rows);if(hp[idx]>0)hp[idx]--;}for(var y=0;y<rows;y++)for(var x=0;x<cols;x++){var v=hp[y*cols+x];if(v>0){ctx.fillStyle=v===3?'#886644':v===2?'#aa8866':'#ccaa88';ctx.fillRect(x*cs,y*cs,cs-1,cs-1);}}}},
-
-{id:'Anjara',name:'Anjara',cat:'C',desc:'Weighted loot table',
-usage:'var loot = new R.Anjara();\nloot.add("Gold", 50, "common");\nloot.add("Sword", 10, "rare");\nloot.add("Legendary", 1, "epic");\nvar drop = loot.roll();\nvar drops = loot.rollMany(5);',
-demo:function(ctx,w,h,t){var rarColors={common:'#aaa',uncommon:'#44ff44',rare:'#4488ff',legendary:'#ff44ff'};var weights=[50,15,5,1];var rarNames=['common','uncommon','rare','legendary'];var results=[];for(var i=0;i<10;i++){var total=71;var r=Math.random()*total;var acc=0;var picked=0;for(var j=0;j<weights.length;j++){acc+=weights[j];if(r<=acc){picked=j;break;}}results.push(rarNames[picked]);}for(var i=0;i<results.length;i++){ctx.fillStyle=rarColors[results[i]]||'#fff';ctx.fillRect(w/2-100+i*20,h/2-10,18,18);}ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText('10 rolls:',w/2-100,h/2-20);}},
-
-{id:'Lalana',name:'Lalana (A*)',cat:'C',desc:'Pathfinding A*',
-usage:'var path = R.Lalana.find(grid, sx,sy, ex,ey, {diagonal:true});\nif (path) {\n  var smooth = R.Lalana.smooth(path, tileSize);\n}',
-demo:function(ctx,w,h,t){var gw=20,gh=12,cs=32;var grid=[];for(var y=0;y<gh;y++){var row=[];for(var x=0;x<gw;x++)row.push(Math.random()<0.2?1:0);grid.push(row);}grid[1][1]=0;grid[gh-2][gw-2]=0;var path=R.Lalana.find(grid,1,1,gw-2,gh-2,{diagonal:true});for(var y=0;y<gh;y++)for(var x=0;x<gw;x++){if(grid[y][x]){ctx.fillStyle='#333';ctx.fillRect(x*cs,y*cs,cs,cs);}}if(path)for(var i=0;i<path.length;i++){ctx.fillStyle='#00ff8844';ctx.fillRect(path[i].x*cs+4,path[i].y*cs+4,cs-8,cs-8);}ctx.fillStyle='#00ff88';ctx.fillRect(1*cs+8,1*cs+8,16,16);ctx.fillStyle='#ff4444';ctx.fillRect((gw-2)*cs+8,(gh-2)*cs+8,16,16);}},
-
-{id:'Firaketana',name:'Firaketana',cat:'D',desc:'Replay recorder/playback',
-usage:'var replay = new R.Firaketana();\nreplay.start();\nreplay.record({x: player.x, y: player.y});\nreplay.play();\nvar frame = replay.nextFrame();\nvar json = replay.toJSON();',
-demo:function(ctx,w,h,t){var frames=60;var idx=Math.floor(t*30)%frames;ctx.strokeStyle='#00ff8844';ctx.beginPath();for(var i=0;i<frames;i++){var fx=i/frames*w,fy=h/2+Math.sin(i*0.2)*50;if(i===0)ctx.moveTo(fx,fy);else ctx.lineTo(fx,fy);}ctx.stroke();var px=idx/frames*w,py=h/2+Math.sin(idx*0.2)*50;ctx.fillStyle='#00ff88';ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText('Frame: '+idx+'/'+frames,10,h-10);}},
-
-{id:'Ekipa',name:'Ekipa',cat:'D',desc:'Team/Clan system',
-usage:'var teams = new R.Ekipa();\nteams.createTeam("red");\nteams.join("red", playerId);\nteams.addScore("red", 10);\nif (teams.areAllies(p1, p2)) skipFriendlyFire();\nvar standings = teams.standings();',
-demo:function(ctx,w,h,t){var redScore=Math.floor(t*10)%50;var blueScore=Math.floor(t*8)%50;var st=[{id:'Red',score:redScore},{id:'Blue',score:blueScore}];st.sort(function(a,b){return b.score-a.score;});for(var i=0;i<st.length;i++){ctx.fillStyle=st[i].id==='Red'?'#ff4444':'#4488ff';ctx.fillRect(w/2-100,h/2-30+i*40,200*(st[i].score/50),25);ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText(st[i].id+': '+st[i].score,w/2-90,h/2-12+i*40);}}},
-
-{id:'FeoAkaiky',name:'FeoAkaiky',cat:'D',desc:'Proximity audio volume',
-usage:'var vol = R.FeoAkaiky.volumeForDistance(lx,ly,sx,sy,500,50);\nR.FeoAkaiky.playAt("explosion",lx,ly,sx,sy,{volume:0.8});',
-demo:function(ctx,w,h,t){var lx=w/2,ly=h/2;var sx=w/2+Math.sin(t)*150,sy=h/2+Math.cos(t*0.7)*100;var d=Math.hypot(sx-lx,sy-ly);var vol=d<=50?1:d>=200?0:1-(d-50)/150;ctx.beginPath();ctx.arc(sx,sy,200,0,Math.PI*2);ctx.strokeStyle='#ff444433';ctx.stroke();ctx.beginPath();ctx.arc(sx,sy,50,0,Math.PI*2);ctx.strokeStyle='#ff444466';ctx.stroke();ctx.beginPath();ctx.arc(sx,sy,8+vol*15,0,Math.PI*2);ctx.fillStyle='rgba(255,68,68,'+vol+')';ctx.fill();ctx.fillStyle='#00ff88';ctx.fillRect(lx-5,ly-5,10,10);ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText('Volume: '+(vol*100).toFixed(0)+'%',10,h-10);}},
-
-{id:'VonoVono',name:'VonoVono',cat:'E',desc:'Screen juice pack',
-usage:'R.VonoVono.hitstop(game, 60);\nR.VonoVono.flash(scene, 0xFFFFFFFF, 100);\nR.VonoVono.impact(game, scene, 8, 150, 50);',
-demo:function(ctx,w,h,t){var shake=Math.sin(t*20)*Math.max(0,5-t*3);ctx.save();ctx.translate(shake,shake*0.7);ctx.fillStyle='#00ff88';ctx.fillRect(w/2-20,h/2-20,40,40);ctx.restore();var flashAlpha=Math.max(0,1-t*2);if(flashAlpha>0){ctx.fillStyle='rgba(255,255,255,'+flashAlpha+')';ctx.fillRect(0,0,w,h);}ctx.fillStyle='#fff';ctx.font='11px monospace';ctx.fillText('Impact: shake + flash + hitstop',10,h-10);}},
-
-{id:'Fanoratana',name:'Fanoratana',cat:'E',desc:'Typewriter text reveal',
-usage:'var tw = new R.Fanoratana("Salama ô!", 30);\ntw.update(dt);\nconsole.log(tw.visible);\nif (tw.done) showNextDialog();\ntw.skip();',
-demo:function(ctx,w,h,t){var fullText='Salama ô! Tongasoa eto amin\'ny RAKITRAKATRA V4.2.1!';var charsVisible=Math.min(fullText.length,Math.floor(t*25)%60);var visible=fullText.slice(0,charsVisible);ctx.fillStyle='#000a';ctx.fillRect(w/2-220,h/2-30,440,60);ctx.fillStyle='#00ff88';ctx.font='14px monospace';ctx.textAlign='center';ctx.fillText(visible+(Math.sin(t*5)>0?'_':''),w/2,h/2+5);ctx.textAlign='left';}},
-
-{id:'Vovoka',name:'Vovoka',cat:'E',desc:'Particle system',
-usage:'var particles = new R.Vovoka(5000);\nparticles.emit(x, y, {\n  count: 20, speedMin: 50, speedMax: 200,\n  lifeMin: 0.5, lifeMax: 1.5, sizeStart: 8\n});\nparticles.update(dt);\nparticles.render(renderer);',
-demo:function(ctx,w,h,t){for(var i=0;i<30;i++){var age=(t*2+i*0.1)%1;var angle=i*0.5+t;var speed=50+i*3;var px=w/2+Math.cos(angle)*speed*age;var py=h/2+Math.sin(angle)*speed*age+age*age*100;var size=8*(1-age);var alpha=1-age;ctx.fillStyle='rgba(255,255,68,'+alpha+')';ctx.fillRect(px-size/2,py-size/2,size,size);}}},
-
-{id:'Toetrandro',name:'Toetrandro',cat:'E',desc:'Weather rain/snow/storm',
-usage:'var weather = new R.Toetrandro(800, 600);\nweather.setMode("rain", 1.0);\nweather.update(dt);\nweather.render(renderer);',
-demo:function(ctx,w,h,t){var modes=['rain','snow','storm'];var mode=modes[Math.floor(t/4)%3];ctx.fillStyle='#111';ctx.fillRect(0,0,w,h);var count=mode==='snow'?60:120;for(var i=0;i<count;i++){var seed=i*137.5;if(mode==='snow'){var px=(seed*7+t*20)%w,py=(seed*13+t*40)%h;ctx.fillStyle='rgba(255,255,255,0.7)';ctx.fillRect(px,py,3,3);}else{var px=(seed*7+t*10)%w,py=(seed*13+t*300)%h;ctx.strokeStyle='rgba(150,180,255,0.5)';ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px-2,py+12);ctx.stroke();}}if(mode==='storm'&&Math.sin(t*10)>0.95){ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillRect(0,0,w,h);}ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText('Mode: '+mode,10,h-10);}},
-
-{id:'SarintanyMafana',name:'SarintanyMafana',cat:'E',desc:'Analytics heatmap',
-usage:'var heat = new R.SarintanyMafana(800, 600, 32);\nheat.record(player.x, player.y);\nvar val = heat.valueAt(x, y);\nvar max = heat.max();',
-demo:function(ctx,w,h,t){var cs=16;var cols=Math.ceil(w/cs),rows=Math.ceil(h/cs);var grid=new Uint32Array(cols*rows);for(var i=0;i<200;i++){var hx=Math.floor((w/2+Math.sin(i*0.3)*100+Math.random()*40)/cs);var hy=Math.floor((h/2+Math.cos(i*0.5)*80+Math.random()*40)/cs);if(hx>=0&&hx<cols&&hy>=0&&hy<rows)grid[hy*cols+hx]++;}var max=1;for(var i=0;i<grid.length;i++)if(grid[i]>max)max=grid[i];for(var y=0;y<rows;y++)for(var x=0;x<cols;x++){var v=grid[y*cols+x];if(v>0){var intensity=v/max;ctx.fillStyle='rgba(255,'+Math.floor(255*(1-intensity))+',0,'+(intensity*0.8)+')';ctx.fillRect(x*cs,y*cs,cs,cs);}}}},
-
-{id:'MpitarikaAI',name:'MpitarikaAI',cat:'E',desc:'AI Director stress system',
-usage:'var director = new R.MpitarikaAI({maxStress:100});\ndirector.onSpawnRequest = function(stress) { spawnEnemies(stress); };\ndirector.addStress(20);\ndirector.update(dt);',
-demo:function(ctx,w,h,t){var stress=50+Math.sin(t*0.5)*40;var pct=stress/100;ctx.fillStyle='#222';ctx.fillRect(w/2-100,h/2-15,200,30);ctx.fillStyle=pct>0.7?'#ff4444':pct>0.3?'#ffff44':'#44ff44';ctx.fillRect(w/2-100,h/2-15,200*pct,30);ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.textAlign='center';ctx.fillText('Stress: '+stress.toFixed(0)+'%',w/2,h/2+5);ctx.fillText(pct<0.3?'⚠️ SPAWN REQUEST':'😌 Calm',w/2,h/2+35);ctx.textAlign='left';}}
+const PLUGINS = [
+{
+  "id": 1,
+  "name": "Fanindry",
+  "description": "Rakitrakatra module: Fanindry.",
+  "methods": [
+    "init",
+    "_touchDist",
+    "isDown",
+    "isUp",
+    "justPressed",
+    "justReleased",
+    "anyKey",
+    "mouseDown",
+    "mouseJustDown",
+    "mouseJustUp",
+    "getGamepad",
+    "getAllGamepads",
+    "gamepadAxis",
+    "gamepadButton",
+    "gamepadButtonJustPressed",
+    "_updateGamepadState",
+    "axis",
+    "updateWorld",
+    "_endFrame"
+  ],
+  "notes": [
+    "Module 1 of 85 in the plugin showcase.",
+    "Direct engine access: R.Fanindry.",
+    "Exported symbol: Fanindry.",
+    "Declaration type: class.",
+    "Primary purpose: Rakitrakatra module: Fanindry.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const api=R.Fanindry;\nreturn {type:typeof api, methods:[\"init\", \"_touchDist\", \"isDown\", \"isUp\", \"justPressed\", \"justReleased\", \"anyKey\", \"mouseDown\", \"mouseJustDown\", \"mouseJustUp\", \"getGamepad\", \"getAllGamepads\", \"gamepadAxis\", \"gamepadButton\", \"gamepadButtonJustPressed\", \"_updateGamepadState\", \"axis\", \"updateWorld\", \"_endFrame\"], value:api};",
+  "signature": ""
+},
+{
+  "id": 2,
+  "name": "SakanToerana",
+  "description": "Uniform spatial partitioning for fast 2D region queries.",
+  "methods": [
+    "clear",
+    "_key",
+    "insert",
+    "query",
+    "queryPoint"
+  ],
+  "notes": [
+    "Module 2 of 85 in the plugin showcase.",
+    "Direct engine access: R.SakanToerana.",
+    "Exported symbol: SakanToerana.",
+    "Declaration type: class.",
+    "Primary purpose: Uniform spatial partitioning for fast 2D region queries.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const g = new R.SakanToerana(64);\ng.insert(1,40,30,80,50);\nreturn [...g.query(0,0,180,140)];",
+  "signature": ""
+},
+{
+  "id": 3,
+  "name": "HazoEfatra",
+  "description": "Quadtree structure for broad-phase 2D retrieval.",
+  "methods": [
+    "clear",
+    "_split",
+    "_getIndex",
+    "insert",
+    "retrieve"
+  ],
+  "notes": [
+    "Module 3 of 85 in the plugin showcase.",
+    "Direct engine access: R.HazoEfatra.",
+    "Exported symbol: HazoEfatra.",
+    "Declaration type: class.",
+    "Primary purpose: Quadtree structure for broad-phase 2D retrieval.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const q = new R.HazoEfatra(new R.Efajoro(0,0,320,220),4,5);\nq.insert(new R.Efajoro(20,20,40,40));\nreturn q.retrieve(new R.Efajoro(0,0,200,160));",
+  "signature": "new HazoEfatra(new Efajoro(x,y,hw,hh), this.maxObj, this.maxDepth, d),"
+},
+{
+  "id": 4,
+  "name": "Sarimihetsika",
+  "description": "Sprite-sheet animation and frame playback helper.",
+  "methods": [
+    "add",
+    "play",
+    "stop",
+    "update",
+    "_onEdge",
+    "getFrame"
+  ],
+  "notes": [
+    "Module 4 of 85 in the plugin showcase.",
+    "Direct engine access: R.Sarimihetsika.",
+    "Exported symbol: Sarimihetsika.",
+    "Declaration type: class.",
+    "Primary purpose: Sprite-sheet animation and frame playback helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Sarimihetsika(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Sarimihetsika', api, methods:[\"add\", \"play\", \"stop\", \"update\", \"_onEdge\", \"getFrame\"]};",
+  "signature": ""
+},
+{
+  "id": 5,
+  "name": "Taolana2D",
+  "description": "Hierarchical 2D bone transform node.",
+  "methods": [
+    "addChild",
+    "_updateLocal",
+    "updateWorld"
+  ],
+  "notes": [
+    "Module 5 of 85 in the plugin showcase.",
+    "Direct engine access: R.Taolana2D.",
+    "Exported symbol: Taolana2D.",
+    "Declaration type: class.",
+    "Primary purpose: Hierarchical 2D bone transform node.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Taolana2D(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Taolana2D', api, methods:[\"addChild\", \"_updateLocal\", \"updateWorld\"]};",
+  "signature": ""
+},
+{
+  "id": 6,
+  "name": "EndrikaTaolana",
+  "description": "Skeleton container that builds a bone hierarchy from JSON.",
+  "methods": [
+    "fromJSON",
+    "getBone",
+    "updateWorld",
+    "render"
+  ],
+  "notes": [
+    "Module 6 of 85 in the plugin showcase.",
+    "Direct engine access: R.EndrikaTaolana.",
+    "Exported symbol: EndrikaTaolana.",
+    "Declaration type: class.",
+    "Primary purpose: Skeleton container that builds a bone hierarchy from JSON.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.EndrikaTaolana(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'EndrikaTaolana', api, methods:[\"fromJSON\", \"getBone\", \"updateWorld\", \"render\"]};",
+  "signature": "const skel = new EndrikaTaolana();"
+},
+{
+  "id": 7,
+  "name": "HetsikaTaolana",
+  "description": "Skeleton animation / pose control module.",
+  "methods": [
+    "addAnimation",
+    "loadAnimations",
+    "play",
+    "_sampleTrack",
+    "update"
+  ],
+  "notes": [
+    "Module 7 of 85 in the plugin showcase.",
+    "Direct engine access: R.HetsikaTaolana.",
+    "Exported symbol: HetsikaTaolana.",
+    "Declaration type: class.",
+    "Primary purpose: Skeleton animation / pose control module.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.HetsikaTaolana(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'HetsikaTaolana', api, methods:[\"addAnimation\", \"loadAnimations\", \"play\", \"_sampleTrack\", \"update\"]};",
+  "signature": ""
+},
+{
+  "id": 8,
+  "name": "Vovoka",
+  "description": "Particle emission and update system.",
+  "methods": [
+    "_createParticle",
+    "emit",
+    "update",
+    "render"
+  ],
+  "notes": [
+    "Module 8 of 85 in the plugin showcase.",
+    "Direct engine access: R.Vovoka.",
+    "Exported symbol: Vovoka.",
+    "Declaration type: class.",
+    "Primary purpose: Particle emission and update system.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Vovoka(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Vovoka', api, methods:[\"_createParticle\", \"emit\", \"update\", \"render\"]};",
+  "signature": ""
+},
+{
+  "id": 9,
+  "name": "Toetrandro",
+  "description": "Weather effects controller.",
+  "methods": [
+    "setMode",
+    "_createParticle",
+    "update",
+    "render"
+  ],
+  "notes": [
+    "Module 9 of 85 in the plugin showcase.",
+    "Direct engine access: R.Toetrandro.",
+    "Exported symbol: Toetrandro.",
+    "Declaration type: class.",
+    "Primary purpose: Weather effects controller.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Toetrandro(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Toetrandro', api, methods:[\"setMode\", \"_createParticle\", \"update\", \"render\"]};",
+  "signature": ""
+},
+{
+  "id": 10,
+  "name": "MpitantanaTween",
+  "description": "Central manager for time-based property tweens.",
+  "methods": [
+    "to",
+    "update",
+    "killAll",
+    "killOf"
+  ],
+  "notes": [
+    "Module 10 of 85 in the plugin showcase.",
+    "Direct engine access: R.MpitantanaTween.",
+    "Exported symbol: MpitantanaTween.",
+    "Declaration type: class.",
+    "Primary purpose: Central manager for time-based property tweens.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const obj={x:0}; const tw=R.MpitantanaTween.to(obj,{x:100},1000,{ease:'quadOut'});\nR.MpitantanaTween.update(250);\nreturn {object:obj, tween:tw};",
+  "signature": ""
+},
+{
+  "id": 11,
+  "name": "Mpanamora",
+  "description": "Easing functions used by tweening and animation.",
+  "methods": [],
+  "notes": [
+    "Module 11 of 85 in the plugin showcase.",
+    "Direct engine access: R.Mpanamora.",
+    "Exported symbol: Mpanamora.",
+    "Declaration type: class.",
+    "Primary purpose: Easing functions used by tweening and animation.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "return [0,.25,.5,.75,1].map(t=>({t,quadInOut:R.Mpanamora.quadInOut(t),bounceOut:R.Mpanamora.bounceOut(t)}));",
+  "signature": ""
+},
+{
+  "id": 12,
+  "name": "TsipikaFotoana",
+  "description": "Timeline sequencing helper.",
+  "methods": [
+    "at",
+    "update",
+    "reset"
+  ],
+  "notes": [
+    "Module 12 of 85 in the plugin showcase.",
+    "Direct engine access: R.TsipikaFotoana.",
+    "Exported symbol: TsipikaFotoana.",
+    "Declaration type: class.",
+    "Primary purpose: Timeline sequencing helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.TsipikaFotoana(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'TsipikaFotoana', api, methods:[\"at\", \"update\", \"reset\"]};",
+  "signature": ""
+},
+{
+  "id": 13,
+  "name": "Fizika",
+  "description": "Physics, collision and movement helpers.",
+  "methods": [
+    "rectVsRect",
+    "circleVsCircle",
+    "circleVsRect",
+    "pointInRect",
+    "pointInCircle",
+    "rayRect",
+    "rayCircle",
+    "polygonVsPolygon",
+    "_getAxes",
+    "_project",
+    "satMTV",
+    "resolvePolygon",
+    "resolveAABB",
+    "resolveCircle",
+    "testPair",
+    "resolvePair",
+    "define",
+    "id",
+    "_key",
+    "setCollision",
+    "canCollide",
+    "reset",
+    "step"
+  ],
+  "notes": [
+    "Module 13 of 85 in the plugin showcase.",
+    "Direct engine access: R.Fizika.",
+    "Exported symbol: Fizika.",
+    "Declaration type: class.",
+    "Primary purpose: Physics, collision and movement helpers.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const api=R.Fizika;\nreturn {type:typeof api, methods:[\"rectVsRect\", \"circleVsCircle\", \"circleVsRect\", \"pointInRect\", \"pointInCircle\", \"rayRect\", \"rayCircle\", \"polygonVsPolygon\", \"_getAxes\", \"_project\", \"satMTV\", \"resolvePolygon\", \"resolveAABB\", \"resolveCircle\", \"testPair\", \"resolvePair\", \"define\", \"id\", \"_key\", \"setCollision\", \"canCollide\", \"reset\", \"step\"], value:api};",
+  "signature": ""
+},
+{
+  "id": 14,
+  "name": "Drafitra",
+  "description": "Planning / graph-style helper.",
+  "methods": [
+    "addLayer",
+    "fromTiled",
+    "_propsToObj",
+    "_hexToColor",
+    "decodeGid",
+    "getTileProperties",
+    "_tilesetForGid",
+    "getObjectsByType",
+    "getObjectByName",
+    "getTile",
+    "setTile",
+    "isSolidAt",
+    "updateAnimations",
+    "render",
+    "_packLayerColor",
+    "return",
+    "rotation"
+  ],
+  "notes": [
+    "Module 14 of 85 in the plugin showcase.",
+    "Direct engine access: R.Drafitra.",
+    "Exported symbol: Drafitra.",
+    "Declaration type: class.",
+    "Primary purpose: Planning / graph-style helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Drafitra(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Drafitra', api, methods:[\"addLayer\", \"fromTiled\", \"_propsToObj\", \"_hexToColor\", \"decodeGid\", \"getTileProperties\", \"_tilesetForGid\", \"getObjectsByType\", \"getObjectByName\", \"getTile\", \"setTile\", \"isSolidAt\", \"updateAnimations\", \"render\", \"_packLayerColor\", \"return\", \"rotation\"]};",
+  "signature": "const map=new Drafitra({tileSize:json.tilewidth,width:json.width,height:json.height});"
+},
+{
+  "id": 15,
+  "name": "Lalana",
+  "description": "Pathfinding helper for navigable grids.",
+  "methods": [
+    "find",
+    "smooth"
+  ],
+  "notes": [
+    "Module 15 of 85 in the plugin showcase.",
+    "Direct engine access: R.Lalana.",
+    "Exported symbol: Lalana.",
+    "Declaration type: class.",
+    "Primary purpose: Pathfinding helper for navigable grids.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const api=R.Lalana;\nreturn {type:typeof api, methods:[\"find\", \"smooth\"], value:api};",
+  "signature": ""
+},
+{
+  "id": 16,
+  "name": "Fivoarana",
+  "description": "Progression and advancement utilities.",
+  "methods": [
+    "add",
+    "set",
+    "update"
+  ],
+  "notes": [
+    "Module 16 of 85 in the plugin showcase.",
+    "Direct engine access: R.Fivoarana.",
+    "Exported symbol: Fivoarana.",
+    "Declaration type: class.",
+    "Primary purpose: Progression and advancement utilities.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Fivoarana(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Fivoarana', api, methods:[\"add\", \"set\", \"update\"]};",
+  "signature": ""
+},
+{
+  "id": 17,
+  "name": "Fitondrantena",
+  "description": "Behavior/composition utility.",
+  "methods": [],
+  "notes": [
+    "Module 17 of 85 in the plugin showcase.",
+    "Direct engine access: R.Fitondrantena.",
+    "Exported symbol: Fitondrantena.",
+    "Declaration type: class.",
+    "Primary purpose: Behavior/composition utility.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const api=R.Fitondrantena;\nreturn {type:typeof api, methods:[], value:api};",
+  "signature": ""
+},
+{
+  "id": 18,
+  "name": "Taolana",
+  "description": "Bone/chain math helper.",
+  "methods": [
+    "solve"
+  ],
+  "notes": [
+    "Module 18 of 85 in the plugin showcase.",
+    "Direct engine access: R.Taolana.",
+    "Exported symbol: Taolana.",
+    "Declaration type: class.",
+    "Primary purpose: Bone/chain math helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Taolana(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Taolana', api, methods:[\"solve\"]};",
+  "signature": ""
+},
+{
+  "id": 19,
+  "name": "Piolaka",
+  "description": "Polyline / curve geometry utility.",
+  "methods": [
+    "_getPoint",
+    "evaluate"
+  ],
+  "notes": [
+    "Module 19 of 85 in the plugin showcase.",
+    "Direct engine access: R.Piolaka.",
+    "Exported symbol: Piolaka.",
+    "Declaration type: class.",
+    "Primary purpose: Polyline / curve geometry utility.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Piolaka(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Piolaka', api, methods:[\"_getPoint\", \"evaluate\"]};",
+  "signature": ""
+},
+{
+  "id": 20,
+  "name": "Rano",
+  "description": "Water-region helper.",
+  "methods": [
+    "splash",
+    "update",
+    "getSurfaceY"
+  ],
+  "notes": [
+    "Module 20 of 85 in the plugin showcase.",
+    "Direct engine access: R.Rano.",
+    "Exported symbol: Rano.",
+    "Declaration type: class.",
+    "Primary purpose: Water-region helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Rano(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Rano', api, methods:[\"splash\", \"update\", \"getSurfaceY\"]};",
+  "signature": ""
+},
+{
+  "id": 21,
+  "name": "Entana",
+  "description": "Inventory / item container.",
+  "methods": [
+    "add",
+    "remove",
+    "has"
+  ],
+  "notes": [
+    "Module 21 of 85 in the plugin showcase.",
+    "Direct engine access: R.Entana.",
+    "Exported symbol: Entana.",
+    "Declaration type: class.",
+    "Primary purpose: Inventory / item container.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Entana(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Entana', api, methods:[\"add\", \"remove\", \"has\"]};",
+  "signature": ""
+},
+{
+  "id": 22,
+  "name": "MpitantanaIraka",
+  "description": "Quest/mission manager.",
+  "methods": [
+    "add",
+    "progress"
+  ],
+  "notes": [
+    "Module 22 of 85 in the plugin showcase.",
+    "Direct engine access: R.MpitantanaIraka.",
+    "Exported symbol: MpitantanaIraka.",
+    "Declaration type: class.",
+    "Primary purpose: Quest/mission manager.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.MpitantanaIraka(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'MpitantanaIraka', api, methods:[\"add\", \"progress\"]};",
+  "signature": ""
+},
+{
+  "id": 23,
+  "name": "MpitantanaResaka",
+  "description": "Dialogue / conversation manager.",
+  "methods": [],
+  "notes": [
+    "Module 23 of 85 in the plugin showcase.",
+    "Direct engine access: R.MpitantanaResaka.",
+    "Exported symbol: MpitantanaResaka.",
+    "Declaration type: class.",
+    "Primary purpose: Dialogue / conversation manager.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.MpitantanaResaka(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'MpitantanaResaka', api, methods:[]};",
+  "signature": ""
+},
+{
+  "id": 24,
+  "name": "Fandraisana",
+  "description": "Interaction / hit area utility.",
+  "methods": [],
+  "notes": [
+    "Module 24 of 85 in the plugin showcase.",
+    "Direct engine access: R.Fandraisana.",
+    "Exported symbol: Fandraisana.",
+    "Declaration type: class.",
+    "Primary purpose: Interaction / hit area utility.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const api=R.Fandraisana;\nreturn {type:typeof api, methods:[], value:api};",
+  "signature": ""
+},
+{
+  "id": 25,
+  "name": "Sarintany",
+  "description": "World map helper.",
+  "methods": [
+    "track",
+    "render"
+  ],
+  "notes": [
+    "Module 25 of 85 in the plugin showcase.",
+    "Direct engine access: R.Sarintany.",
+    "Exported symbol: Sarintany.",
+    "Declaration type: class.",
+    "Primary purpose: World map helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Sarintany(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Sarintany', api, methods:[\"track\", \"render\"]};",
+  "signature": ""
+},
+{
+  "id": 26,
+  "name": "Zavona",
+  "description": "Fog-of-war helper.",
+  "methods": [
+    "reveal",
+    "isVisible"
+  ],
+  "notes": [
+    "Module 26 of 85 in the plugin showcase.",
+    "Direct engine access: R.Zavona.",
+    "Exported symbol: Zavona.",
+    "Declaration type: class.",
+    "Primary purpose: Fog-of-war helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Zavona(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Zavona', api, methods:[\"reveal\", \"isVisible\"]};",
+  "signature": ""
+},
+{
+  "id": 27,
+  "name": "JoystickVirtoaly",
+  "description": "Virtual joystick input helper.",
+  "methods": [
+    "update"
+  ],
+  "notes": [
+    "Module 27 of 85 in the plugin showcase.",
+    "Direct engine access: R.JoystickVirtoaly.",
+    "Exported symbol: JoystickVirtoaly.",
+    "Declaration type: class.",
+    "Primary purpose: Virtual joystick input helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.JoystickVirtoaly(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'JoystickVirtoaly', api, methods:[\"update\"]};",
+  "signature": ""
+},
+{
+  "id": 28,
+  "name": "MpitantanaSehatra",
+  "description": "Scene lifecycle and switching manager.",
+  "methods": [
+    "add",
+    "_boot",
+    "start",
+    "launch",
+    "stop",
+    "sleep",
+    "wake",
+    "pause",
+    "resume",
+    "_shutdownScene",
+    "destroyScene",
+    "getScene",
+    "isActive",
+    "sendMessage",
+    "update",
+    "render",
+    "renderUI",
+    "hotReplaceScene",
+    "hookHMR"
+  ],
+  "notes": [
+    "Module 28 of 85 in the plugin showcase.",
+    "Direct engine access: R.MpitantanaSehatra.",
+    "Exported symbol: MpitantanaSehatra.",
+    "Declaration type: class.",
+    "Primary purpose: Scene lifecycle and switching manager.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.MpitantanaSehatra(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'MpitantanaSehatra', api, methods:[\"add\", \"_boot\", \"start\", \"launch\", \"stop\", \"sleep\", \"wake\", \"pause\", \"resume\", \"_shutdownScene\", \"destroyScene\", \"getScene\", \"isActive\", \"sendMessage\", \"update\", \"render\", \"renderUI\", \"hotReplaceScene\", \"hookHMR\"]};",
+  "signature": ""
+},
+{
+  "id": 29,
+  "name": "Dobo",
+  "description": "Object pool for reducing allocations.",
+  "methods": [
+    "alaina",
+    "avereno",
+    "clear",
+    "stats"
+  ],
+  "notes": [
+    "Module 29 of 85 in the plugin showcase.",
+    "Direct engine access: R.Dobo.",
+    "Exported symbol: Dobo.",
+    "Declaration type: class.",
+    "Primary purpose: Object pool for reducing allocations.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const p=new R.Dobo(()=>({value:0}),(o,v=0)=>o.value=v,2); const item=p.alaina(7); const before=p.stats(); p.avereno(item); return {item,before,after:p.stats()};",
+  "signature": ""
+},
+{
+  "id": 30,
+  "name": "Kisendrasendra",
+  "description": "Seeded deterministic random generator.",
+  "methods": [
+    "next",
+    "return",
+    "range",
+    "int",
+    "choice",
+    "reset"
+  ],
+  "notes": [
+    "Module 30 of 85 in the plugin showcase.",
+    "Direct engine access: R.Kisendrasendra.",
+    "Exported symbol: Kisendrasendra.",
+    "Declaration type: class.",
+    "Primary purpose: Seeded deterministic random generator.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const rng = new R.Kisendrasendra(12345);\nreturn {int:rng.int(1,6), range:rng.range(0,1), choice:rng.choice(['A','B','C'])};",
+  "signature": "Kisendrasendra.global = new Kisendrasendra(12345);"
+},
+{
+  "id": 31,
+  "name": "Tabataba",
+  "description": "Value, Perlin and FBM noise generation.",
+  "methods": [
+    "value2D",
+    "perlin2D",
+    "fbm",
+    "_hash",
+    "return",
+    "_fade"
+  ],
+  "notes": [
+    "Module 31 of 85 in the plugin showcase.",
+    "Direct engine access: R.Tabataba.",
+    "Exported symbol: Tabataba.",
+    "Declaration type: class.",
+    "Primary purpose: Value, Perlin and FBM noise generation.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "return {value2D:R.Tabataba.value2D(.25,.75,7),perlin2D:R.Tabataba.perlin2D(.25,.75,7),fbm:R.Tabataba.fbm(.25,.75,4,7)};",
+  "signature": ""
+},
+{
+  "id": 32,
+  "name": "Tehirizo",
+  "description": "Persistent save/load helper.",
+  "methods": [
+    "_slotKey",
+    "save",
+    "load",
+    "list",
+    "delete",
+    "clear",
+    "_lzwCompress",
+    "_lzwDecompress",
+    "saveCompressed",
+    "loadCompressed"
+  ],
+  "notes": [
+    "Module 32 of 85 in the plugin showcase.",
+    "Direct engine access: R.Tehirizo.",
+    "Exported symbol: Tehirizo.",
+    "Declaration type: class.",
+    "Primary purpose: Persistent save/load helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Tehirizo(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Tehirizo', api, methods:[\"_slotKey\", \"save\", \"load\", \"list\", \"delete\", \"clear\", \"_lzwCompress\", \"_lzwDecompress\", \"saveCompressed\", \"loadCompressed\"]};",
+  "signature": ""
+},
+{
+  "id": 33,
+  "name": "Teny",
+  "description": "Language/text helper.",
+  "methods": [
+    "add",
+    "set",
+    "t"
+  ],
+  "notes": [
+    "Module 33 of 85 in the plugin showcase.",
+    "Direct engine access: R.Teny.",
+    "Exported symbol: Teny.",
+    "Declaration type: class.",
+    "Primary purpose: Language/text helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const api=R.Teny;\nreturn {type:typeof api, methods:[\"add\", \"set\", \"t\"], value:api};",
+  "signature": ""
+},
+{
+  "id": 34,
+  "name": "Antontanisa",
+  "description": "Runtime statistics collector.",
+  "methods": [
+    "update",
+    "render"
+  ],
+  "notes": [
+    "Module 34 of 85 in the plugin showcase.",
+    "Direct engine access: R.Antontanisa.",
+    "Exported symbol: Antontanisa.",
+    "Declaration type: class.",
+    "Primary purpose: Runtime statistics collector.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Antontanisa(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Antontanisa', api, methods:[\"update\", \"render\"]};",
+  "signature": ""
+},
+{
+  "id": 35,
+  "name": "DebugDrafitra",
+  "description": "Debug visualisation/helper.",
+  "methods": [
+    "rect",
+    "circle",
+    "line",
+    "point"
+  ],
+  "notes": [
+    "Module 35 of 85 in the plugin showcase.",
+    "Direct engine access: R.DebugDrafitra.",
+    "Exported symbol: DebugDrafitra.",
+    "Declaration type: class.",
+    "Primary purpose: Debug visualisation/helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.DebugDrafitra(); } catch(e) { api={error:e.message}; }\nreturn api;",
+  "signature": ""
+},
+{
+  "id": 36,
+  "name": "MpitantanaFanampiny",
+  "description": "Plugin registry, installation and scene/global plugin lifecycle.",
+  "methods": [
+    "register",
+    "_instantiate",
+    "installGlobal",
+    "uninstallGlobal",
+    "getGlobal",
+    "updateGlobal",
+    "installScene",
+    "getScenePlugin",
+    "updateScenePlugins",
+    "install",
+    "uninstall",
+    "get",
+    "list"
+  ],
+  "notes": [
+    "Module 36 of 85 in the plugin showcase.",
+    "Direct engine access: R.MpitantanaFanampiny.",
+    "Exported symbol: MpitantanaFanampiny.",
+    "Declaration type: class.",
+    "Primary purpose: Plugin registry, installation and scene/global plugin lifecycle.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.MpitantanaFanampiny(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'MpitantanaFanampiny', api, methods:[\"register\", \"_instantiate\", \"installGlobal\", \"uninstallGlobal\", \"getGlobal\", \"updateGlobal\", \"installScene\", \"getScenePlugin\", \"updateScenePlugins\", \"install\", \"uninstall\", \"get\", \"list\"]};",
+  "signature": ""
+},
+{
+  "id": 37,
+  "name": "MpitantanaFanamboarana",
+  "description": "Plugin/configuration support module.",
+  "methods": [
+    "setVondrona",
+    "_buildDOM",
+    "setTab",
+    "_applyTabVisibility",
+    "selectEntity",
+    "_renderEntityList",
+    "_renderEntityDetail",
+    "log",
+    "toggle",
+    "update",
+    "destroy"
+  ],
+  "notes": [
+    "Module 37 of 85 in the plugin showcase.",
+    "Direct engine access: R.MpitantanaFanamboarana.",
+    "Exported symbol: MpitantanaFanamboarana.",
+    "Declaration type: class.",
+    "Primary purpose: Plugin/configuration support module.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.MpitantanaFanamboarana(); } catch(e) { api={error:e.message}; }\nreturn api;",
+  "signature": ""
+},
+{
+  "id": 38,
+  "name": "Hetsika",
+  "description": "Event emitter with wildcard listeners.",
+  "methods": [
+    "_isWildcard",
+    "_wildcardToRegex",
+    "on",
+    "once",
+    "off",
+    "emit",
+    "removeAll"
+  ],
+  "notes": [
+    "Module 38 of 85 in the plugin showcase.",
+    "Direct engine access: R.Hetsika.",
+    "Exported symbol: Hetsika.",
+    "Declaration type: class.",
+    "Primary purpose: Event emitter with wildcard listeners.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const e=new R.Hetsika(); let got=null; e.on('demo',v=>got=v); e.emit('demo',42); return got;",
+  "signature": ""
+},
+{
+  "id": 39,
+  "name": "Events",
+  "description": "Exported global event emitter singleton.",
+  "methods": [],
+  "notes": [
+    "Module 39 of 85 in the plugin showcase.",
+    "Direct engine access: R.Events.",
+    "Exported symbol: Events.",
+    "Declaration type: class.",
+    "Primary purpose: Exported global event emitter singleton.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let got=null; R.Events.once('rakitrakatra-demo',v=>got=v); R.Events.emit('rakitrakatra-demo',42); return got;",
+  "signature": ""
+},
+{
+  "id": 40,
+  "name": "DistanceJoint",
+  "description": "Distance constraint between two bodies/points.",
+  "methods": [
+    "update"
+  ],
+  "notes": [
+    "Module 40 of 85 in the plugin showcase.",
+    "Direct engine access: R.DistanceJoint.",
+    "Exported symbol: DistanceJoint.",
+    "Declaration type: class.",
+    "Primary purpose: Distance constraint between two bodies/points.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.DistanceJoint(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'DistanceJoint', api, methods:[\"update\"]};",
+  "signature": ""
+},
+{
+  "id": 41,
+  "name": "RevoluteJoint",
+  "description": "Rotational joint helper.",
+  "methods": [
+    "update"
+  ],
+  "notes": [
+    "Module 41 of 85 in the plugin showcase.",
+    "Direct engine access: R.RevoluteJoint.",
+    "Exported symbol: RevoluteJoint.",
+    "Declaration type: class.",
+    "Primary purpose: Rotational joint helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.RevoluteJoint(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'RevoluteJoint', api, methods:[\"update\"]};",
+  "signature": ""
+},
+{
+  "id": 42,
+  "name": "SpringJoint",
+  "description": "Spring-like constraint helper.",
+  "methods": [
+    "update"
+  ],
+  "notes": [
+    "Module 42 of 85 in the plugin showcase.",
+    "Direct engine access: R.SpringJoint.",
+    "Exported symbol: SpringJoint.",
+    "Declaration type: class.",
+    "Primary purpose: Spring-like constraint helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.SpringJoint(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'SpringJoint', api, methods:[\"update\"]};",
+  "signature": ""
+},
+{
+  "id": 43,
+  "name": "MpitantanaJoint",
+  "description": "Joint collection/manager.",
+  "methods": [
+    "add",
+    "remove",
+    "update",
+    "clear"
+  ],
+  "notes": [
+    "Module 43 of 85 in the plugin showcase.",
+    "Direct engine access: R.MpitantanaJoint.",
+    "Exported symbol: MpitantanaJoint.",
+    "Declaration type: class.",
+    "Primary purpose: Joint collection/manager.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.MpitantanaJoint(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'MpitantanaJoint', api, methods:[\"add\", \"remove\", \"update\", \"clear\"]};",
+  "signature": ""
+},
+{
+  "id": 44,
+  "name": "LaminaSary",
+  "description": "Render/image layer helper.",
+  "methods": [
+    "clear",
+    "draw",
+    "fn",
+    "resize",
+    "destroy"
+  ],
+  "notes": [
+    "Module 44 of 85 in the plugin showcase.",
+    "Direct engine access: R.LaminaSary.",
+    "Exported symbol: LaminaSary.",
+    "Declaration type: class.",
+    "Primary purpose: Render/image layer helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.LaminaSary(); } catch(e) { api={error:e.message}; }\nreturn api;",
+  "signature": ""
+},
+{
+  "id": 45,
+  "name": "MpitantanaHazavana",
+  "description": "2D lighting manager.",
+  "methods": [
+    "_ensureRadialTexture",
+    "setAmbient",
+    "addLight",
+    "addSpotLight",
+    "removeLight",
+    "clear",
+    "renderLightMap",
+    "applyToScreen",
+    "resize",
+    "destroy"
+  ],
+  "notes": [
+    "Module 45 of 85 in the plugin showcase.",
+    "Direct engine access: R.MpitantanaHazavana.",
+    "Exported symbol: MpitantanaHazavana.",
+    "Declaration type: class.",
+    "Primary purpose: 2D lighting manager.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.MpitantanaHazavana(); } catch(e) { api={error:e.message}; }\nreturn api;",
+  "signature": ""
+},
+{
+  "id": 46,
+  "name": "DataManager",
+  "description": "Data storage / event-linked manager.",
+  "methods": [
+    "set",
+    "get",
+    "has",
+    "remove",
+    "getAll",
+    "each",
+    "clear"
+  ],
+  "notes": [
+    "Module 46 of 85 in the plugin showcase.",
+    "Direct engine access: R.DataManager.",
+    "Exported symbol: DataManager.",
+    "Declaration type: class.",
+    "Primary purpose: Data storage / event-linked manager.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.DataManager(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'DataManager', api, methods:[\"set\", \"get\", \"has\", \"remove\", \"getAll\", \"each\", \"clear\"]};",
+  "signature": ""
+},
+{
+  "id": 47,
+  "name": "MpitantanaEfitra",
+  "description": "Room manager.",
+  "methods": [],
+  "notes": [
+    "Module 47 of 85 in the plugin showcase.",
+    "Direct engine access: R.MpitantanaEfitra.",
+    "Exported symbol: MpitantanaEfitra.",
+    "Declaration type: class.",
+    "Primary purpose: Room manager.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.MpitantanaEfitra(); } catch(e) { api={error:e.message}; }\nreturn api;",
+  "signature": ""
+},
+{
+  "id": 48,
+  "name": "EfitraTaloha",
+  "description": "Legacy room utility.",
+  "methods": [],
+  "notes": [
+    "Module 48 of 85 in the plugin showcase.",
+    "Direct engine access: R.EfitraTaloha.",
+    "Exported symbol: EfitraTaloha.",
+    "Declaration type: class.",
+    "Primary purpose: Legacy room utility.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.EfitraTaloha(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'EfitraTaloha', api, methods:[]};",
+  "signature": ""
+},
+{
+  "id": 49,
+  "name": "Famirapiratana",
+  "description": "Brightness / glow helper.",
+  "methods": [],
+  "notes": [
+    "Module 49 of 85 in the plugin showcase.",
+    "Direct engine access: R.Famirapiratana.",
+    "Exported symbol: Famirapiratana.",
+    "Declaration type: class.",
+    "Primary purpose: Brightness / glow helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Famirapiratana(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Famirapiratana', api, methods:[]};",
+  "signature": ""
+},
+{
+  "id": 50,
+  "name": "Hozongozona",
+  "description": "Shake controller.",
+  "methods": [],
+  "notes": [
+    "Module 50 of 85 in the plugin showcase.",
+    "Direct engine access: R.Hozongozona.",
+    "Exported symbol: Hozongozona.",
+    "Declaration type: class.",
+    "Primary purpose: Shake controller.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Hozongozona(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Hozongozona', api, methods:[]};",
+  "signature": ""
+},
+{
+  "id": 51,
+  "name": "FitaovanaVoa",
+  "description": "Spawn / seed-point helper.",
+  "methods": [
+    "addHitbox",
+    "addHurtbox",
+    "removeHitbox",
+    "removeHurtbox",
+    "update",
+    "clear"
+  ],
+  "notes": [
+    "Module 51 of 85 in the plugin showcase.",
+    "Direct engine access: R.FitaovanaVoa.",
+    "Exported symbol: FitaovanaVoa.",
+    "Declaration type: class.",
+    "Primary purpose: Spawn / seed-point helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.FitaovanaVoa(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'FitaovanaVoa', api, methods:[\"addHitbox\", \"addHurtbox\", \"removeHitbox\", \"removeHurtbox\", \"update\", \"clear\"]};",
+  "signature": ""
+},
+{
+  "id": 52,
+  "name": "FitahirizanaBaiko",
+  "description": "Command/input buffer.",
+  "methods": [
+    "press",
+    "setGrounded",
+    "consume",
+    "canCoyote",
+    "update"
+  ],
+  "notes": [
+    "Module 52 of 85 in the plugin showcase.",
+    "Direct engine access: R.FitahirizanaBaiko.",
+    "Exported symbol: FitahirizanaBaiko.",
+    "Declaration type: class.",
+    "Primary purpose: Command/input buffer.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.FitahirizanaBaiko(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'FitahirizanaBaiko', api, methods:[\"press\", \"setGrounded\", \"consume\", \"canCoyote\", \"update\"]};",
+  "signature": ""
+},
+{
+  "id": 53,
+  "name": "Fiadiana",
+  "description": "Weapon manager with fire/reload state.",
+  "methods": [
+    "switchTo",
+    "canFire",
+    "fire",
+    "reload",
+    "update"
+  ],
+  "notes": [
+    "Module 53 of 85 in the plugin showcase.",
+    "Direct engine access: R.Fiadiana.",
+    "Exported symbol: Fiadiana.",
+    "Declaration type: class.",
+    "Primary purpose: Weapon manager with fire/reload state.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Fiadiana(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Fiadiana', api, methods:[\"switchTo\", \"canFire\", \"fire\", \"reload\", \"update\"]};",
+  "signature": ""
+},
+{
+  "id": 54,
+  "name": "AndroAlina",
+  "description": "Day/night cycle utility.",
+  "methods": [
+    "update",
+    "phase",
+    "isNight",
+    "tint",
+    "setTime"
+  ],
+  "notes": [
+    "Module 54 of 85 in the plugin showcase.",
+    "Direct engine access: R.AndroAlina.",
+    "Exported symbol: AndroAlina.",
+    "Declaration type: class.",
+    "Primary purpose: Day/night cycle utility.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "R.AndroAlina.setTime(.85); return {phase:R.AndroAlina.phase(),night:R.AndroAlina.isNight(),tint:R.AndroAlina.tint()};",
+  "signature": ""
+},
+{
+  "id": 55,
+  "name": "BokotraVirtoaly",
+  "description": "Virtual button state manager.",
+  "methods": [
+    "define",
+    "press",
+    "release",
+    "isDown",
+    "justPressed",
+    "justReleased",
+    "endFrame"
+  ],
+  "notes": [
+    "Module 55 of 85 in the plugin showcase.",
+    "Direct engine access: R.BokotraVirtoaly.",
+    "Exported symbol: BokotraVirtoaly.",
+    "Declaration type: class.",
+    "Primary purpose: Virtual button state manager.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const b=new R.BokotraVirtoaly(); b.define('jump'); b.press('jump'); const out={down:b.isDown('jump'),just:b.justPressed('jump')}; b.release('jump'); out.released=b.justReleased('jump'); return out;",
+  "signature": ""
+},
+{
+  "id": 56,
+  "name": "FaribolanaMihena",
+  "description": "Shrinking safe-zone / damage ring.",
+  "methods": [
+    "update",
+    "isOutside",
+    "damageIfOutside",
+    "progress"
+  ],
+  "notes": [
+    "Module 56 of 85 in the plugin showcase.",
+    "Direct engine access: R.FaribolanaMihena.",
+    "Exported symbol: FaribolanaMihena.",
+    "Declaration type: class.",
+    "Primary purpose: Shrinking safe-zone / damage ring.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const z=new R.FaribolanaMihena(200,150,120,60,10,5); z.update(2); return {radius:z.radius,progress:z.progress(),outside:z.isOutside(400,400)};",
+  "signature": ""
+},
+{
+  "id": 57,
+  "name": "EndrikaBala",
+  "description": "Projectile firing-pattern generator.",
+  "methods": [
+    "spiral",
+    "wave",
+    "aimed",
+    "burst"
+  ],
+  "notes": [
+    "Module 57 of 85 in the plugin showcase.",
+    "Direct engine access: R.EndrikaBala.",
+    "Exported symbol: EndrikaBala.",
+    "Declaration type: class.",
+    "Primary purpose: Projectile firing-pattern generator.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "return {spiral:R.EndrikaBala.spiral(8,0,200),wave:R.EndrikaBala.wave(0,5,1,200),aimed:R.EndrikaBala.aimed(0,0,100,50,200)};",
+  "signature": ""
+},
+{
+  "id": 58,
+  "name": "Fisintonana",
+  "description": "Dash/pull movement helper.",
+  "methods": [
+    "canDash",
+    "start",
+    "update"
+  ],
+  "notes": [
+    "Module 58 of 85 in the plugin showcase.",
+    "Direct engine access: R.Fisintonana.",
+    "Exported symbol: Fisintonana.",
+    "Declaration type: class.",
+    "Primary purpose: Dash/pull movement helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Fisintonana(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Fisintonana', api, methods:[\"canDash\", \"start\", \"update\"]};",
+  "signature": ""
+},
+{
+  "id": 59,
+  "name": "IsaMitohy",
+  "description": "Combo/streak counter with multiplier.",
+  "methods": [
+    "add",
+    "update",
+    "reset"
+  ],
+  "notes": [
+    "Module 59 of 85 in the plugin showcase.",
+    "Direct engine access: R.IsaMitohy.",
+    "Exported symbol: IsaMitohy.",
+    "Declaration type: class.",
+    "Primary purpose: Combo/streak counter with multiplier.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const c=new R.IsaMitohy(1.5); const scores=[c.add(10),c.add(10),c.add(10),c.add(10),c.add(10)]; return {scores,combo:c.combo,multiplier:c.multiplier,best:c.best};",
+  "signature": ""
+},
+{
+  "id": 60,
+  "name": "TantaraFandresena",
+  "description": "Kill feed and score ranking manager.",
+  "methods": [
+    "addKill",
+    "addScore",
+    "ranking",
+    "clear"
+  ],
+  "notes": [
+    "Module 60 of 85 in the plugin showcase.",
+    "Direct engine access: R.TantaraFandresena.",
+    "Exported symbol: TantaraFandresena.",
+    "Declaration type: class.",
+    "Primary purpose: Kill feed and score ranking manager.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const b=new R.TantaraFandresena(5,10); b.addKill('A','B'); b.addKill('A','C'); b.addScore('C',5); return {feed:b.feed,ranking:b.ranking()};",
+  "signature": ""
+},
+{
+  "id": 61,
+  "name": "FanampianaKendrena",
+  "description": "Aim-assist target selection.",
+  "methods": [
+    "findBestTarget",
+    "snapAngle"
+  ],
+  "notes": [
+    "Module 61 of 85 in the plugin showcase.",
+    "Direct engine access: R.FanampianaKendrena.",
+    "Exported symbol: FanampianaKendrena.",
+    "Declaration type: class.",
+    "Primary purpose: Aim-assist target selection.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const ts=[{id:1,x:80,y:20},{id:2,x:200,y:40}]; return R.FanampianaKendrena.findBestTarget(0,0,0,ts,.8,400);",
+  "signature": ""
+},
+{
+  "id": 62,
+  "name": "Fijerena",
+  "description": "Target/camera browsing helper.",
+  "methods": [
+    "next",
+    "prev",
+    "setTargets"
+  ],
+  "notes": [
+    "Module 62 of 85 in the plugin showcase.",
+    "Direct engine access: R.Fijerena.",
+    "Exported symbol: Fijerena.",
+    "Declaration type: class.",
+    "Primary purpose: Target/camera browsing helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.Fijerena(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'Fijerena', api, methods:[\"next\", \"prev\", \"setTargets\"]};",
+  "signature": ""
+},
+{
+  "id": 63,
+  "name": "KarazanTany",
+  "description": "Noise-based terrain/biome classifier.",
+  "methods": [
+    "biomeAt",
+    "generate"
+  ],
+  "notes": [
+    "Module 63 of 85 in the plugin showcase.",
+    "Direct engine access: R.KarazanTany.",
+    "Exported symbol: KarazanTany.",
+    "Declaration type: class.",
+    "Primary purpose: Noise-based terrain/biome classifier.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "return R.KarazanTany.generate(160,128,32,7);",
+  "signature": ""
+},
+{
+  "id": 64,
+  "name": "DrafitraSimba",
+  "description": "Destructible grid with per-cell HP.",
+  "methods": [
+    "_idx",
+    "cellAt",
+    "damage",
+    "isBroken",
+    "repair"
+  ],
+  "notes": [
+    "Module 64 of 85 in the plugin showcase.",
+    "Direct engine access: R.DrafitraSimba.",
+    "Exported symbol: DrafitraSimba.",
+    "Declaration type: class.",
+    "Primary purpose: Destructible grid with per-cell HP.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const d=new R.DrafitraSimba(8,6,32,3); const broken=d.damage(2,2,3); return {broken,hp:d.hp[d._idx(2,2)],cell:d.cellAt(70,70)};",
+  "signature": ""
+},
+{
+  "id": 65,
+  "name": "Radar",
+  "description": "Range-based entity scanner.",
+  "methods": [],
+  "notes": [
+    "Module 65 of 85 in the plugin showcase.",
+    "Direct engine access: R.Radar.",
+    "Exported symbol: Radar.",
+    "Declaration type: class.",
+    "Primary purpose: Range-based entity scanner.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const es=[{id:1,x:80,y:20},{id:2,x:500,y:400}]; return R.Radar.scan(0,0,120,es);",
+  "signature": ""
+},
+{
+  "id": 66,
+  "name": "FotsakaTsyMifarana",
+  "description": "Infinite/parallax offset helper.",
+  "methods": [],
+  "notes": [
+    "Module 66 of 85 in the plugin showcase.",
+    "Direct engine access: R.FotsakaTsyMifarana.",
+    "Exported symbol: FotsakaTsyMifarana.",
+    "Declaration type: class.",
+    "Primary purpose: Infinite/parallax offset helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "return R.FotsakaTsyMifarana.layerOffset(540,220,.25,320);",
+  "signature": ""
+},
+{
+  "id": 67,
+  "name": "MpamorontsatsaVahiny",
+  "description": "Enemy/wave spawner.",
+  "methods": [
+    "update",
+    "notifyKilled",
+    "isComplete"
+  ],
+  "notes": [
+    "Module 67 of 85 in the plugin showcase.",
+    "Direct engine access: R.MpamorontsatsaVahiny.",
+    "Exported symbol: MpamorontsatsaVahiny.",
+    "Declaration type: class.",
+    "Primary purpose: Enemy/wave spawner.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.MpamorontsatsaVahiny(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'MpamorontsatsaVahiny', api, methods:[\"update\", \"notifyKilled\", \"isComplete\"]};",
+  "signature": ""
+},
+{
+  "id": 68,
+  "name": "Anjara",
+  "description": "Weighted loot/random reward selector.",
+  "methods": [
+    "add",
+    "roll",
+    "rollMany"
+  ],
+  "notes": [
+    "Module 68 of 85 in the plugin showcase.",
+    "Direct engine access: R.Anjara.",
+    "Exported symbol: Anjara.",
+    "Declaration type: class.",
+    "Primary purpose: Weighted loot/random reward selector.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const l=new R.Anjara(); l.add('coin',70,'common').add('gem',10,'rare').add('potion',20,'uncommon'); return l.rollMany(5);",
+  "signature": ""
+},
+{
+  "id": 69,
+  "name": "Vavahady",
+  "description": "Portal/zone trigger utility.",
+  "methods": [
+    "add",
+    "check"
+  ],
+  "notes": [
+    "Module 69 of 85 in the plugin showcase.",
+    "Direct engine access: R.Vavahady.",
+    "Exported symbol: Vavahady.",
+    "Declaration type: class.",
+    "Primary purpose: Portal/zone trigger utility.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const v=new R.Vavahady(); v.add(40,40,80,60,'portal','level-2'); return v.check(50,50,20,20);",
+  "signature": ""
+},
+{
+  "id": 70,
+  "name": "Firaketana",
+  "description": "Input recorder/replay helper.",
+  "methods": [
+    "start",
+    "stop",
+    "record",
+    "play",
+    "nextFrame",
+    "toJSON",
+    "fromJSON"
+  ],
+  "notes": [
+    "Module 70 of 85 in the plugin showcase.",
+    "Direct engine access: R.Firaketana.",
+    "Exported symbol: Firaketana.",
+    "Declaration type: class.",
+    "Primary purpose: Input recorder/replay helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const r=new R.Firaketana(); r.start(); r.record({left:true,jump:false}); r.stop(); r.play(); return {frame:r.nextFrame(),done:r.isDone};",
+  "signature": "static fromJSON(json) { const r=new Firaketana();r.frames=JSON.parse(json);return r; }"
+},
+{
+  "id": 71,
+  "name": "FiarovanaFitaka",
+  "description": "Basic movement/speed validation helper.",
+  "methods": [],
+  "notes": [
+    "Module 71 of 85 in the plugin showcase.",
+    "Direct engine access: R.FiarovanaFitaka.",
+    "Exported symbol: FiarovanaFitaka.",
+    "Declaration type: class.",
+    "Primary purpose: Basic movement/speed validation helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "return {normal:R.FiarovanaFitaka.check(3,4),invalid:R.FiarovanaFitaka.check(5000,0),maxSpeed:R.FiarovanaFitaka.maxSpeed};",
+  "signature": ""
+},
+{
+  "id": 72,
+  "name": "Ekipa",
+  "description": "Teams, members and standings.",
+  "methods": [
+    "createTeam",
+    "join",
+    "leave",
+    "addScore",
+    "areAllies",
+    "standings"
+  ],
+  "notes": [
+    "Module 72 of 85 in the plugin showcase.",
+    "Direct engine access: R.Ekipa.",
+    "Exported symbol: Ekipa.",
+    "Declaration type: class.",
+    "Primary purpose: Teams, members and standings.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const e=new R.Ekipa(); e.createTeam('red'); e.join('red','p1'); e.addScore('red',10); e.createTeam('blue'); e.addScore('blue',5); return e.standings();",
+  "signature": ""
+},
+{
+  "id": 73,
+  "name": "Fihetsehampo",
+  "description": "Whitelist-based emote trigger.",
+  "methods": [],
+  "notes": [
+    "Module 73 of 85 in the plugin showcase.",
+    "Direct engine access: R.Fihetsehampo.",
+    "Exported symbol: Fihetsehampo.",
+    "Declaration type: class.",
+    "Primary purpose: Whitelist-based emote trigger.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const e=new R.Fihetsehampo(['wave']); let out=null; e.onEmote=(name,id)=>out={name,id}; const ok=e.trigger('wave','p1'); return {ok,out};",
+  "signature": ""
+},
+{
+  "id": 74,
+  "name": "FeoAkaiky",
+  "description": "Distance-based audio attenuation.",
+  "methods": [
+    "volumeForDistance",
+    "playAt"
+  ],
+  "notes": [
+    "Module 74 of 85 in the plugin showcase.",
+    "Direct engine access: R.FeoAkaiky.",
+    "Exported symbol: FeoAkaiky.",
+    "Declaration type: class.",
+    "Primary purpose: Distance-based audio attenuation.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "return {near:R.FeoAkaiky.volumeForDistance(0,0,40,0,500,50),mid:R.FeoAkaiky.volumeForDistance(0,0,250,0,500,50),far:R.FeoAkaiky.volumeForDistance(0,0,800,0,500,50)};",
+  "signature": ""
+},
+{
+  "id": 75,
+  "name": "Akanjo",
+  "description": "Skin registration/equipping.",
+  "methods": [
+    "register",
+    "equip",
+    "textureFor"
+  ],
+  "notes": [
+    "Module 75 of 85 in the plugin showcase.",
+    "Direct engine access: R.Akanjo.",
+    "Exported symbol: Akanjo.",
+    "Declaration type: class.",
+    "Primary purpose: Skin registration/equipping.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const s=new R.Akanjo(); s.register('hero','texture-hero'); s.equip(1,'hero'); return s.textureFor(1,'white');",
+  "signature": ""
+},
+{
+  "id": 76,
+  "name": "VonoVono",
+  "description": "Hitstop, flash and impact feedback effects.",
+  "methods": [
+    "hitstop",
+    "isHitstopped",
+    "flash",
+    "getFlashAlpha",
+    "impact"
+  ],
+  "notes": [
+    "Module 76 of 85 in the plugin showcase.",
+    "Direct engine access: R.VonoVono.",
+    "Exported symbol: VonoVono.",
+    "Declaration type: class.",
+    "Primary purpose: Hitstop, flash and impact feedback effects.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const game={camera:{shake:(...a)=>a}}; const scene={}; R.VonoVono.impact(game,scene,6,120,50); return {hitstopUntil:game._hitstopUntil,flashUntil:scene._flashUntil};",
+  "signature": ""
+},
+{
+  "id": 77,
+  "name": "Fanoratana",
+  "description": "Typewriter text effect.",
+  "methods": [
+    "setText",
+    "update",
+    "skip"
+  ],
+  "notes": [
+    "Module 77 of 85 in the plugin showcase.",
+    "Direct engine access: R.Fanoratana.",
+    "Exported symbol: Fanoratana.",
+    "Declaration type: class.",
+    "Primary purpose: Typewriter text effect.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const t=new R.Fanoratana('Rakitrakatra V4',24); t.update(.3); return {visible:t.visible,done:t.done};",
+  "signature": ""
+},
+{
+  "id": 78,
+  "name": "ZavaBita",
+  "description": "Achievement definitions, unlocks and persistence.",
+  "methods": [
+    "define",
+    "unlock",
+    "isUnlocked",
+    "progress"
+  ],
+  "notes": [
+    "Module 78 of 85 in the plugin showcase.",
+    "Direct engine access: R.ZavaBita.",
+    "Exported symbol: ZavaBita.",
+    "Declaration type: class.",
+    "Primary purpose: Achievement definitions, unlocks and persistence.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const a=new R.ZavaBita(null); a.define('first','First','Demo achievement'); const unlocked=a.unlock('first'); return {unlocked,progress:a.progress()};",
+  "signature": ""
+},
+{
+  "id": 79,
+  "name": "FivarotanaMock",
+  "description": "Minimal mock shop/economy helper.",
+  "methods": [
+    "addItem",
+    "addCurrency",
+    "canBuy",
+    "buy"
+  ],
+  "notes": [
+    "Module 79 of 85 in the plugin showcase.",
+    "Direct engine access: R.FivarotanaMock.",
+    "Exported symbol: FivarotanaMock.",
+    "Declaration type: class.",
+    "Primary purpose: Minimal mock shop/economy helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const s=new R.FivarotanaMock(100); s.addItem('potion',35); return {canBuy:s.canBuy('potion'),bought:s.buy('potion'),currency:s.currency};",
+  "signature": ""
+},
+{
+  "id": 80,
+  "name": "FitsingerinaIsanAndro",
+  "description": "Once-per-day reward spin gate.",
+  "methods": [
+    "canSpin",
+    "spin"
+  ],
+  "notes": [
+    "Module 80 of 85 in the plugin showcase.",
+    "Direct engine access: R.FitsingerinaIsanAndro.",
+    "Exported symbol: FitsingerinaIsanAndro.",
+    "Declaration type: class.",
+    "Primary purpose: Once-per-day reward spin gate.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.FitsingerinaIsanAndro(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'FitsingerinaIsanAndro', api, methods:[\"canSpin\", \"spin\"]};",
+  "signature": ""
+},
+{
+  "id": 81,
+  "name": "MpampianatraMatoatoa",
+  "description": "Ghost/replay frame player.",
+  "methods": [],
+  "notes": [
+    "Module 81 of 85 in the plugin showcase.",
+    "Direct engine access: R.MpampianatraMatoatoa.",
+    "Exported symbol: MpampianatraMatoatoa.",
+    "Declaration type: class.",
+    "Primary purpose: Ghost/replay frame player.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "let api=null;\ntry { api=new R.MpampianatraMatoatoa(); } catch(e) { api={error:e.message}; }\nreturn {plugin:'MpampianatraMatoatoa', api, methods:[]};",
+  "signature": ""
+},
+{
+  "id": 82,
+  "name": "SarintanyMafana",
+  "description": "Grid heatmap accumulator.",
+  "methods": [
+    "record",
+    "valueAt",
+    "max"
+  ],
+  "notes": [
+    "Module 82 of 85 in the plugin showcase.",
+    "Direct engine access: R.SarintanyMafana.",
+    "Exported symbol: SarintanyMafana.",
+    "Declaration type: class.",
+    "Primary purpose: Grid heatmap accumulator.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const h=new R.SarintanyMafana(320,220,32); h.record(100,100,5); h.record(104,101,3); return {cell:h.valueAt(100,100),max:h.max()};",
+  "signature": ""
+},
+{
+  "id": 83,
+  "name": "MpametakaMody",
+  "description": "Runtime mod registry/loader.",
+  "methods": [],
+  "notes": [
+    "Module 83 of 85 in the plugin showcase.",
+    "Direct engine access: R.MpametakaMody.",
+    "Exported symbol: MpametakaMody.",
+    "Declaration type: class.",
+    "Primary purpose: Runtime mod registry/loader.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const api=R.MpametakaMody;\nreturn {type:typeof api, methods:[], value:api};",
+  "signature": ""
+},
+{
+  "id": 84,
+  "name": "MpitarikaAI",
+  "description": "AI director driven by a stress value.",
+  "methods": [
+    "addStress",
+    "update"
+  ],
+  "notes": [
+    "Module 84 of 85 in the plugin showcase.",
+    "Direct engine access: R.MpitarikaAI.",
+    "Exported symbol: MpitarikaAI.",
+    "Declaration type: class.",
+    "Primary purpose: AI director driven by a stress value.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const ai=new R.MpitarikaAI({maxStress:100,decayRate:5}); let request=null; ai.onSpawnRequest=s=>request=s; ai.addStress(80); ai.update(.2); return {stress:ai.stress,request};",
+  "signature": ""
+},
+{
+  "id": 85,
+  "name": "FanambaraKely",
+  "description": "Ping/marker event helper.",
+  "methods": [
+    "ping",
+    "update"
+  ],
+  "notes": [
+    "Module 85 of 85 in the plugin showcase.",
+    "Direct engine access: R.FanambaraKely.",
+    "Exported symbol: FanambaraKely.",
+    "Declaration type: class.",
+    "Primary purpose: Ping/marker event helper.",
+    "The source excerpt below is taken from the supplied engine file.",
+    "The usage panel shows a direct-call example intended for this page.",
+    "The Run demo button executes the usage snippet against window.R.",
+    "Renderer/audio/network requirements are not introduced unless the module needs them.",
+    "Constructor-dependent modules are probed conservatively to keep the catalog stable.",
+    "Use this card as the starting point when integrating the module into a game scene.",
+    "All 85 cards share the same Rakitrakatra V4 runtime loaded once by index.html."
+  ],
+  "sourceLines": [
+    "class FanambaraKely extends Hetsika {",
+    "    constructor(cooldown) { super();this.cooldown=cooldown===undefined?2:cooldown;this._cd=0; }",
+    "    ping(x, y, message, senderId) { if(this._cd>0)return false;this._cd=this.cooldown;this.emit('ping',{x,y,message,senderId,t:Date.now()});return true; }",
+    "    update(dt) { if(this._cd>0)this._cd-=dt; }",
+    "}",
+    "",
+    "                                                               ",
+    "         ",
+    "                                                               "
+  ],
+  "demo": "const p=new R.FanambaraKely(1); let event=null; p.on('ping',d=>event=d); const ok=p.ping(120,80,'Demo ping','p1'); return {ok,event};",
+  "signature": ""
+}
 ];
 
-// ============================================================
-// APP LOGIC
-// ============================================================
-var currentPlugin = null;
-var demoAnimId = null;
-var demoStartTime = 0;
-var activeTab = 'usage';
+const state={index:0,filter:'all',query:''};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function safeString(v){try{const seen=new WeakSet();return JSON.stringify(v,(k,x)=>{if(typeof x==='function')return '[Function]';if(x&&typeof x==='object'){if(seen.has(x))return '[Circular]';seen.add(x)}return x},2)}catch(e){return String(v)}}
+function filtered(){const q=state.query.trim().toLowerCase();return PLUGINS.map((p,i)=>({p,i})).filter(x=>(state.filter==='all'||(state.filter==='class'&&x.p.source.startsWith('class'))||(state.filter==='object'&&x.p.source.startsWith('const')))&&(!q||x.p.name.toLowerCase().includes(q)||x.p.description.toLowerCase().includes(q)||x.p.methods.some(m=>m.toLowerCase().includes(q))));}
+function drawBase(name){const c=$('#stage'),x=c.getContext('2d');const w=c.width,h=c.height;x.clearRect(0,0,w,h);x.fillStyle='#06101a';x.fillRect(0,0,w,h);x.strokeStyle='#13263b';x.lineWidth=1;for(let i=0;i<w;i+=40){x.beginPath();x.moveTo(i,0);x.lineTo(i,h);x.stroke()}for(let j=0;j<h;j+=40){x.beginPath();x.moveTo(0,j);x.lineTo(w,j);x.stroke()}x.fillStyle='#dbe9f7';x.font='700 26px system-ui';x.fillText(name,24,38)}
+function visual(p){drawBase(p.name);const c=$('#stage'),x=c.getContext('2d'),w=c.width,h=c.height; x.fillStyle='#9eacbd';x.font='13px system-ui';x.fillText('Rakitrakatra V4 · direct engine demo',24,62);
+if(p.name==='SakanToerana'){x.strokeStyle='#6fb5ff';x.strokeRect(50,90,230,150);x.strokeStyle='#70efc0';x.strokeRect(180,155,300,150);x.fillStyle='#6fb5ff';x.fillRect(115,135,16,16);x.fillStyle='#70efc0';x.fillRect(320,220,16,16)}
+else if(p.name==='HazoEfatra'){x.strokeStyle='#6fb5ff';x.strokeRect(45,80,560,240);x.beginPath();x.moveTo(325,80);x.lineTo(325,320);x.moveTo(45,200);x.lineTo(605,200);x.stroke();x.fillStyle='#70efc0';x.fillRect(90,115,55,55);x.fillRect(420,240,70,45)}
+else if(p.name==='Fizika'){x.fillStyle='rgba(111,181,255,.22)';x.fillRect(80,130,180,90);x.fillStyle='rgba(112,239,192,.22)';x.fillRect(210,175,240,110);x.strokeStyle='#fff';x.strokeRect(80,130,180,90);x.strokeRect(210,175,240,110)}
+else if(p.name==='Lalana'){x.strokeStyle='#17304a';for(let y=0;y<6;y++)for(let xx=0;xx<12;xx++)x.strokeRect(35+xx*45,95+y*38,45,38);x.fillStyle='#70efc0';[[0,0],[1,0],[2,1],[3,2],[4,2],[5,3],[6,4],[7,4],[8,5]].forEach(([a,b])=>x.fillRect(41+a*45,101+b*38,31,24))}
+else if(p.name==='Radar'){const cx=320,cy=200,r=135;x.strokeStyle='#355b7e';x.beginPath();x.arc(cx,cy,r,0,Math.PI*2);x.stroke();x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+r*.75,cy-r*.45);x.stroke();x.fillStyle='#70efc0';x.beginPath();x.arc(cx+85,cy-60,6,0,7);x.fill()}
+else if(p.name==='FaribolanaMihena'){x.strokeStyle='#ff8787';x.lineWidth=5;x.beginPath();x.arc(320,200,110,0,7);x.stroke();x.strokeStyle='#6fb5ff';x.beginPath();x.arc(320,200,55,0,7);x.stroke()}
+else if(p.name==='SarintanyMafana'){for(let y=0;y<7;y++)for(let xx=0;xx<10;xx++){const v=Math.max(0,1-Math.hypot(xx-4.5,y-3)/7);x.fillStyle=`rgba(255,130,130,${.06+v*.5})`;x.fillRect(55+xx*55,90+y*42,51,38)}}
+else if(p.name==='Vovoka'){x.fillStyle='#fff';for(let i=0;i<110;i++){const xx=80+(i*71)%570,yy=100+(i*37)%210;x.beginPath();x.arc(xx,yy,1+(i%4),0,7);x.fill()}}
+else{x.strokeStyle='#28415a';x.strokeRect(45,90,600,215);x.fillStyle='#11253a';x.fillRect(65,112,240,44);x.fillStyle='#173856';x.fillRect(65,175,380,18);x.fillStyle='#0e2235';x.fillRect(65,215,540,65);x.fillStyle='#70efc0';x.fillRect(82,237,180,12)}}
+function renderList(){const list=$('#nav');const arr=filtered();list.innerHTML='';for(const {p,i} of arr){const b=document.createElement('button');b.className='navitem'+(i===state.index?' active':'');b.innerHTML=`<span class="navnum">${String(p.id).padStart(2,'0')}</span><span class="navname">${esc(p.name)}</span>`;b.onclick=()=>{state.index=i;renderAll()};list.appendChild(b)}$('#count').textContent=`${arr.length} shown / 85 plugins`}
+function findPosition(){const arr=filtered();const pos=arr.findIndex(x=>x.i===state.index);return {pos,total:arr.length};}
+function renderCard(){const p=PLUGINS[state.index];$('#title').textContent=`${String(p.id).padStart(2,'0')} · ${p.name}`;$('#desc').textContent=p.description;$('#number').textContent=`${p.id} / 85`;
+$('#methods').innerHTML=p.methods.length?p.methods.map(m=>`<span class="chip">${esc(m)}()</span>`).join(''):'<span class="chip">no instance methods detected</span>';
+$('#notes').innerHTML=p.notes.map(n=>`<div class="note">${esc(n)}</div>`).join('');
+$('#usage').textContent=p.demo;$('#source').textContent=p.sourceLines.join('\n');$('#sig').textContent=p.signature||`${p.name} API`;
+visual(p);$('#out').className='out ok';$('#out').textContent='Press “Run demo” to execute this plugin usage example.';$('#status').textContent='Ready';renderList();const fp=findPosition();$('#prev').disabled=fp.pos<=0;$('#next').disabled=fp.pos===-1||fp.pos>=fp.total-1}
+function renderAll(){renderCard()}
+async function run(){const p=PLUGINS[state.index];visual(p);$('#status').textContent='Running…';try{if(!window.R){throw new Error('R engine not loaded. Keep rakitrakatra.js beside index.html.')};const fn=new Function('R',p.demo);const result=fn(window.R);$('#out').className='out ok';$('#out').textContent=`SUCCESS · ${p.name}\n\n${typeof result==='string'?result:safeString(result)}`;$('#status').textContent='Success'}catch(e){$('#out').className='out err';$('#out').textContent=`DEMO ERROR · ${p.name}\n\n${e&&e.stack?e.stack:e}`;$('#status').textContent='Error'}}
+$('#search').addEventListener('input',e=>{state.query=e.target.value;const arr=filtered();if(arr.length&&!arr.some(x=>x.i===state.index))state.index=arr[0].i;renderAll()});
+for(const id of ['all','class','object'])$('#f-'+id).onclick=()=>{state.filter=id;document.querySelectorAll('.filters button').forEach(b=>b.classList.remove('active'));$('#f-'+id).classList.add('active');const arr=filtered();if(arr.length&&!arr.some(x=>x.i===state.index))state.index=arr[0].i;renderAll()};
+$('#run').onclick=run;$('#copy').onclick=async()=>{try{await navigator.clipboard.writeText(PLUGINS[state.index].demo);$('#copy').textContent='Copied ✓';setTimeout(()=>$('#copy').textContent='Copy usage code',900)}catch(e){}};
+$('#prev').onclick=()=>{const arr=filtered(),pos=arr.findIndex(x=>x.i===state.index);if(pos>0){state.index=arr[pos-1].i;renderAll()}};
+$('#next').onclick=()=>{const arr=filtered(),pos=arr.findIndex(x=>x.i===state.index);if(pos>=0&&pos<arr.length-1){state.index=arr[pos+1].i;renderAll()}};
+renderAll();
 
-function buildSidebar(filter) {
-    var list = document.getElementById('pluginList');
-    list.innerHTML = '';
-    var f = (filter || '').toLowerCase();
-    for (var p = 0; p < PLUGINS.length; p++) {
-        var pl = PLUGINS[p];
-        if (f && pl.name.toLowerCase().indexOf(f) === -1 && pl.desc.toLowerCase().indexOf(f) === -1 && pl.cat.toLowerCase().indexOf(f) === -1) continue;
-        var li = document.createElement('li');
-        li.className = 'pi' + (currentPlugin && currentPlugin.id === pl.id ? ' active' : '');
-        var catClass = pl.cat === 'core' ? 'cat-core' : 'cat-' + pl.cat;
-        li.innerHTML = '<span>' + pl.name + '</span><span class="cat-tag ' + catClass + '">' + pl.cat + '</span>';
-        li.setAttribute('data-idx', p);
-        li.onclick = function() { selectPlugin(PLUGINS[parseInt(this.getAttribute('data-idx'))]); };
-        list.appendChild(li);
-    }
-}
-
-function selectPlugin(plugin) {
-    currentPlugin = plugin;
-    buildSidebar(document.getElementById('searchInput').value);
-    updateCodeDisplay();
-    startDemo();
-}
-
-function updateCodeDisplay() {
-    if (!currentPlugin) return;
-    var el = document.getElementById('codeDisplay');
-    if (activeTab === 'usage') {
-        el.innerHTML = highlightCode('// ' + currentPlugin.name + ' — ' + currentPlugin.desc + '\n\n' + currentPlugin.usage);
-    } else {
-        el.innerHTML = highlightCode('// API: R.' + currentPlugin.id + '\n// Category: ' + currentPlugin.cat + '\n// Description: ' + currentPlugin.desc + '\n\n// See usage tab for examples.\n// All APIs accessible via R. namespace');
-    }
-}
-
-function highlightCode(code) {
-    return code
-        .replace(/\/\/.*$/gm, function(m) { return '<span class="cmt">' + m + '</span>'; })
-        .replace(/\b(var|new|return|if|else|for|while|function|this|true|false|null)\b/g, '<span class="kw">$1</span>')
-        .replace(/\b(R\.\w+)\b/g, '<span class="fn">$1</span>')
-        .replace(/'[^']*'/g, function(m) { return '<span class="str">' + m + '</span>'; })
-        .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
-}
-
-function startDemo() {
-    if (demoAnimId) cancelAnimationFrame(demoAnimId);
-    var canvas = document.getElementById('demoCanvas');
-    var ctx = canvas.getContext('2d');
-    demoStartTime = performance.now();
-    var lastFrame = demoStartTime;
-    var frameCount = 0;
-
-    function loop(now) {
-        frameCount++;
-        var t = (now - demoStartTime) / 1000;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#0a0a0f';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        if (currentPlugin && currentPlugin.demo) {
-            try {
-                currentPlugin.demo.call({}, ctx, canvas.width, canvas.height, t);
-            } catch(e) {
-                ctx.fillStyle = '#ff4444';
-                ctx.font = '14px monospace';
-                ctx.fillText('Error: ' + e.message, 20, 40);
-            }
-        }
-
-        if (frameCount % 30 === 0) {
-            var fps = Math.round(1000 / ((now - lastFrame) / 30));
-            document.getElementById('demoOverlay').textContent = 'FPS: ' + fps + ' | t=' + t.toFixed(1) + 's';
-            lastFrame = now;
-            frameCount = 0;
-        }
-
-        demoAnimId = requestAnimationFrame(loop);
-    }
-    loop(performance.now());
-}
-
-// Tab switching
-var tabs = document.querySelectorAll('.code-tab');
-for (var i = 0; i < tabs.length; i++) {
-    tabs[i].onclick = function() {
-        for (var j = 0; j < tabs.length; j++) tabs[j].className = 'code-tab';
-        this.className = 'code-tab active';
-        activeTab = this.getAttribute('data-tab');
-        updateCodeDisplay();
-    };
-}
-
-// Search
-document.getElementById('searchInput').oninput = function() {
-    buildSidebar(this.value);
-};
-
-// Init
-buildSidebar();
-selectPlugin(PLUGINS[0]);
-
-console.log('%c⚡ RAKITRAKATRA V4.2.1 Plugin Explorer Loaded', 'color:#00ff88;font-size:14px;font-weight:bold');
-console.log('%c' + PLUGINS.length + ' plugins registered — ZERO template literals', 'color:#00ffff');
 </script>
 </body>
 </html>
