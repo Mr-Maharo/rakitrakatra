@@ -3,31 +3,40 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Demo Fizika — Projetila Avancé</title>
+  <title>demofizika — Demo Projetila (trara be)</title>
+  <meta name="description" content="Demo projetila mivaingana: zoro, hafaingana, gravité, drag, wind, replay, export, snapshot — rehetra ao anaty fisie HTML tokana." />
   <style>
-    :root{--bg:#0f1724;--card:#0b1220;--muted:#9fb0c8;--accent:#60a5fa;--accent-2:#7dd3fc}
+    /* Simple modern UI, single-file demo (dark theme) */
+    :root{
+      --bg:#071029; --card:#081225; --muted:#9fb0c8; --accent:#60a5fa; --accent-2:#7dd3fc; --glass:rgba(255,255,255,0.04);
+    }
     *{box-sizing:border-box}
-    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;margin:0;background:linear-gradient(180deg,#071029 0%, #071a2b 60%);color:#e6eef6;min-height:100vh}
-    .wrap{max-width:1100px;margin:24px auto;padding:20px}
-    header{display:flex;align-items:center;gap:16px}
-    h1{margin:0;font-size:1.4rem}
-    p.lead{margin:6px 0 14px;color:var(--muted)}
-    .app{display:grid;grid-template-columns:1fr 360px;gap:18px}
-    .canvas-card{background:linear-gradient(180deg,#e6f7ff0f,#e6f7ff06);border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.04)}
-    .controls{background:rgba(255,255,255,0.02);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
-    label{font-size:0.85rem;color:var(--muted);display:block;margin-bottom:6px}
-    .row{display:flex;gap:8px;align-items:center}
-    input[type=range]{width:100%}
+    html,body{height:100%}
+    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;color:#e6f3fb;background:linear-gradient(180deg,#031022 0%, #071a2b 60%);-webkit-font-smoothing:antialiased}
+    .wrap{max-width:1200px;margin:18px auto;padding:18px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    h1{margin:0;font-size:1.25rem;letter-spacing:0.2px}
+    .lead{color:var(--muted);margin:6px 0 12px}
+
+    .app{display:grid;grid-template-columns:1fr 380px;gap:18px}
+    .canvas-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.04)}
+    canvas#scene{width:100%;height:520px;border-radius:10px;background:linear-gradient(180deg,#bfe6ff0a,#e6f7ff04)}
+
+    .controls{background:var(--card);border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.03)}
+    .controls h2{margin:0 0 8px 0;font-size:1rem}
     .field{margin-bottom:12px}
-    button{background:linear-gradient(90deg,var(--accent),var(--accent-2));border:0;padding:10px 12px;border-radius:8px;color:#04263a;cursor:pointer;font-weight:600}
-    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-    .small{font-size:0.85rem;color:var(--muted)}
-    canvas{width:100%;height:420px;border-radius:8px;background:linear-gradient(180deg,#bfe6ff10,#e6f7ff05);display:block}
-    .stats{font-size:0.9rem;color:#dff3ff;background:rgba(0,0,0,0.08);padding:8px;border-radius:8px;margin-top:8px}
-    .footer{margin-top:14px;color:var(--muted);font-size:0.85rem}
-    .top-row{display:flex;gap:8px;align-items:center}
-    .preset{background:#04263a;border-radius:8px;padding:6px 8px;border:1px solid rgba(255,255,255,0.03);cursor:pointer}
-    .graph{height:120px;margin-top:10px;background:rgba(255,255,255,0.02);border-radius:8px;padding:8px}
+    label{font-size:0.86rem;color:var(--muted);display:block;margin-bottom:6px}
+    input[type=range]{width:100%}
+    .row{display:flex;gap:8px;align-items:center}
+    .small{font-size:0.83rem;color:var(--muted)}
+    button{background:linear-gradient(90deg,var(--accent),var(--accent-2));border:0;padding:9px 12px;border-radius:9px;color:#02263a;cursor:pointer;font-weight:700}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:8px;border-radius:8px}
+    .preset{background:rgba(255,255,255,0.02);padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);cursor:pointer}
+
+    .stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;color:#dff3ff}
+    .stat{background:rgba(0,0,0,0.06);padding:8px;border-radius:8px;font-size:0.9rem}
+
+    footer{margin-top:12px;color:var(--muted);font-size:0.85rem}
 
     @media(max-width:980px){.app{grid-template-columns:1fr}.controls{order:2}}
   </style>
@@ -35,81 +44,109 @@
 <body>
   <div class="wrap">
     <header>
-      <h1>Demo Fizika — Projetila (Avancé)</h1>
+      <div>
+        <h1>demofizika — Demo Projetila (trara be)</h1>
+        <div class="lead">Interactive demo: RK4 integrator, quadratic drag, wind, trails, replay, snapshot, export CSV — Malagasy UI.</div>
+      </div>
+      <div>
+        <button id="snapshotBtn" title="Save scene as PNG">Snapshot</button>
+      </div>
     </header>
-    <p class="lead">Simulation visual sy interactive: zoro, hafainganam‑pandeha, gravité, ary safidy <em>air resistance</em> (quadratic). Asehoy ny trajectory, trail, na export CSV. (Malagasy)</p>
 
     <div class="app">
       <div class="canvas-card">
-        <canvas id="scene" width="860" height="420"></canvas>
+        <canvas id="scene" width="960" height="520"></canvas>
         <div class="stats" id="computed">
-          <div>Range: <strong id="range">—</strong> m &nbsp; • &nbsp; Time of flight: <strong id="flightTime">—</strong> s &nbsp; • &nbsp; Max height: <strong id="maxH">—</strong> m</div>
+          <div class="stat">Range: <strong id="range">—</strong> m</div>
+          <div class="stat">Time: <strong id="flightTime">—</strong> s</div>
+          <div class="stat">Max H: <strong id="maxH">—</strong> m</div>
+          <div class="stat">Shots: <strong id="shotsCount">0</strong></div>
         </div>
-        <div class="graph" id="minigraph"><canvas id="mini" width="820" height="110"></canvas></div>
-        <div class="footer">Tip: Ampiasao <strong>Start</strong> mba handefa projetila; afaka mandefa maromaro ianao ary mampiasa <strong>Clear</strong> hanaisotra trail rehetra.</div>
+        <div style="margin-top:10px;color:var(--muted);font-size:0.88rem">Click <strong>Start</strong> na tsindrio canvas mba handefa projetila (drag & drop amin'ny canvas koa ho an'ny angle!).</div>
       </div>
 
       <aside class="controls">
+        <h2>Controls</h2>
         <div class="field">
-          <label>Zoro (deg): <span id="angleVal">45</span>°</label>
+          <label>Zoro (°) <span id="angleVal">45</span></label>
           <input id="angle" type="range" min="0" max="90" value="45">
         </div>
         <div class="field">
-          <label>Hafainganam‑pandeha (m/s): <span id="speedVal">40</span></label>
-          <input id="speed" type="range" min="1" max="200" value="40">
+          <label>Hafainganam‑pandeha (m/s) <span id="speedVal">60</span></label>
+          <input id="speed" type="range" min="1" max="300" value="60">
         </div>
         <div class="field">
-          <label>Gravité (m/s²): <span id="gravityVal">9.81</span></label>
-          <input id="gravity" type="range" min="0.5" max="30" step="0.01" value="9.81">
+          <label>Gravité (m/s²) <span id="gravityVal">9.81</span></label>
+          <input id="gravity" type="range" min="0.1" max="30" step="0.01" value="9.81">
         </div>
         <div class="field">
-          <label><input id="dragToggle" type="checkbox"> Ampidiro Air resistance (quadratic)</label>
-          <div class="small">Drag: F = -0.5 * rho * Cd * A * v^2 (simple model). Azonao atao manova: Cd <input id="cd" type="number" value="0.47" step="0.01" style="width:80px"></div>
+          <label><input id="dragToggle" type="checkbox" checked> Air resistance (quadratic)</label>
+          <div class="small">Cd <input id="cd" type="number" value="0.47" step="0.01" style="width:70px"> • mass <input id="mass" type="number" value="0.15" step="0.01" style="width:70px"> kg</div>
         </div>
-
-        <div class="field top-row">
-          <button id="startBtn">Start</button>
-          <button class="ghost" id="pauseBtn">Pause</button>
-          <button class="ghost" id="resetBtn">Reset</button>
+        <div class="field">
+          <label>Wind (m/s): <input id="wind" type="range" min="-30" max="30" value="0"> <span id="windVal">0</span></label>
+        </div>
+        <div class="field">
+          <div class="row">
+            <button id="startBtn">Start</button>
+            <button class="ghost" id="pauseBtn">Pause</button>
+            <button class="ghost" id="resetBtn">Reset</button>
+          </div>
         </div>
 
         <div class="field">
           <label>Asehoy</label>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <label class="small"><input id="showPred" type="checkbox" checked> Trajectory teorika</label>
-            <label class="small"><input id="showTrail" type="checkbox" checked> Trail (path)</label>
-            <label class="small"><input id="showVectors" type="checkbox"> Show velocity vector</label>
+            <label class="small"><input id="showTrail" type="checkbox" checked> Trail (fade)</label>
+            <label class="small"><input id="showVectors" type="checkbox"> Velocity vector</label>
           </div>
         </div>
 
         <div class="field">
           <label>Presets</label>
           <div style="display:flex;gap:8px">
-            <div class="preset" data-angle="30" data-speed="60">Long shot</div>
-            <div class="preset" data-angle="45" data-speed="80">Max range</div>
-            <div class="preset" data-angle="60" data-speed="40">High arc</div>
+            <div class="preset" data-angle="20" data-speed="120">Long</div>
+            <div class="preset" data-angle="45" data-speed="90">Max</div>
+            <div class="preset" data-angle="65" data-speed="55">High</div>
           </div>
         </div>
 
         <div class="field">
-          <label>Export / Scene</label>
+          <label>Export</label>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button id="exportCSV" class="ghost">Export CSV</button>
-            <button id="clearBtn" class="ghost">Clear</button>
+            <button class="ghost" id="exportCSV">Export CSV</button>
+            <button class="ghost" id="clearBtn">Clear Trails</button>
           </div>
         </div>
 
-        <div class="field small">Kaody nosoratan'ny Copilot — ampiasao izany ho fampianarana. Raha tianao, azoko atao ny mandamina ny kaody ho fisie .js/.css misaraka sy manampy fanazavana fohifohy.</div>
+        <div class="field small">Tip: Afaka manindry eo amin'ny canvas ianao mba hanitsy haingana ny zoro (drag ny totozy ho an'ny angle) ary tsindrio <strong>Start</strong> handefa projetila. Fampianarana: modely quadratic drag, RK4 integrator ho an'ny fahamarinan-toerana.</div>
       </aside>
     </div>
+
+    <footer>Kaody nosoratan'ny Copilot — Raha tianao dia azoko atao ny manoratra tests, manasaraka CSS/JS, na mampiditra animation effects fanampiny.</footer>
   </div>
 
 <script>
-// Advanced projectile demo (Malagasy UI)
+// demofizika — polished single-file demo
+// Features: RK4 integrator with quadratic drag, wind, trails (fading), multiple shots, presets, snapshot, CSV export.
+
+// Canvas setup
 const canvas = document.getElementById('scene');
 const ctx = canvas.getContext('2d');
-const mini = document.getElementById('mini').getContext('2d');
+let DPR = Math.max(1, window.devicePixelRatio || 1);
+function resize(){
+  const rect = canvas.getBoundingClientRect();
+  DPR = Math.max(1, window.devicePixelRatio || 1);
+  canvas.width = Math.floor(rect.width * DPR);
+  canvas.height = Math.floor(rect.height * DPR);
+  canvas.style.height = rect.height + 'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener('resize', resize);
+resize();
 
+// UI elements
 const angleEl = document.getElementById('angle');
 const speedEl = document.getElementById('speed');
 const gravityEl = document.getElementById('gravity');
@@ -124,34 +161,45 @@ const showTrail = document.getElementById('showTrail');
 const showVectors = document.getElementById('showVectors');
 const dragToggle = document.getElementById('dragToggle');
 const cdEl = document.getElementById('cd');
+const massEl = document.getElementById('mass');
+const windEl = document.getElementById('wind');
+const windVal = document.getElementById('windVal');
 const exportCSV = document.getElementById('exportCSV');
 const clearBtn = document.getElementById('clearBtn');
+const snapshotBtn = document.getElementById('snapshotBtn');
+const presets = document.querySelectorAll('.preset');
 
 const rangeEl = document.getElementById('range');
 const flightTimeEl = document.getElementById('flightTime');
 const maxHEl = document.getElementById('maxH');
+const shotsCountEl = document.getElementById('shotsCount');
 
-// state
+// physical constants (defaults)
+const rho = 1.225; // air density kg/m3
+const areaDefault = 0.03; // cross-sectional area m^2
+
+// simulation state
 let running = false;
 let paused = false;
-let trails = [];
-let projectiles = [];
 let t = 0;
 let lastTime = null;
-
-// physical constants for drag model
-const rho = 1.225; // air density kg/m3
-const area = 0.03; // cross-sectional area (m^2) typical small ball
-const mass = 0.15; // mass (kg)
+let projectiles = []; // active
+let trails = []; // finished
 
 function getParams(){
   const angleDeg = Number(angleEl.value);
   const angle = angleDeg * Math.PI/180;
-  const v0 = Number(speedEl.value);
-  const g = Number(gravityEl.value);
-  const useDrag = dragToggle.checked;
-  const Cd = Number(cdEl.value) || 0.47;
-  return {angleDeg, angle, v0, g, useDrag, Cd};
+  return {
+    angleDeg,
+    angle,
+    v0: Number(speedEl.value),
+    g: Number(gravityEl.value),
+    useDrag: dragToggle.checked,
+    Cd: Number(cdEl.value) || 0.47,
+    mass: Number(massEl.value) || 0.15,
+    area: areaDefault,
+    wind: Number(windEl.value) || 0
+  };
 }
 
 function updateUI(){
@@ -159,216 +207,240 @@ function updateUI(){
   angleVal.textContent = p.angleDeg;
   speedVal.textContent = p.v0;
   gravityVal.textContent = p.g.toFixed(2);
-
-  // theoretical values (no drag)
+  windVal.textContent = p.wind.toFixed(1);
+  // theoretical values without drag
   const R = (p.v0*p.v0 * Math.sin(2*p.angle)) / p.g;
   const tflight = (2*p.v0*Math.sin(p.angle))/p.g;
   const hmax = (p.v0*p.v0 * Math.pow(Math.sin(p.angle),2)) / (2*p.g);
   rangeEl.textContent = isFinite(R)? R.toFixed(2): '—';
   flightTimeEl.textContent = isFinite(tflight)? tflight.toFixed(2): '—';
   maxHEl.textContent = isFinite(hmax)? hmax.toFixed(2): '—';
+  shotsCountEl.textContent = trails.length + projectiles.length;
 }
 
-angleEl.addEventListener('input', ()=>{ updateUI(); drawScene(); });
-speedEl.addEventListener('input', ()=>{ updateUI(); drawScene(); });
-gravityEl.addEventListener('input', ()=>{ updateUI(); drawScene(); });
-showPred.addEventListener('change', drawScene);
-showTrail.addEventListener('change', drawScene);
-showVectors.addEventListener('change', drawScene);
-dragToggle.addEventListener('change', ()=>{ drawScene(); });
+angleEl.addEventListener('input', ()=>{ updateUI(); });
+speedEl.addEventListener('input', ()=>{ updateUI(); });
+gravityEl.addEventListener('input', ()=>{ updateUI(); });
+windEl.addEventListener('input', ()=>{ updateUI(); });
 
-// presets
-document.querySelectorAll('.preset').forEach(el=>{
-  el.addEventListener('click', ()=>{
-    angleEl.value = el.dataset.angle;
-    speedEl.value = el.dataset.speed;
-    updateUI(); drawScene();
-  });
-});
+presets.forEach(p=> p.addEventListener('click', ()=>{
+  angleEl.value = p.dataset.angle; speedEl.value = p.dataset.speed; updateUI();
+}));
 
 // coordinate mapping (meters -> px)
-function getScale(v0, g){
-  // estimate theoretical range (no drag)
+function getScale(v0,g){
   const theta = getParams().angle;
   const R = (v0*v0 * Math.sin(2*theta)) / g || 10;
-  const pxMargin = 120;
-  const avail = canvas.width - pxMargin;
-  const pxPerMeter = Math.max(6, avail / (R*1.2));
+  const pxMargin = 160;
+  const avail = canvas.getBoundingClientRect().width - pxMargin;
+  const pxPerMeter = Math.max(8, avail / (R*1.2));
   return pxPerMeter;
 }
 
-function spawn(){
+// RK4 integrator for motion with drag+wind
+function derivatives(state, params){
+  // state: [x, y, vx, vy]
+  const [x,y,vx,vy] = state;
+  const vRelX = vx - params.wind; // relative air velocity
+  const vRelY = vy;
+  const v = Math.hypot(vRelX, vRelY);
+  let ax = 0, ay = -params.g;
+  if(params.useDrag && v>0){
+    const dragMag = 0.5 * rho * params.Cd * params.area * v*v / params.mass;
+    ax += -dragMag * (vRelX / v);
+    ay += -dragMag * (vRelY / v);
+  }
+  return [vx, vy, ax, ay];
+}
+
+function rk4Step(state, dt, params){
+  const s = state.slice();
+  const k1 = derivatives(s, params);
+  const s2 = s.map((v,i)=> v + k1[i]*dt/2);
+  const k2 = derivatives(s2, params);
+  const s3 = s.map((v,i)=> v + k2[i]*dt/2);
+  const k3 = derivatives(s3, params);
+  const s4 = s.map((v,i)=> v + k3[i]*dt);
+  const k4 = derivatives(s4, params);
+  const next = s.map((v,i)=> v + dt*(k1[i] + 2*k2[i] + 2*k3[i] + k4[i]) / 6);
+  return next;
+}
+
+function spawnProjectile(){
   const p = getParams();
   const pxPerMeter = getScale(p.v0, p.g);
-  const angle = p.angle;
-  const v0 = p.v0;
-  const vx = v0*Math.cos(angle);
-  const vy = v0*Math.sin(angle);
-  const proj = {x:0, y:0, vx, vy, g:p.g, useDrag:p.useDrag, Cd:p.Cd, pxPerMeter, points:[]};
+  const x0 = 0.7; // m initial offset
+  const y0 = 0;
+  const vx = p.v0 * Math.cos(p.angle);
+  const vy = p.v0 * Math.sin(p.angle);
+  const proj = {
+    state: [x0, y0, vx, vy],
+    params: {...p},
+    pxPerMeter,
+    points: [],
+    color: `hsl(${Math.floor(Math.random()*360)} 80% 60%)`
+  };
   projectiles.push(proj);
 }
 
-startBtn.addEventListener('click', ()=>{ spawn(); running = true; paused = false; if(!requestId) loop(); });
-pauseBtn.addEventListener('click', ()=>{ paused = !paused; pauseBtn.textContent = paused? 'Resume':'Pause'; });
-resetBtn.addEventListener('click', ()=>{ projectiles = []; trails = []; drawScene(); updateUI(); });
-clearBtn.addEventListener('click', ()=>{ projectiles=[]; trails=[]; drawScene(); });
+startBtn.addEventListener('click', ()=>{ spawnProjectile(); running = true; if(!animId){ lastTime = performance.now(); animId = requestAnimationFrame(loop); } });
+pauseBtn.addEventListener('click', ()=>{ paused = !paused; pauseBtn.textContent = paused? 'Resume' : 'Pause'; });
+resetBtn.addEventListener('click', ()=>{ projectiles = []; trails = []; updateUI(); draw(); });
+clearBtn.addEventListener('click', ()=>{ trails = []; updateUI(); draw(); });
 
-exportCSV.addEventListener('click', ()=>{
-  // export latest projectile points
-  if(trails.length===0) return alert('Tsy misy trajectory voarakitra. Start aloha.');
-  const rows = ['time(s),x(m),y(m)'];
-  const pts = trails[trails.length-1];
-  pts.forEach(pt=> rows.push([pt.t.toFixed(3), pt.x.toFixed(5), pt.y.toFixed(5)].join(',')));
-  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download='trajectory.csv'; a.click(); URL.revokeObjectURL(url);
+// click on canvas to set angle (drag for dynamic angle)
+let draggingAngle = false;
+canvas.addEventListener('pointerdown', (e)=>{
+  draggingAngle = true; handlePointer(e);
 });
-
-// physics integrator (semi-implicit Euler) with quadratic drag
-function stepProjectile(proj, dt){
-  const v = Math.hypot(proj.vx, proj.vy);
-  if(proj.useDrag){
-    const Cd = proj.Cd; // drag coefficient
-    const dragMag = 0.5 * rho * Cd * area * v*v / (mass || 1);
-    // direction opposite to velocity
-    const ax = - (v>0? dragMag * (proj.vx / v) : 0);
-    const ay = - proj.g - (v>0? dragMag * (proj.vy / v) : 0);
-    proj.vx += ax * dt;
-    proj.vy += ay * dt;
-  } else {
-    proj.vy -= proj.g * dt;
-  }
-  proj.x += proj.vx * dt;
-  proj.y += proj.vy * dt;
+window.addEventListener('pointerup', ()=>{ if(draggingAngle){ draggingAngle=false; } });
+canvas.addEventListener('pointermove', (e)=>{ if(draggingAngle) handlePointer(e); });
+canvas.addEventListener('click', (e)=>{ // click to shoot
+  handlePointer(e); spawnProjectile(); running = true; if(!animId){ lastTime = performance.now(); animId = requestAnimationFrame(loop); }
+});
+function handlePointer(e){
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+  // compute angle from origin (origin at left-bottom)
+  const originPx = {x: 60, y: canvas.getBoundingClientRect().height - 48};
+  const dx = x - originPx.x; const dy = originPx.y - y; // meters direction
+  const angle = Math.atan2(dy, dx);
+  const deg = Math.max(0, Math.min(90, Math.round(angle * 180 / Math.PI)));
+  angleEl.value = deg; updateUI();
 }
 
-// animation
-let requestId = null;
-function loop(timestamp){
-  if(lastTime===null) lastTime = timestamp;
-  const dt = Math.min(0.04, (timestamp - lastTime)/1000); // cap dt
-  lastTime = timestamp;
-
+// simulation loop
+let animId = null;
+function loop(time){
+  if(!lastTime) lastTime = time;
+  const dt = Math.min(0.04, (time - lastTime)/1000);
+  lastTime = time;
   if(!paused){
-    // update all projectiles
-    projectiles.forEach((p,idx)=>{
-      stepProjectile(p, dt);
-      // add to trail
-      if(p.points.length===0 || t - (p.points[p.points.length-1].t || 0) > 0.02){
-        p.points.push({t: t, x: p.x, y: p.y});
+    // update projectiles
+    for(let i = projectiles.length - 1; i>=0; i--){
+      const p = projectiles[i];
+      // integrate with RK4
+      const s = p.state;
+      const next = rk4Step(s, dt, p.params);
+      p.state = next;
+      t += dt;
+      // push sample
+      p.points.push({t: t, x: p.state[0], y: p.state[1]});
+      // ground collision
+      if(p.state[1] <= 0 && p.state[2] > -1000){
+        // record trail and remove
+        trails.push(p.points.slice());
+        projectiles.splice(i,1);
       }
-      // if hit ground
-      if(p.y <= 0){
-        // finalize: record trail into trails list
-        if(p.points.length>0) trails.push(p.points.slice());
-        projectiles.splice(idx,1);
-      }
-    });
-    t += dt;
+    }
   }
-
-  drawScene();
-
-  // continue loop if running or there are active items
-  if(running || projectiles.length>0) requestId = requestAnimationFrame(loop);
-  else { requestId = null; lastTime = null; }
+  draw();
+  if(running || projectiles.length>0) animId = requestAnimationFrame(loop);
+  else { animId = null; lastTime = null; }
 }
 
-// drawing
-function drawScene(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+function draw(){
+  const rect = canvas.getBoundingClientRect();
+  ctx.clearRect(0,0,rect.width,rect.height);
+  // background sky gradient
+  const g = ctx.createLinearGradient(0,0,0,rect.height);
+  g.addColorStop(0,'#dff6ff'); g.addColorStop(0.25,'#bfe6ff'); g.addColorStop(1,'#e6f7ff05');
+  ctx.fillStyle = 'linear-gradient(180deg,#bfe6ff10,#e6f7ff03)';
+  ctx.fillStyle = '#e9f8ff05';
+  ctx.fillRect(0,0,rect.width,rect.height);
+
   // ground
-  const groundY = canvas.height - 36;
-  ctx.fillStyle = '#e8fef7';
-  ctx.fillRect(0, groundY, canvas.width, 36);
-  ctx.strokeStyle = '#cfece6'; ctx.beginPath(); ctx.moveTo(0, groundY+0.5); ctx.lineTo(canvas.width, groundY+0.5); ctx.stroke();
+  const groundY = rect.height - 48;
+  ctx.fillStyle = '#eaf7ee'; ctx.fillRect(0, groundY, rect.width, 48);
+  ctx.strokeStyle = '#d2efd6'; ctx.beginPath(); ctx.moveTo(0, groundY+0.5); ctx.lineTo(rect.width, groundY+0.5); ctx.stroke();
 
-  const originPx = {x:60, y:groundY};
+  const originPx = {x:60, y: groundY};
 
-  // axis labels
-  ctx.fillStyle = '#bfe4ff'; ctx.font='12px Inter'; ctx.fillText('Origin', originPx.x-28, originPx.y+16);
-
-  // scale
-  const pTemp = getParams();
-  const pxPerMeter = getScale(pTemp.v0, pTemp.g);
-
-  // theoretical trajectory (no drag)
+  // draw theoretical trajectory (no drag)
+  const p0 = getParams();
+  const pxPerMeter = getScale(p0.v0, p0.g);
   if(showPred.checked){
-    ctx.strokeStyle = 'rgba(255,160,60,0.95)'; ctx.lineWidth=2; ctx.beginPath();
-    const steps = 220;
-    const v0 = pTemp.v0; const theta = pTemp.angle; const g = pTemp.g;
+    ctx.strokeStyle = 'rgba(255,160,60,0.95)'; ctx.lineWidth = 2; ctx.beginPath();
+    const steps = 240; const v0 = p0.v0; const theta = p0.angle; const g = p0.g;
     const R = (v0*v0 * Math.sin(2*theta))/g;
     for(let i=0;i<=steps;i++){
       const xm = R * (i/steps);
       const y = xm*Math.tan(theta) - (g*xm*xm)/(2*v0*v0*Math.cos(theta)*Math.cos(theta));
-      const px = originPx.x + xm*pxPerMeter;
-      const py = originPx.y - y*pxPerMeter;
+      const px = originPx.x + xm*pxPerMeter; const py = originPx.y - y*pxPerMeter;
       if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
     }
     ctx.stroke();
   }
 
-  // draw existing trails
-  ctx.lineWidth = 2;
-  trails.forEach(tr=>{
-    ctx.strokeStyle = 'rgba(96,165,250,0.25)'; ctx.beginPath();
-    tr.forEach((pt,i)=>{ const px = originPx.x + pt.x*pxPerMeter; const py = originPx.y - pt.y*pxPerMeter; if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py); }); ctx.stroke();
-  });
+  // draw all finished trails (faded)
+  for(let i=0;i<trails.length;i++){
+    const tr = trails[i];
+    ctx.beginPath(); ctx.lineWidth = 2; ctx.strokeStyle = `rgba(96,165,250,${0.12 + 0.15*Math.min(1,i/10)})`;
+    for(let j=0;j<tr.length;j++){ const pt = tr[j]; const px = originPx.x + pt.x * pxPerMeter; const py = originPx.y - pt.y * pxPerMeter; if(j===0) ctx.moveTo(px,py); else ctx.lineTo(px,py); }
+    ctx.stroke();
+  }
 
   // draw active projectiles
-  projectiles.forEach(p=>{
-    const px = originPx.x + p.x*pxPerMeter; const py = originPx.y - p.y*pxPerMeter;
-    // trail
+  for(let p of projectiles){
+    // draw trail
     if(showTrail.checked){
-      ctx.strokeStyle = 'rgba(125,211,252,0.7)'; ctx.beginPath();
-      p.points.forEach((pt,i)=>{ const px2 = originPx.x + pt.x*pxPerMeter; const py2 = originPx.y - pt.y*pxPerMeter; if(i===0) ctx.moveTo(px2,py2); else ctx.lineTo(px2,py2); }); ctx.stroke();
+      ctx.beginPath();
+      for(let i=0;i<p.points.length;i++){
+        const pt = p.points[i]; const alpha = Math.max(0.08, (i+1)/p.points.length);
+        const px = originPx.x + pt.x * pxPerMeter; const py = originPx.y - pt.y * pxPerMeter;
+        if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+      }
+      ctx.strokeStyle = p.color; ctx.globalAlpha = 0.9; ctx.lineWidth = 2; ctx.stroke(); ctx.globalAlpha = 1;
     }
-    // projectile
-    ctx.fillStyle = '#023e8a'; ctx.beginPath(); ctx.arc(px,py,7,0,Math.PI*2); ctx.fill();
-    if(showVectors.checked){ ctx.strokeStyle='#ff7b7b'; ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px + p.vx*8, py - p.vy*8); ctx.stroke(); }
-  });
-
-  // draw latest spawn marker
-  const p0 = getParams();
-  ctx.save(); ctx.translate(originPx.x, originPx.y);
-  ctx.rotate(-p0.angle); ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(0,-6,30,12); ctx.restore();
-
-  // mini graph for last trail (y vs x)
-  mini.clearRect(0,0,820,110);
-  if(trails.length>0){
-    const last = trails[trails.length-1];
-    // find ranges
-    const maxX = Math.max(...last.map(p=>p.x), 0.1);
-    const maxY = Math.max(...last.map(p=>p.y), 0.1);
-    mini.strokeStyle='rgba(125,211,252,0.95)'; mini.lineWidth=1.6; mini.beginPath();
-    last.forEach((pt,i)=>{ const gx = 8 + (812*(pt.x/maxX)); const gy = 102 - (92*(pt.y/maxY)); if(i===0) mini.moveTo(gx,gy); else mini.lineTo(gx,gy); }); mini.stroke();
-    mini.fillStyle='#bfe4ff'; mini.font='11px Inter'; mini.fillText('x (m) →',740,105); mini.fillText('↑ y (m)',6,12);
+    // draw projectile
+    const px = originPx.x + p.state[0] * pxPerMeter; const py = originPx.y - p.state[1] * pxPerMeter;
+    // shadow
+    ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.ellipse(px+4, groundY+6, 10, 4, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.fillStyle = p.color; ctx.arc(px,py,8,0,Math.PI*2); ctx.fill();
+    // vector
+    if(showVectors.checked){ ctx.strokeStyle = 'rgba(255,120,120,0.95)'; ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px + p.state[2]*6, py - p.state[3]*6); ctx.stroke(); }
   }
+
+  // draw launcher
+  ctx.save(); ctx.translate(originPx.x, originPx.y);
+  ctx.fillStyle = '#0b1220'; ctx.strokeStyle = '#ffffff22'; ctx.lineWidth = 2;
+  const ang = getParams().angle; ctx.rotate(-ang); ctx.fillRect(0,-8,36,12); ctx.restore();
+
+  updateUI();
 }
 
-updateUI(); drawScene();
+// export CSV for last trail
+exportCSV.addEventListener('click', ()=>{
+  if(trails.length===0) return alert('Tsy misy trajectory voarakitra. Start aloha.');
+  const last = trails[trails.length-1];
+  const rows = ['time(s),x(m),y(m)'];
+  last.forEach(pt=> rows.push([pt.t.toFixed(4), pt.x.toFixed(6), pt.y.toFixed(6)].join(',')));
+  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'trajectory.csv'; a.click(); URL.revokeObjectURL(url);
+});
 
-// start animation loop if needed
-if(!requestId && (running || projectiles.length>0)) requestId = requestAnimationFrame(loop);
-
-// responsive canvas backing store
-function resizeCanvas(){
+// snapshot
+snapshotBtn.addEventListener('click', ()=>{
+  // temporary draw at device resolution and download
+  const tmpCanvas = document.createElement('canvas');
   const rect = canvas.getBoundingClientRect();
-  const scale = window.devicePixelRatio || 1;
-  canvas.width = Math.floor(rect.width * scale);
-  canvas.height = Math.floor(420 * scale);
-  canvas.style.height = '420px';
-  ctx.setTransform(scale,0,0,scale,0,0);
+  tmpCanvas.width = rect.width * DPR; tmpCanvas.height = rect.height * DPR;
+  const tctx = tmpCanvas.getContext('2d');
+  // scale and redraw current scene into tmp canvas
+  tctx.scale(DPR, DPR);
+  // draw current canvas content
+  tctx.drawImage(canvas, 0, 0);
+  tmpCanvas.toBlob(blob => { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'demofizika_snapshot.png'; a.click(); URL.revokeObjectURL(url); });
+});
 
-  const r = document.getElementById('mini').getBoundingClientRect();
-  const ms = window.devicePixelRatio || 1;
-  document.getElementById('mini').width = Math.floor(r.width*ms);
-  document.getElementById('mini').height = Math.floor(110*ms);
-  mini.setTransform(ms,0,0,ms,0,0);
-  drawScene();
-}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
+// initial draw & responsive
+updateUI(); draw();
+
+// ensure canvas rect size set (height fixed)
+(function setCanvasSize(){
+  const rect = canvas.getBoundingClientRect();
+  if(!rect.height){ canvas.style.height = '520px'; resize(); }
+})();
 
 </script>
 </body>
