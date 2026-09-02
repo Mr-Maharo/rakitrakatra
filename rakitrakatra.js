@@ -471,7 +471,6 @@ class Vondrona {
         this.tebokaPolygon[id]=null;
         this._tagDirty = true; return id;
     }
-}
     destroy(id) {
         if (id >= 0 && id < this.count && this.alive[id]) {
             this.alive[id] = 0; this.active[id] = 0;
@@ -1371,12 +1370,6 @@ class Mpampiseho {
         const gl = this.gl; const n = this._batchCount;
         const VERTEX_SIZE = 8; const QUAD_FLOATS = VERTEX_SIZE * 4;
         const texOf = this._quadTex;
-                                                              
-        const order = this._order;
-        for (let i = 0; i < n; i++) order[i] = i;
-                                                                                 
-                                                                                                  
-                                                                  
         const sortedIndices = this._sortedIndices;
 sortedIndices.length = 0;
 for (let i = 0; i < n; i++) sortedIndices.push(i);
@@ -3252,7 +3245,7 @@ const RakitrakatraV4 = {
     KINOVANA: '4.3.3', ANARANMIAFINA: 'Ady Goavana - Patched',
     Lalao, Sehatra, Vektora2, Vektora3, Lamina2D, Efajoro, Boribory, Lafomaro, Z,
     Vondrona, Mpampiseho, Kamera, Famataranandro, Mpampiditra, Feo, Fanindry, SakanToerana, HazoEfatra,
-    Sarimihetsika, Vovoka, Toetrandro, MpitantanaTween, Mpanamora, TsipikaFotoana,
+    Sarimihetsika, Taolana2D, EndrikaTaolana, HetsikaTaolana, Vovoka, Toetrandro, MpitantanaTween, Mpanamora, TsipikaFotoana,
     Fizika, Drafitra, Lalana, Fivoarana, Fitondrantena, Taolana, Piolaka, Rano, Entana, MpitantanaIraka, MpitantanaResaka,
     Fandraisana, Sarintany, Zavona, JoystickVirtoaly, MpitantanaSehatra,
     Dobo, Kisendrasendra, Tabataba, Tehirizo, Teny, Antontanisa, DebugDrafitra, MpitantanaFanampiny, MpitantanaFanamboarana,
